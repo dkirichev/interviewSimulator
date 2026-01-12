@@ -1,7 +1,7 @@
 # Interview Simulator - Frontend Structure
 
 ## Overview
-This project follows the **PSCR** (Pragma Source Core) template structure pattern, separating layout, fragments, and page content for better maintainability and scalability.
+This project follows a template structure pattern, separating layout, fragments, and page content for better maintainability and scalability.
 
 ## Technology Stack
 - **Backend**: Spring Boot 4.0.0 with Thymeleaf
@@ -108,7 +108,7 @@ Create `src/main/resources/static/js/newpage.js` and reference in `layouts/fragm
 - Fast initial page load
 - No hydration issues
 
-### ✅ PSCR-Aligned Structure
+### ✅ Aligned Structure
 - Matches your main project structure
 - Easy to maintain consistency
 - Familiar patterns
