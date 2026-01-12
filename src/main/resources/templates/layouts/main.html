@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layouts/fragments/head :: head}"><title></title></head>
+
+<body class="bg-slate-900 text-white h-screen overflow-hidden selection:bg-blue-500 selection:text-white">
+
+    <!-- Main Content Area -->
+    <th:block th:replace="~{${content} :: content}"/>
+
+    <!-- JavaScript Body Bottom -->
+    <th:block th:replace="~{layouts/fragments/bodyBottom :: bodyBottom}"/>
+
+</body>
+</html>

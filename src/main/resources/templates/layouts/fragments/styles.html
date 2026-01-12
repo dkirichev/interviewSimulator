@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<style th:fragment="styles">
+    body { font-family: 'Inter', sans-serif; }
+    
+    /* Audio Visualizer Animations */
+    .bar {
+        width: 6px;
+        background: #34d399;
+        border-radius: 9999px;
+        animation: sound 0ms -800ms linear infinite alternate;
+        height: 5px;
+        transition: height 0.1s ease;
+    }
+
+    .bar.active {
+        animation-duration: 400ms;
+    }
+
+    @keyframes sound {
+        0% { height: 5px; opacity: 0.35; }
+        100% { height: 40px; opacity: 1; }
+    }
+
+    /* Avatar Breathing Animation (Idle) */
+    @keyframes breathe {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    .avatar-idle {
+        animation: breathe 4s ease-in-out infinite;
+    }
+
+    /* Avatar Talking Animation */
+    @keyframes talk {
+        0%, 100% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.03); filter: brightness(1.1); }
+    }
+    .avatar-talking {
+        animation: talk 0.3s ease-in-out infinite;
+        border-color: #60a5fa !important;
+    }
+
+    /* Transition Utilities */
+    .view-section {
+        display: none;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+    }
+    .view-section.active {
+        display: flex;
+        opacity: 1;
+    }
+</style>
+</html>
