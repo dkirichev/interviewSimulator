@@ -225,4 +225,3 @@ public class GeminiLiveClient {
     }//setOnClosed
 
 }//GeminiLiveClient
-// GeminiLiveClient

@@ -44,4 +44,3 @@ public class InterviewSession {
     private String feedbackJson;
 
 }//InterviewSession
-
