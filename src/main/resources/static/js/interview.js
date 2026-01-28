@@ -9,26 +9,54 @@ const connectionOverlay = document.getElementById('connection-overlay');
 
 function startInterviewSimulation() {
     isInterviewActive = true;
-    connectionOverlay.style.display = 'flex';
-    connectionOverlay.style.opacity = '1';
+    isMicActive = false;
+    
+    // Reset UI state
+    if (connectionOverlay) {
+        connectionOverlay.style.display = 'flex';
+        connectionOverlay.style.opacity = '1';
+        const overlayText = connectionOverlay.querySelector('p');
+        if (overlayText) {
+            overlayText.innerText = 'Establishing Secure Websocket...';
+        }
+    }
+    
+    // Reset mic button
+    const micBtn = document.getElementById('mic-btn');
+    if (micBtn) {
+        micBtn.classList.remove('bg-slate-700', 'ring-2', 'ring-green-500');
+        const muteOverlay = document.getElementById('mic-mute-overlay');
+        if (muteOverlay) {
+            muteOverlay.classList.remove('hidden');
+        }
+    }
+    
+    // Connect to backend
     connectToBackend();
 }
 
 function updateStatus(text, classes) {
-    statusBadge.innerText = text;
-    statusBadge.className = `px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase border ${classes} transition-all duration-300`;
+    if (statusBadge) {
+        statusBadge.innerText = text;
+        statusBadge.className = `px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase border ${classes} transition-all duration-300`;
+    }
 }
 
 function toggleMic() {
+    if (!isInterviewActive) return;
+    
     isMicActive = !isMicActive;
     const btn = document.getElementById('mic-btn');
     const icon = btn.querySelector('i');
+    const muteOverlay = document.getElementById('mic-mute-overlay');
     
     if (isMicActive) {
         btn.classList.add('bg-slate-700', 'ring-2', 'ring-green-500');
         icon.classList.remove('fa-microphone-slash');
         icon.classList.add('fa-microphone');
-        document.getElementById('mic-mute-overlay').classList.add('hidden');
+        if (muteOverlay) {
+            muteOverlay.classList.add('hidden');
+        }
         
         updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
         
@@ -36,7 +64,9 @@ function toggleMic() {
         startVisualizer();
     } else {
         btn.classList.remove('bg-slate-700', 'ring-2', 'ring-green-500');
-        document.getElementById('mic-mute-overlay').classList.remove('hidden');
+        if (muteOverlay) {
+            muteOverlay.classList.remove('hidden');
+        }
         
         updateStatus('Mic Muted', 'bg-red-500/20 text-red-400 border-red-500/50');
         stopAudioCapture();
@@ -53,6 +83,8 @@ function stopVisualizer() {
 }
 
 function setAvatarState(state) {
+    if (!avatarVisual) return;
+    
     if (state === 'talking') {
         avatarVisual.classList.remove('avatar-idle');
         avatarVisual.classList.add('avatar-talking');
@@ -66,29 +98,26 @@ function setAvatarState(state) {
     }
 }
 
-function triggerMockAIResponse() {
-    if (!isInterviewActive) return;
-
-    updateStatus('AI Speaking', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
-    setAvatarState('talking');
-    
-    setTimeout(() => {
-        setAvatarState('idle');
-        if(isMicActive) {
-            updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
-        } else {
-            updateStatus('Waiting...', 'bg-slate-800 text-slate-400 border-slate-700');
-        }
-    }, 3000);
-}
-
 function endInterview() {
-    isInterviewActive = false;
-    stopVisualizer();
+    if (!isInterviewActive) return;
     
-    const randomScore = Math.floor(Math.random() * (95 - 60 + 1) + 60);
-    document.getElementById('final-score').innerText = randomScore;
-    document.getElementById('report-id').innerText = Math.floor(Math.random() * 9000 + 1000);
-
-    switchView('report');
+    isInterviewActive = false;
+    isMicActive = false;
+    
+    stopVisualizer();
+    stopAudioCapture();
+    
+    // Show grading screen
+    if (connectionOverlay) {
+        connectionOverlay.style.display = 'flex';
+        connectionOverlay.style.opacity = '1';
+        const overlayText = connectionOverlay.querySelector('p');
+        if (overlayText) {
+            overlayText.innerText = 'Analyzing your performance...';
+        }
+    }
+    
+    // Tell server to end interview and start grading
+    endInterviewConnection();
 }
+

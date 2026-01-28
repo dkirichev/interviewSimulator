@@ -7,10 +7,10 @@
         <div class="flex justify-between items-center border-b border-slate-800 pb-6">
             <div>
                 <h2 class="text-3xl font-bold">Interview Report</h2>
-                <p class="text-slate-400">Session ID: #<span id="report-id">8392</span></p>
+                <p class="text-slate-400">Session ID: #<span id="report-id">----</span></p>
             </div>
             <button onclick="restartApp()" class="text-slate-400 hover:text-white transition flex items-center gap-2">
-                <i class="fa-solid fa-arrow-left"></i> Home
+                <i class="fa-solid fa-arrow-left"></i> New Interview
             </button>
         </div>
 
@@ -22,47 +22,96 @@
                 <div class="relative z-10">
                     <svg class="w-40 h-40 transform -rotate-90">
                         <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="10" fill="transparent" class="text-slate-700" />
-                        <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="10" fill="transparent" class="text-blue-500" stroke-dasharray="440" stroke-dashoffset="88" />
+                        <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="10" fill="transparent" class="text-blue-500" stroke-dasharray="440" stroke-dashoffset="440" style="transition: stroke-dashoffset 1s ease-out;" />
                     </svg>
                     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                        <span class="text-4xl font-bold text-white" id="final-score">78</span>
+                        <span class="text-4xl font-bold text-white" id="final-score">--</span>
                         <span class="text-sm text-slate-400 block">/100</span>
                     </div>
                 </div>
                 <div class="mt-6 text-center z-10">
-                    <span class="px-3 py-1 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-full text-xs font-bold">SOLID CANDIDATE</span>
+                    <span class="px-3 py-1 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-full text-xs font-bold">EVALUATING...</span>
                 </div>
             </div>
 
             <!-- Feedback Categories -->
             <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 hover:border-blue-500/50 transition">
+                <!-- Strengths -->
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 hover:border-green-500/50 transition">
                     <div class="flex items-center gap-3 mb-3">
-                        <div class="w-10 h-10 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                            <i class="fa-solid fa-wave-square"></i>
+                        <div class="w-10 h-10 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center">
+                            <i class="fa-solid fa-star"></i>
                         </div>
-                        <h4 class="font-bold">Speech Analysis</h4>
+                        <h4 class="font-bold">Strengths</h4>
                     </div>
                     <ul class="space-y-2 text-sm text-slate-300">
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> Good pacing (130 wpm)</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-yellow-500"></i> Frequent use of "Umm"</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> Clear enunciation</li>
+                        <li class="flex items-center gap-2 text-slate-500 italic">Loading...</li>
                     </ul>
                 </div>
 
-                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 hover:border-blue-500/50 transition">
+                <!-- Areas for Improvement -->
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 hover:border-yellow-500/50 transition">
                     <div class="flex items-center gap-3 mb-3">
-                        <div class="w-10 h-10 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center">
-                            <i class="fa-solid fa-code"></i>
+                        <div class="w-10 h-10 rounded-lg bg-yellow-500/20 text-yellow-400 flex items-center justify-center">
+                            <i class="fa-solid fa-lightbulb"></i>
                         </div>
-                        <h4 class="font-bold">Technical Accuracy</h4>
+                        <h4 class="font-bold">Areas to Improve</h4>
                     </div>
                     <ul class="space-y-2 text-sm text-slate-300">
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> Correct Spring annotations</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-xmark text-red-500"></i> Missed Singleton scope detail</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> Good REST API design</li>
+                        <li class="flex items-center gap-2 text-slate-500 italic">Loading...</li>
                     </ul>
                 </div>
+
+                <!-- Score Breakdown -->
+                <div class="sm:col-span-2 bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                    <h4 class="font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-bar text-blue-400"></i>
+                        Score Breakdown
+                    </h4>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-slate-400">Communication</span>
+                                <span class="text-white" id="comm-score">--</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div id="comm-bar" class="h-full bg-purple-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-slate-400">Technical Knowledge</span>
+                                <span class="text-white" id="tech-score">--</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div id="tech-bar" class="h-full bg-orange-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-slate-400">Confidence</span>
+                                <span class="text-white" id="conf-score">--</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div id="conf-bar" class="h-full bg-cyan-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Analysis -->
+        <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+            <div class="bg-slate-900/50 px-6 py-4 border-b border-slate-700">
+                <h3 class="font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass-chart text-slate-400"></i> Detailed Analysis
+                </h3>
+            </div>
+            <div class="p-6">
+                <p id="detailed-analysis" class="text-slate-300 leading-relaxed">
+                    Analyzing your interview performance...
+                </p>
             </div>
         </div>
 
@@ -70,29 +119,14 @@
         <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
             <div class="bg-slate-900/50 px-6 py-4 border-b border-slate-700">
                 <h3 class="font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-file-lines text-slate-400"></i> Transcript
+                    <i class="fa-solid fa-file-lines text-slate-400"></i> Interview Transcript
                 </h3>
             </div>
-            <div class="p-6 h-64 overflow-y-auto space-y-4 font-mono text-sm" id="transcript-container">
-                <!-- Mock Transcript Items -->
-                <div class="flex gap-4">
-                    <div class="font-bold text-blue-400 w-16 shrink-0">AI</div>
-                    <div class="text-slate-300">Welcome to the interview. Could you please describe your experience with Spring Boot?</div>
-                </div>
-                <div class="flex gap-4">
-                    <div class="font-bold text-green-400 w-16 shrink-0">You</div>
-                    <div class="text-slate-300">Sure. I've been using Spring Boot for about 2 years. I mostly use it for creating RESTful APIs and microservices.</div>
-                </div>
-                <div class="flex gap-4">
-                    <div class="font-bold text-blue-400 w-16 shrink-0">AI</div>
-                    <div class="text-slate-300">That's great. How do you handle dependency injection in your projects?</div>
-                </div>
-                <div class="flex gap-4">
-                    <div class="font-bold text-green-400 w-16 shrink-0">You</div>
-                    <div class="text-slate-300">Umm, I usually use the @Autowired annotation, but recently I switched to constructor injection for better testability.</div>
-                </div>
+            <div class="p-6 max-h-96 overflow-y-auto space-y-4 font-mono text-sm" id="transcript-container">
+                <p class="text-slate-500 italic">Loading transcript...</p>
             </div>
         </div>
     </div>
 </section>
 </html>
+

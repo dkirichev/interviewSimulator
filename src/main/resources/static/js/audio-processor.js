@@ -4,136 +4,329 @@ let audioContext;
 let processor;
 let input;
 let globalStream;
-let websocket;
+let stompClient = null;
+let isConnected = false;
 
-// 1. Initialize WebSocket
+// Audio playback queue
+const audioQueue = [];
+let isPlaying = false;
+let playbackAudioContext;
+
+// Session data
+let currentSession = {
+    candidateName: '',
+    position: '',
+    difficulty: ''
+};
+
+// Connect to backend WebSocket
 function connectToBackend() {
-	// For development: Simulate connection without actual WebSocket
-	// TODO: Uncomment when backend WebSocket is ready
-	
-	/*
-	// Protocol must match (ws:// for http, wss:// for https)
-	const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-	websocket = new WebSocket(`${protocol}//${window.location.host}/ws/interview`);
-
-	websocket.binaryType = 'arraybuffer'; // Crucial for audio
-
-	websocket.onopen = () => {
-		console.log("Connected to AI Brain");
-		updateStatus('Connected', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
-		// Hide overlay with animation
-		const overlay = document.getElementById('connection-overlay');
-		overlay.style.opacity = '0';
-		setTimeout(() => overlay.style.display = 'none', 500);
-	};
-
-	websocket.onerror = (error) => {
-		console.error("WebSocket error:", error);
-		updateStatus('Connection Error', 'bg-red-500/20 text-red-400 border-red-500/50');
-		// Hide overlay even on error so UI isn't stuck
-		const overlay = document.getElementById('connection-overlay');
-		overlay.style.opacity = '0';
-		setTimeout(() => overlay.style.display = 'none', 500);
-	};
-
-	websocket.onmessage = (event) => {
-		// Handle incoming audio from Gemini (Server -> Browser)
-		playAudioChunk(event.data);
-	};
-
-	websocket.onclose = () => {
-		console.log("Disconnected");
-		updateStatus('Disconnected', 'bg-red-500/20 text-red-400 border-red-500/50');
-	};
-	*/
-	
-	// MOCK: Simulate successful connection for frontend development
-	console.log("MOCK: Simulating WebSocket connection...");
-	setTimeout(() => {
-		console.log("MOCK: Connected to AI Brain");
-		updateStatus('Connected (MOCK)', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
-		// Hide overlay with animation
-		const overlay = document.getElementById('connection-overlay');
-		overlay.style.opacity = '0';
-		setTimeout(() => overlay.style.display = 'none', 500);
-	}, 1500); // Simulate 1.5s connection time
+    console.log("Connecting to WebSocket...");
+    
+    const socket = new SockJS('/ws/interview');
+    stompClient = Stomp.over(socket);
+    
+    // Disable debug logging in production
+    stompClient.debug = function(str) {
+        console.debug(str);
+    };
+    
+    stompClient.connect({}, function(frame) {
+        console.log('Connected to WebSocket:', frame);
+        isConnected = true;
+        
+        // Subscribe to user-specific queues
+        stompClient.subscribe('/user/queue/status', handleStatusMessage);
+        stompClient.subscribe('/user/queue/audio', handleAudioMessage);
+        stompClient.subscribe('/user/queue/transcript', handleTranscriptMessage);
+        stompClient.subscribe('/user/queue/report', handleReportMessage);
+        stompClient.subscribe('/user/queue/error', handleErrorMessage);
+        stompClient.subscribe('/user/queue/text', handleTextMessage);
+        
+        // Start the interview session
+        startInterviewSession();
+        
+    }, function(error) {
+        console.error('WebSocket connection error:', error);
+        updateStatus('Connection Failed', 'bg-red-500/20 text-red-400 border-red-500/50');
+        hideConnectionOverlay();
+    });
 }
 
-// 2. Capture & Process Audio
+function startInterviewSession() {
+    if (!stompClient || !isConnected) {
+        console.error('Not connected to WebSocket');
+        return;
+    }
+    
+    // Send start message with interview parameters
+    stompClient.send('/app/interview/start', {}, JSON.stringify({
+        candidateName: currentSession.candidateName,
+        position: currentSession.position,
+        difficulty: currentSession.difficulty
+    }));
+    
+    console.log('Interview start request sent:', currentSession);
+}
+
+function handleStatusMessage(message) {
+    const data = JSON.parse(message.body);
+    console.log('Status:', data);
+    
+    switch(data.type) {
+        case 'CONNECTED':
+            updateStatus('Connected', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
+            hideConnectionOverlay();
+            break;
+        case 'TURN_COMPLETE':
+            setAvatarState('idle');
+            if (isMicActive) {
+                updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
+            }
+            break;
+        case 'INTERRUPTED':
+            // User interrupted, clear audio queue
+            audioQueue.length = 0;
+            break;
+        case 'GRADING':
+            showGradingScreen();
+            break;
+        case 'DISCONNECTED':
+            updateStatus('Disconnected', 'bg-red-500/20 text-red-400 border-red-500/50');
+            break;
+    }
+}
+
+function handleAudioMessage(message) {
+    const data = JSON.parse(message.body);
+    if (data.data) {
+        // Queue audio for playback
+        const audioBytes = base64ToArrayBuffer(data.data);
+        audioQueue.push(audioBytes);
+        
+        // Start playback if not already playing
+        if (!isPlaying) {
+            playNextAudio();
+        }
+        
+        // Update UI to show AI is speaking
+        setAvatarState('talking');
+        updateStatus('AI Speaking', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
+    }
+}
+
+function handleTranscriptMessage(message) {
+    const data = JSON.parse(message.body);
+    console.log('Transcript:', data.speaker, '-', data.text);
+    
+    // Store transcript for display
+    appendToLiveTranscript(data.speaker, data.text);
+}
+
+function handleReportMessage(message) {
+    const data = JSON.parse(message.body);
+    console.log('Report received:', data);
+    
+    // Store report data and switch to report view
+    displayReport(data);
+    switchView('report');
+}
+
+function handleErrorMessage(message) {
+    const data = JSON.parse(message.body);
+    console.error('Error from server:', data.message);
+    alert('Error: ' + data.message);
+}
+
+function handleTextMessage(message) {
+    const data = JSON.parse(message.body);
+    console.log('Text from AI:', data.text);
+}
+
+// Audio capture
 async function startAudioCapture() {
-	try {
-		globalStream = await navigator.mediaDevices.getUserMedia({
-			audio: {
-				channelCount: 1,
-				echoCancellation: true,
-				noiseSuppression: true
-			}
-		});
+    try {
+        globalStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                channelCount: 1,
+                sampleRate: 16000,
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            }
+        });
 
-		// Use default sample rate to avoid mismatch
-		audioContext = new (window.AudioContext || window.webkitAudioContext)();
-		
-		input = audioContext.createMediaStreamSource(globalStream);
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({
+            sampleRate: 16000
+        });
+        
+        input = audioContext.createMediaStreamSource(globalStream);
 
-		// bufferSize: 2048 or 4096.
-		// 1 channel input, 1 channel output
-		processor = audioContext.createScriptProcessor(4096, 1, 1);
+        // Use ScriptProcessor for audio data access
+        processor = audioContext.createScriptProcessor(4096, 1, 1);
 
-		processor.onaudioprocess = (e) => {
-			if (!isMicActive || !websocket || websocket.readyState !== WebSocket.OPEN) return;
+        processor.onaudioprocess = (e) => {
+            if (!isMicActive || !stompClient || !isConnected) return;
 
-			const inputData = e.inputBuffer.getChannelData(0);
+            const inputData = e.inputBuffer.getChannelData(0);
 
-			// Convert Float32 (Browser) to Int16 (Gemini Requirement)
-			const pcmData = floatTo16BitPCM(inputData);
+            // Convert Float32 to Int16 PCM
+            const pcmData = floatTo16BitPCM(inputData);
+            
+            // Convert to base64 and send
+            const base64Audio = arrayBufferToBase64(pcmData);
+            stompClient.send('/app/interview/audio', {}, base64Audio);
+        };
 
-			// Send to Backend
-			websocket.send(pcmData);
-		};
+        input.connect(processor);
+        processor.connect(audioContext.destination);
+        
+        console.log('Audio capture started');
 
-		input.connect(processor);
-		processor.connect(audioContext.destination); // Needed for the processor to run
-
-	} catch (err) {
-		console.error("Mic Error:", err);
-		alert("Microphone access denied!");
-	}
+    } catch (err) {
+        console.error("Mic Error:", err);
+        alert("Microphone access denied! Please allow microphone access to use the interview simulator.");
+    }
 }
 
 function stopAudioCapture() {
-	if (globalStream) globalStream.getTracks().forEach(track => track.stop());
-	if (processor) processor.disconnect();
-	if (input) input.disconnect();
-	if (audioContext) audioContext.close();
+    if (globalStream) globalStream.getTracks().forEach(track => track.stop());
+    if (processor) processor.disconnect();
+    if (input) input.disconnect();
+    if (audioContext && audioContext.state !== 'closed') audioContext.close();
+    
+    // Notify server that audio stream ended
+    if (stompClient && isConnected) {
+        stompClient.send('/app/interview/mic-off', {}, '');
+    }
+    
+    console.log('Audio capture stopped');
 }
 
-// Helper: Convert Float32Array to Int16Array (PCM)
+// Convert Float32Array to Int16Array (PCM)
 function floatTo16BitPCM(input) {
-	const output = new Int16Array(input.length);
-	for (let i = 0; i < input.length; i++) {
-		let s = Math.max(-1, Math.min(1, input[i]));
-		output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-	}
-	return output.buffer;
+    const output = new Int16Array(input.length);
+    for (let i = 0; i < input.length; i++) {
+        let s = Math.max(-1, Math.min(1, input[i]));
+        output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+    return output.buffer;
 }
 
-// 3. Play Incoming Audio (Simple Buffer Queue)
-const audioQueue = [];
-let isPlaying = false;
-
-function playAudioChunk(arrayBuffer) {
-	// 1. Decode generic raw PCM?
-	// Usually Gemini sends WAV or raw PCM. If raw PCM, we need to wrap it in WAV container or use AudioContext to play buffer.
-	// For simplicity, let's assume Backend sends a WAV header or we use AudioContext to decode.
-
-	// Quickest way: Blob URL if it's a valid audio file chunk
-	// Better way for streams: AudioContext.decodeAudioData
-
-	const blob = new Blob([arrayBuffer], { type: 'audio/wav' });
-	const url = URL.createObjectURL(blob);
-	const audio = new Audio(url);
-
-	audio.onplay = () => setAvatarState('talking');
-	audio.onended = () => setAvatarState('idle');
-	audio.play();
+// Convert ArrayBuffer to base64
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
 }
+
+// Convert base64 to ArrayBuffer
+function base64ToArrayBuffer(base64) {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+// Audio playback using Web Audio API
+async function playNextAudio() {
+    if (audioQueue.length === 0) {
+        isPlaying = false;
+        return;
+    }
+    
+    isPlaying = true;
+    const audioData = audioQueue.shift();
+    
+    try {
+        if (!playbackAudioContext || playbackAudioContext.state === 'closed') {
+            playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)({
+                sampleRate: 24000 // Gemini outputs at 24kHz
+            });
+        }
+        
+        // Convert raw PCM to AudioBuffer
+        const pcm16 = new Int16Array(audioData);
+        const floatData = new Float32Array(pcm16.length);
+        
+        for (let i = 0; i < pcm16.length; i++) {
+            floatData[i] = pcm16[i] / 32768.0;
+        }
+        
+        const audioBuffer = playbackAudioContext.createBuffer(1, floatData.length, 24000);
+        audioBuffer.getChannelData(0).set(floatData);
+        
+        const source = playbackAudioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(playbackAudioContext.destination);
+        
+        source.onended = () => {
+            playNextAudio();
+        };
+        
+        source.start();
+        
+    } catch (err) {
+        console.error('Audio playback error:', err);
+        playNextAudio(); // Try next chunk
+    }
+}
+
+// End interview and disconnect
+function endInterviewConnection() {
+    if (stompClient && isConnected) {
+        stompClient.send('/app/interview/end', {}, '');
+    }
+    
+    stopAudioCapture();
+    audioQueue.length = 0;
+}
+
+// Disconnect WebSocket
+function disconnectWebSocket() {
+    if (stompClient) {
+        stompClient.disconnect();
+        stompClient = null;
+        isConnected = false;
+    }
+}
+
+// Helper to hide connection overlay
+function hideConnectionOverlay() {
+    const overlay = document.getElementById('connection-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 500);
+    }
+}
+
+// Show grading screen
+function showGradingScreen() {
+    const overlay = document.getElementById('connection-overlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.style.opacity = '1';
+        overlay.querySelector('p').innerText = 'Analyzing your performance...';
+    }
+}
+
+// Live transcript (for debugging/display)
+let liveTranscript = [];
+
+function appendToLiveTranscript(speaker, text) {
+    liveTranscript.push({ speaker, text });
+}
+
+function getLiveTranscript() {
+    return liveTranscript;
+}
+
+function clearLiveTranscript() {
+    liveTranscript = [];
+}
+

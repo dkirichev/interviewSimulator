@@ -28,11 +28,23 @@
                 <label class="block text-sm font-medium text-slate-300 mb-2">Target Position</label>
                 <div class="relative">
                     <select id="job-position" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="Java Dev">Junior Java Developer</option>
+                        <option value="Junior Java Developer">Junior Java Developer</option>
+                        <option value="Senior Java Developer">Senior Java Developer</option>
+                        <option value="Frontend Developer">Frontend Developer</option>
+                        <option value="Full Stack Developer">Full Stack Developer</option>
                         <option value="QA Engineer">QA Engineer</option>
+                        <option value="DevOps Engineer">DevOps Engineer</option>
                         <option value="Project Manager">Project Manager</option>
+                        <option value="Product Manager">Product Manager</option>
+                        <option value="Data Scientist">Data Scientist</option>
+                        <option value="custom">Custom Position...</option>
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-500 pointer-events-none"></i>
+                </div>
+                <!-- Custom position input (hidden by default) -->
+                <div id="custom-position-container" class="hidden mt-2">
+                    <input type="text" id="custom-position" placeholder="Enter custom position (e.g., ML Engineer)" 
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                 </div>
             </div>
 
@@ -67,3 +79,4 @@
     </div>
 </section>
 </html>
+
