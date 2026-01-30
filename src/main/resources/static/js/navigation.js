@@ -24,6 +24,7 @@ function handleStart(e) {
     const candidateName = document.getElementById('candidate-name').value.trim();
     const positionSelect = document.getElementById('job-position');
     const customPosition = document.getElementById('custom-position');
+    const languageSelect = document.getElementById('interview-language');
     
     let position = positionSelect.value;
     if (position === 'custom' && customPosition) {
@@ -31,12 +32,14 @@ function handleStart(e) {
     }
     
     const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+    const language = languageSelect ? languageSelect.value : 'en';
     
     // Store session data for WebSocket connection
     currentSession = {
         candidateName: candidateName || 'Candidate',
         position: position,
-        difficulty: difficulty
+        difficulty: difficulty,
+        language: language
     };
     
     // Update UI

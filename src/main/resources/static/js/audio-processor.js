@@ -18,7 +18,8 @@ const CROSSFADE_SAMPLES = 64;  // Samples to crossfade between chunks to elimina
 let currentSession = {
     candidateName: '',
     position: '',
-    difficulty: ''
+    difficulty: '',
+    language: 'en'
 };
 
 // Connect to backend WebSocket
@@ -65,7 +66,8 @@ function startInterviewSession() {
     stompClient.send('/app/interview/start', {}, JSON.stringify({
         candidateName: currentSession.candidateName,
         position: currentSession.position,
-        difficulty: currentSession.difficulty
+        difficulty: currentSession.difficulty,
+        language: currentSession.language
     }));
     
     console.log('Interview start request sent:', currentSession);
@@ -93,6 +95,11 @@ function handleStatusMessage(message) {
             isPlaying = false;
             break;
         case 'GRADING':
+            // Interview ended - immediately stop microphone to prevent audio spam
+            if (isMicActive) {
+                isMicActive = false;
+                stopAudioCapture();
+            }
             showGradingScreen();
             break;
         case 'DISCONNECTED':
@@ -250,11 +257,20 @@ async function playNextAudio() {
     
     try {
         // Initialize or resume AudioContext (reuse for entire session)
+        // Note: Some browsers may not support 24kHz and will use hardware rate (typically 48kHz)
         if (!playbackAudioContext || playbackAudioContext.state === 'closed') {
             playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)({
-                sampleRate: 24000 // Gemini outputs at 24kHz
+                sampleRate: 24000 // Request 24kHz to match Gemini output
             });
             nextPlayTime = 0;
+            const actualRate = playbackAudioContext.sampleRate;
+            console.log('AudioContext initialized. Requested: 24000Hz, Actual:', actualRate + 'Hz');
+            
+            // Warn if browser doesn't support 24kHz (will cause pitch/speed issues)
+            if (actualRate !== 24000) {
+                console.warn('Browser does not support 24kHz AudioContext! Audio will play at', actualRate, 'Hz - expect quality issues.');
+                console.warn('Consider using AudioContext resampling or OfflineAudioContext for proper playback.');
+            }
         }
         
         // Resume if suspended (browser autoplay policy)
@@ -284,7 +300,8 @@ async function playNextAudio() {
             }
         }
         
-        // Create AudioBuffer
+        // Create AudioBuffer with GEMINI'S sample rate (24kHz)
+        // If browser's AudioContext is different rate, it will handle resampling
         const audioBuffer = playbackAudioContext.createBuffer(1, floatData.length, 24000);
         audioBuffer.getChannelData(0).set(floatData);
         
@@ -303,9 +320,9 @@ async function playNextAudio() {
         const currentTime = playbackAudioContext.currentTime;
         const chunkDuration = floatData.length / 24000;
         
-        // If nextPlayTime is in the past or not set, start immediately with small buffer
+        // If nextPlayTime is in the past or not set, start immediately (no buffer for first chunk)
         if (nextPlayTime <= currentTime) {
-            nextPlayTime = currentTime + 0.005; // 5ms buffer for scheduling
+            nextPlayTime = currentTime;
         }
         
         // Schedule this chunk to start exactly when the previous one ends

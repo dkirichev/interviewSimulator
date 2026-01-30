@@ -10,22 +10,45 @@ import java.util.regex.Pattern;
 @Service
 public class InterviewPromptService {
 
-    // Patterns to detect when AI is concluding the interview
-    private static final List<Pattern> CONCLUSION_PATTERNS = List.of(
+    // Patterns to detect when AI is concluding the interview (English)
+    private static final List<Pattern> CONCLUSION_PATTERNS_EN = List.of(
             Pattern.compile("thank you for your time", Pattern.CASE_INSENSITIVE),
             Pattern.compile("that concludes our interview", Pattern.CASE_INSENSITIVE),
             Pattern.compile("we have all the information we need", Pattern.CASE_INSENSITIVE),
             Pattern.compile("thank you for coming in", Pattern.CASE_INSENSITIVE),
             Pattern.compile("we('ll| will) be in touch", Pattern.CASE_INSENSITIVE),
             Pattern.compile("this concludes", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("end of (the|our) interview", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("that('s| is) all (the questions |)I have", Pattern.CASE_INSENSITIVE)
+            Pattern.compile("end of (the |our |this )?interview", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("that('s| is) all (the questions |)I have", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("best of luck", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("good luck with", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("it was (nice|great|a pleasure) (meeting|talking)", Pattern.CASE_INSENSITIVE)
+    );
+
+    // Patterns to detect when AI is concluding the interview (Bulgarian)
+    private static final List<Pattern> CONCLUSION_PATTERNS_BG = List.of(
+            Pattern.compile("благодаря (ви |)за (отделеното |)време", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("интервюто приключи", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("това е всичко от мен", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("ще се свържем с вас", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("успех", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("приятно ми беше", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("довиждане", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("нямам повече въпроси", Pattern.CASE_INSENSITIVE)
     );
 
 
-    public String generateInterviewerPrompt(String position, String difficulty) {
-        String difficultyBehavior = getDifficultyBehavior(difficulty);
-        String positionContext = getPositionContext(position);
+    public String generateInterviewerPrompt(String position, String difficulty, String language) {
+        if ("bg".equals(language)) {
+            return generateBulgarianPrompt(position, difficulty);
+        }
+        return generateEnglishPrompt(position, difficulty);
+    }//generateInterviewerPrompt
+
+
+    private String generateEnglishPrompt(String position, String difficulty) {
+        String difficultyBehavior = getDifficultyBehaviorEn(difficulty);
+        String positionContext = getPositionContextEn(position);
 
         return String.format("""
                 You are an experienced HR interviewer conducting a job interview for a %s position.
@@ -64,10 +87,55 @@ public class InterviewPromptService {
                 """,
                 position, position, difficulty, difficultyBehavior, positionContext
         );
-    }//generateInterviewerPrompt
+    }//generateEnglishPrompt
 
 
-    private String getDifficultyBehavior(String difficulty) {
+    private String generateBulgarianPrompt(String position, String difficulty) {
+        String difficultyBehavior = getDifficultyBehaviorBg(difficulty);
+        String positionContext = getPositionContextBg(position);
+
+        return String.format("""
+                Ти си опитен HR интервюиращ, провеждащ интервю за работа за позиция %s.
+                
+                ## Твоята Роля
+                Ти си професионален интервюиращ в реномирана технологична компания. Казваш се Алекс.
+                Трябва да звучиш естествено, професионално и човешки в отговорите си.
+                ВАЖНО: Говори САМО на български език през цялото интервю.
+                
+                ## Насоки за Интервюто
+                1. Започни като се представиш накратко и помоли кандидата да се представи
+                2. Задай 5-7 релевантни въпроса, подходящи за %s позиция
+                3. Слушай внимателно отговорите и задавай допълнителни въпроси при нужда
+                4. Дръж отговорите си кратки - това е разговор, не лекция
+                5. Бъди професионален, но разговорен
+                
+                ## Ниво на Трудност: %s
+                %s
+                
+                ## Фокус за Позицията
+                %s
+                
+                ## Приключване на Интервюто
+                Когато събереш достатъчно информация (след 5-7 въпроса), приключи естествено като:
+                - Благодариш на кандидата за отделеното време
+                - Споменеш, че "имаме цялата информация, която ни трябва"
+                - Кажеш нещо като "ще се свържем с вас за следващите стъпки"
+                
+                ## Важни Бележки
+                - НЕ споменавай, че си AI - ти си Алекс, интервюиращият
+                - Дръж отговорите КРАТКИ и естествени - избягвай дълги монолози
+                - Реагирай естествено на отговорите на кандидата
+                - Ако кандидатът даде слаб отговор, задълбочи, но остани професионален
+                - Ако кандидатът очевидно се затруднява, можеш да предложиш леко насърчение
+                
+                Започни интервюто сега като се представиш накратко.
+                """,
+                position, position, difficulty, difficultyBehavior, positionContext
+        );
+    }//generateBulgarianPrompt
+
+
+    private String getDifficultyBehaviorEn(String difficulty) {
         return switch (difficulty.toLowerCase()) {
             case "easy", "chill" -> """
                     - Be friendly, encouraging, and supportive
@@ -92,10 +160,38 @@ public class InterviewPromptService {
                     - Mix easy and moderately challenging questions
                     """;
         };
-    }//getDifficultyBehavior
+    }//getDifficultyBehaviorEn
 
 
-    private String getPositionContext(String position) {
+    private String getDifficultyBehaviorBg(String difficulty) {
+        return switch (difficulty.toLowerCase()) {
+            case "easy", "chill" -> """
+                    - Бъди приятелски настроен, окуражаващ и подкрепящ
+                    - Давай време на кандидата да помисли
+                    - Ако се затруднява, предложи подсказки или преформулирай въпроси
+                    - Фокусирай се върху това да се чувства комфортно
+                    - Задавай ясни въпроси без трикове
+                    """;
+            case "hard", "stress" -> """
+                    - Бъди професионален, но предизвикателен
+                    - Задавай задълбочени допълнителни въпроси
+                    - Настоявай за конкретни примери и детайли
+                    - Оспорвай неясни или непълни отговори
+                    - Включи няколко неочаквани или ситуационни въпроса
+                    - Поддържай времеви натиск в тона си
+                    """;
+            default -> """
+                    - Бъди професионален и балансиран
+                    - Задавай ясни, директни въпроси
+                    - Проследявай интересни точки
+                    - Поддържай неутрален, но приятелски тон
+                    - Смесвай лесни и умерено предизвикателни въпроси
+                    """;
+        };
+    }//getDifficultyBehaviorBg
+
+
+    private String getPositionContextEn(String position) {
         String lowerPosition = position.toLowerCase();
 
         if (lowerPosition.contains("java") || lowerPosition.contains("backend") || lowerPosition.contains("software")) {
@@ -159,7 +255,74 @@ public class InterviewPromptService {
                     - Career goals and motivation
                     """;
         }
-    }//getPositionContext
+    }//getPositionContextEn
+
+
+    private String getPositionContextBg(String position) {
+        String lowerPosition = position.toLowerCase();
+
+        if (lowerPosition.contains("java") || lowerPosition.contains("backend") || lowerPosition.contains("software")) {
+            return """
+                    Фокусни области за тази техническа роля:
+                    - Концепции за обектно-ориентирано програмиране
+                    - Познания по Java/Spring Boot (ако е приложимо)
+                    - Разбиране на бази данни и SQL
+                    - API дизайн и REST принципи
+                    - Подход за решаване на проблеми
+                    - Качество на кода и практики за тестване
+                    """;
+        } else if (lowerPosition.contains("qa") || lowerPosition.contains("test") || lowerPosition.contains("quality")) {
+            return """
+                    Фокусни области за тази QA роля:
+                    - Методологии и стратегии за тестване
+                    - Дизайн и изпълнение на тест кейсове
+                    - Докладване и проследяване на бъгове
+                    - Опит с автоматизация
+                    - Разбиране на SDLC
+                    - Примери за внимание към детайла
+                    """;
+        } else if (lowerPosition.contains("project") || lowerPosition.contains("manager") || lowerPosition.contains("pm")) {
+            return """
+                    Фокусни области за тази мениджърска роля:
+                    - Планиране и изпълнение на проекти
+                    - Лидерство на екип и комуникация
+                    - Управление на заинтересовани страни
+                    - Идентифициране и смекчаване на рискове
+                    - Опит с Agile/Scrum
+                    - Примери за разрешаване на конфликти
+                    """;
+        } else if (lowerPosition.contains("frontend") || lowerPosition.contains("ui") || lowerPosition.contains("react")) {
+            return """
+                    Фокусни области за тази фронтенд роля:
+                    - Владеене на HTML, CSS, JavaScript
+                    - Опит с модерни фреймуърци (React, Vue, Angular)
+                    - Принципи на респонсив дизайн
+                    - Обработка на съвместимост между браузъри
+                    - Оптимизация на производителността
+                    - Усет за потребителски опит
+                    """;
+        } else if (lowerPosition.contains("devops") || lowerPosition.contains("cloud") || lowerPosition.contains("infrastructure")) {
+            return """
+                    Фокусни области за тази DevOps роля:
+                    - Опит с CI/CD пайплайни
+                    - Облачни платформи (AWS, GCP, Azure)
+                    - Контейнеризация (Docker, Kubernetes)
+                    - Infrastructure as Code
+                    - Мониторинг и логване
+                    - Най-добри практики за сигурност
+                    """;
+        } else {
+            return """
+                    Фокусни области за тази роля:
+                    - Релевантни технически умения и опит
+                    - Способности за решаване на проблеми
+                    - Комуникационни умения
+                    - Екипна работа
+                    - Обучаемост и адаптивност
+                    - Кариерни цели и мотивация
+                    """;
+        }
+    }//getPositionContextBg
 
 
     public boolean isInterviewConcluding(String transcript) {
@@ -167,13 +330,28 @@ public class InterviewPromptService {
             return false;
         }
 
-        for (Pattern pattern : CONCLUSION_PATTERNS) {
+        String lowerTranscript = transcript.toLowerCase();
+        log.debug("Checking conclusion patterns in: {}", lowerTranscript.length() > 100 ? lowerTranscript.substring(0, 100) + "..." : lowerTranscript);
+
+        // Check English patterns
+        for (Pattern pattern : CONCLUSION_PATTERNS_EN) {
             if (pattern.matcher(transcript).find()) {
-                log.debug("Detected interview conclusion pattern in: {}", transcript);
+                log.info("MATCHED EN conclusion pattern: {} in text: {}", pattern.pattern(), 
+                        transcript.length() > 100 ? transcript.substring(0, 100) + "..." : transcript);
                 return true;
             }
         }
 
+        // Check Bulgarian patterns
+        for (Pattern pattern : CONCLUSION_PATTERNS_BG) {
+            if (pattern.matcher(transcript).find()) {
+                log.info("MATCHED BG conclusion pattern: {} in text: {}", pattern.pattern(),
+                        transcript.length() > 100 ? transcript.substring(0, 100) + "..." : transcript);
+                return true;
+            }
+        }
+
+        log.debug("No conclusion pattern matched");
         return false;
     }//isInterviewConcluding
 

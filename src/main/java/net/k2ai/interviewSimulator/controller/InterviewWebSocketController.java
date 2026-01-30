@@ -27,10 +27,11 @@ public class InterviewWebSocketController {
         String candidateName = payload.getOrDefault("candidateName", "Unknown");
         String position = payload.getOrDefault("position", "Software Developer");
         String difficulty = payload.getOrDefault("difficulty", "Standard");
+        String language = payload.getOrDefault("language", "en");
 
-        UUID interviewSessionId = geminiIntegrationService.startInterview(sessionIdStr, candidateName, position, difficulty);
+        UUID interviewSessionId = geminiIntegrationService.startInterview(sessionIdStr, candidateName, position, difficulty, language);
 
-        log.info("Interview started - WebSocket: {}, Interview Session: {}", sessionIdStr, interviewSessionId);
+        log.info("Interview started - WebSocket: {}, Interview Session: {}, Language: {}", sessionIdStr, interviewSessionId, language);
     }//startInterview
 
 

@@ -34,19 +34,19 @@ public class GeminiIntegrationService {
     private final Map<String, InterviewState> activeSessions = new ConcurrentHashMap<>();
 
 
-    public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty) {
+    public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, String language) {
         // Create database session
         UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty);
 
         // Create Gemini client
         GeminiLiveClient geminiClient = new GeminiLiveClient(geminiConfig.getApiKey(), geminiConfig.getLiveModel(), geminiConfig.getVoiceName());
 
-        // Generate system instruction for the AI interviewer
-        String systemInstruction = promptService.generateInterviewerPrompt(position, difficulty);
+        // Generate system instruction for the AI interviewer (language-aware)
+        String systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language);
         geminiClient.setSystemInstruction(systemInstruction);
 
         // Create interview state
-        InterviewState state = new InterviewState(interviewSessionId, geminiClient, candidateName, position, difficulty);
+        InterviewState state = new InterviewState(interviewSessionId, geminiClient, candidateName, position, difficulty, language);
         activeSessions.put(wsSessionId, state);
 
         // Setup callbacks
@@ -62,13 +62,18 @@ public class GeminiIntegrationService {
     private void setupGeminiCallbacks(String wsSessionId, InterviewState state) {
         GeminiLiveClient client = state.getGeminiClient();
 
-        // When Gemini is ready
+        // When Gemini is ready - send initial greeting to trigger AI to speak first
         client.setOnConnected(() -> {
             log.info("Gemini ready for session: {}", wsSessionId);
             sendToClient(wsSessionId, "/queue/status", Map.of(
                     "type", "CONNECTED",
                     "message", "AI interviewer ready"
             ));
+
+            // Send greeting to trigger AI to introduce itself
+            String greeting = "bg".equals(state.getLanguage()) ? "Здравейте!" : "Hello!";
+            client.sendText(greeting);
+            log.debug("Sent initial greeting to trigger AI: {}", greeting);
         });
 
         // When receiving audio from Gemini
@@ -96,36 +101,39 @@ public class GeminiIntegrationService {
             ));
         });
 
-        // Output transcription (AI's speech)
+        // Output transcription (AI's speech) - accumulate for turn-end checking
         client.setOnOutputTranscript(transcript -> {
             state.appendAiTranscript(transcript);
+            state.appendCurrentTurnTranscript(transcript);
             sendToClient(wsSessionId, "/queue/transcript", Map.of(
                     "speaker", "ai",
                     "text", transcript
             ));
-
-            // Check if AI is concluding the interview
-            if (promptService.isInterviewConcluding(transcript)) {
-                log.info("AI is concluding the interview for session: {}", wsSessionId);
-                state.setAiConcluding(true);
-            }
         });
 
-        // When AI turn is complete
+        // When AI turn is complete - check accumulated transcript for conclusion
         client.setOnTurnComplete(() -> {
+            String turnText = state.getCurrentTurnTranscript();
+            state.clearCurrentTurnTranscript();
+
+            log.info("AI turn complete. Turn text ({} chars): {}", turnText.length(), 
+                    turnText.length() > 200 ? turnText.substring(0, 200) + "..." : turnText);
+
             sendToClient(wsSessionId, "/queue/status", Map.of(
                     "type", "TURN_COMPLETE",
                     "message", "AI finished speaking"
             ));
 
-            // If AI was concluding, end the interview
-            if (state.isAiConcluding()) {
+            // Check if this turn contained conclusion phrases
+            if (promptService.isInterviewConcluding(turnText)) {
+                log.info("AI concluded interview - ending session: {}", wsSessionId);
                 endInterviewInternal(wsSessionId, state);
             }
         });
 
         // When user interrupts
         client.setOnInterrupted(() -> {
+            state.clearCurrentTurnTranscript();
             sendToClient(wsSessionId, "/queue/status", Map.of(
                     "type", "INTERRUPTED",
                     "message", "Generation interrupted"
@@ -156,7 +164,8 @@ public class GeminiIntegrationService {
     public void sendAudioToGemini(String wsSessionId, String base64Audio) {
         InterviewState state = activeSessions.get(wsSessionId);
         if (state == null || state.isEnded()) {
-            log.warn("No active session for WebSocket: {}", wsSessionId);
+            // Session ended/grading - silently ignore remaining audio packets from frontend
+            log.debug("Ignoring audio for ended/missing session: {}", wsSessionId);
             return;
         }
 
@@ -287,24 +296,27 @@ public class GeminiIntegrationService {
 
         private final String difficulty;
 
+        private final String language;
+
         private final StringBuilder userTranscript = new StringBuilder();
 
         private final StringBuilder aiTranscript = new StringBuilder();
 
         private final StringBuilder fullTranscript = new StringBuilder();
 
-        private boolean ended = false;
+        private final StringBuilder currentTurnTranscript = new StringBuilder();
 
-        private boolean aiConcluding = false;
+        private boolean ended = false;
 
 
         public InterviewState(UUID interviewSessionId, GeminiLiveClient geminiClient,
-                              String candidateName, String position, String difficulty) {
+                              String candidateName, String position, String difficulty, String language) {
             this.interviewSessionId = interviewSessionId;
             this.geminiClient = geminiClient;
             this.candidateName = candidateName;
             this.position = position;
             this.difficulty = difficulty;
+            this.language = language;
         }//InterviewState
 
 
@@ -318,6 +330,11 @@ public class GeminiIntegrationService {
         }//getGeminiClient
 
 
+        public String getLanguage() {
+            return language;
+        }//getLanguage
+
+
         public synchronized void appendUserTranscript(String text) {
             userTranscript.append(text);
             fullTranscript.append("\n[Candidate]: ").append(text);
@@ -328,6 +345,21 @@ public class GeminiIntegrationService {
             aiTranscript.append(text);
             fullTranscript.append("\n[Interviewer]: ").append(text);
         }//appendAiTranscript
+
+
+        public synchronized void appendCurrentTurnTranscript(String text) {
+            currentTurnTranscript.append(text);
+        }//appendCurrentTurnTranscript
+
+
+        public synchronized String getCurrentTurnTranscript() {
+            return currentTurnTranscript.toString();
+        }//getCurrentTurnTranscript
+
+
+        public synchronized void clearCurrentTurnTranscript() {
+            currentTurnTranscript.setLength(0);
+        }//clearCurrentTurnTranscript
 
 
         public String getFullTranscript() {
@@ -343,16 +375,6 @@ public class GeminiIntegrationService {
         public void setEnded(boolean ended) {
             this.ended = ended;
         }//setEnded
-
-
-        public boolean isAiConcluding() {
-            return aiConcluding;
-        }//isAiConcluding
-
-
-        public void setAiConcluding(boolean aiConcluding) {
-            this.aiConcluding = aiConcluding;
-        }//setAiConcluding
 
     }//InterviewState
 
