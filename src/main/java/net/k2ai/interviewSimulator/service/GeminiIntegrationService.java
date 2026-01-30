@@ -39,7 +39,7 @@ public class GeminiIntegrationService {
         UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty);
 
         // Create Gemini client
-        GeminiLiveClient geminiClient = new GeminiLiveClient(geminiConfig.getApiKey(), geminiConfig.getLiveModel());
+        GeminiLiveClient geminiClient = new GeminiLiveClient(geminiConfig.getApiKey(), geminiConfig.getLiveModel(), geminiConfig.getVoiceName());
 
         // Generate system instruction for the AI interviewer
         String systemInstruction = promptService.generateInterviewerPrompt(position, difficulty);

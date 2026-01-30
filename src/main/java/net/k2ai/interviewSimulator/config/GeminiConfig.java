@@ -20,6 +20,8 @@ public class GeminiConfig {
 
     private String gradingModel = "gemini-2.5-pro-preview-05-06";
 
+    private String voiceName = "Aoede";
+
 
     @PostConstruct
     public void validate() {
@@ -27,7 +29,7 @@ public class GeminiConfig {
             log.error("Gemini API key not configured! Set GEMINI_API_KEY environment variable.");
             throw new IllegalStateException("GEMINI_API_KEY environment variable required");
         }
-        log.info("Gemini configuration loaded - Live model: {}, Grading model: {}", liveModel, gradingModel);
+        log.info("Gemini configuration loaded - Live model: {}, Grading model: {}, Voice: {}", liveModel, gradingModel, voiceName);
     }//validate
 
 }//GeminiConfig

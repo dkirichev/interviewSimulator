@@ -25,6 +25,8 @@ public class GeminiLiveClient {
 
     private final String model;
 
+    private final String voiceName;
+
     private WebSocket webSocket;
 
     private boolean isConnected = false;
@@ -50,9 +52,10 @@ public class GeminiLiveClient {
     private Runnable onInterrupted;
 
 
-    public GeminiLiveClient(String apiKey, String model) {
+    public GeminiLiveClient(String apiKey, String model, String voiceName) {
         this.apiKey = apiKey;
         this.model = model;
+        this.voiceName = voiceName;
         this.objectMapper = new ObjectMapper();
         this.client = new OkHttpClient.Builder()
                 .readTimeout(0, TimeUnit.MILLISECONDS)
@@ -144,7 +147,7 @@ public class GeminiLiveClient {
             ObjectNode speechConfig = objectMapper.createObjectNode();
             ObjectNode voiceConfig = objectMapper.createObjectNode();
             ObjectNode prebuiltVoiceConfig = objectMapper.createObjectNode();
-            prebuiltVoiceConfig.put("voiceName", "Aoede");
+            prebuiltVoiceConfig.put("voiceName", voiceName);
             voiceConfig.set("prebuiltVoiceConfig", prebuiltVoiceConfig);
             speechConfig.set("voiceConfig", voiceConfig);
             generationConfig.set("speechConfig", speechConfig);

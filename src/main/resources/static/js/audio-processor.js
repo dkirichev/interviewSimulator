@@ -11,6 +11,8 @@ let isConnected = false;
 const audioQueue = [];
 let isPlaying = false;
 let playbackAudioContext;
+let nextPlayTime = 0;  // Track when next chunk should start for gapless playback
+const CROSSFADE_SAMPLES = 64;  // Samples to crossfade between chunks to eliminate clicks
 
 // Session data
 let currentSession = {
@@ -85,8 +87,10 @@ function handleStatusMessage(message) {
             }
             break;
         case 'INTERRUPTED':
-            // User interrupted, clear audio queue
+            // User interrupted, clear audio queue and reset playback timing
             audioQueue.length = 0;
+            nextPlayTime = 0;
+            isPlaying = false;
             break;
         case 'GRADING':
             showGradingScreen();
@@ -233,10 +237,11 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
-// Audio playback using Web Audio API
+// Audio playback using Web Audio API with gapless scheduling
 async function playNextAudio() {
     if (audioQueue.length === 0) {
         isPlaying = false;
+        nextPlayTime = 0;  // Reset for next playback session
         return;
     }
     
@@ -244,13 +249,20 @@ async function playNextAudio() {
     const audioData = audioQueue.shift();
     
     try {
+        // Initialize or resume AudioContext (reuse for entire session)
         if (!playbackAudioContext || playbackAudioContext.state === 'closed') {
             playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)({
                 sampleRate: 24000 // Gemini outputs at 24kHz
             });
+            nextPlayTime = 0;
         }
         
-        // Convert raw PCM to AudioBuffer
+        // Resume if suspended (browser autoplay policy)
+        if (playbackAudioContext.state === 'suspended') {
+            await playbackAudioContext.resume();
+        }
+        
+        // Convert raw PCM Int16 to Float32
         const pcm16 = new Int16Array(audioData);
         const floatData = new Float32Array(pcm16.length);
         
@@ -258,22 +270,63 @@ async function playNextAudio() {
             floatData[i] = pcm16[i] / 32768.0;
         }
         
+        // Apply fade-in to eliminate click at chunk start
+        const fadeInSamples = Math.min(CROSSFADE_SAMPLES, floatData.length);
+        for (let i = 0; i < fadeInSamples; i++) {
+            floatData[i] *= (i / fadeInSamples);
+        }
+        
+        // Apply fade-out to eliminate click at chunk end
+        const fadeOutStart = floatData.length - CROSSFADE_SAMPLES;
+        if (fadeOutStart > 0) {
+            for (let i = 0; i < CROSSFADE_SAMPLES; i++) {
+                floatData[fadeOutStart + i] *= (1 - i / CROSSFADE_SAMPLES);
+            }
+        }
+        
+        // Create AudioBuffer
         const audioBuffer = playbackAudioContext.createBuffer(1, floatData.length, 24000);
         audioBuffer.getChannelData(0).set(floatData);
         
+        // Create source node with gain for smooth transitions
         const source = playbackAudioContext.createBufferSource();
         source.buffer = audioBuffer;
-        source.connect(playbackAudioContext.destination);
         
-        source.onended = () => {
+        // Add a small gain node to prevent clipping
+        const gainNode = playbackAudioContext.createGain();
+        gainNode.gain.value = 0.95;
+        
+        source.connect(gainNode);
+        gainNode.connect(playbackAudioContext.destination);
+        
+        // Calculate gapless start time
+        const currentTime = playbackAudioContext.currentTime;
+        const chunkDuration = floatData.length / 24000;
+        
+        // If nextPlayTime is in the past or not set, start immediately with small buffer
+        if (nextPlayTime <= currentTime) {
+            nextPlayTime = currentTime + 0.005; // 5ms buffer for scheduling
+        }
+        
+        // Schedule this chunk to start exactly when the previous one ends
+        source.start(nextPlayTime);
+        
+        // Calculate when this chunk will end (for scheduling next chunk)
+        // Subtract crossfade overlap to create seamless transition
+        const overlapTime = CROSSFADE_SAMPLES / 24000;
+        nextPlayTime += chunkDuration - overlapTime;
+        
+        // Schedule next chunk processing slightly before this one ends
+        const timeUntilEnd = (nextPlayTime - currentTime) * 1000;
+        setTimeout(() => {
             playNextAudio();
-        };
-        
-        source.start();
+        }, Math.max(0, timeUntilEnd - 50)); // Process 50ms before end
         
     } catch (err) {
         console.error('Audio playback error:', err);
-        playNextAudio(); // Try next chunk
+        // Reset and try next chunk
+        nextPlayTime = 0;
+        setTimeout(() => playNextAudio(), 10);
     }
 }
 
@@ -285,6 +338,8 @@ function endInterviewConnection() {
     
     stopAudioCapture();
     audioQueue.length = 0;
+    nextPlayTime = 0;
+    isPlaying = false;
 }
 
 // Disconnect WebSocket
