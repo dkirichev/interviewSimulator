@@ -39,16 +39,22 @@ public class InterviewPromptService {
 
 
     public String generateInterviewerPrompt(String position, String difficulty, String language) {
-        if ("bg".equals(language)) {
-            return generateBulgarianPrompt(position, difficulty);
-        }
-        return generateEnglishPrompt(position, difficulty);
+        return generateInterviewerPrompt(position, difficulty, language, null);
     }//generateInterviewerPrompt
 
 
-    private String generateEnglishPrompt(String position, String difficulty) {
+    public String generateInterviewerPrompt(String position, String difficulty, String language, String cvText) {
+        if ("bg".equals(language)) {
+            return generateBulgarianPrompt(position, difficulty, cvText);
+        }
+        return generateEnglishPrompt(position, difficulty, cvText);
+    }//generateInterviewerPrompt
+
+
+    private String generateEnglishPrompt(String position, String difficulty, String cvText) {
         String difficultyBehavior = getDifficultyBehaviorEn(difficulty);
         String positionContext = getPositionContextEn(position);
+        String cvSection = getCvSectionEn(cvText, difficulty);
 
         return String.format("""
                 You are an experienced HR interviewer conducting a job interview for a %s position.
@@ -69,7 +75,7 @@ public class InterviewPromptService {
                 
                 ## Position-Specific Focus
                 %s
-                
+                %s
                 ## Concluding the Interview
                 When you have gathered enough information (after 5-7 questions), naturally conclude by:
                 - Thanking the candidate for their time
@@ -85,14 +91,15 @@ public class InterviewPromptService {
                 
                 Begin the interview now by introducing yourself briefly.
                 """,
-                position, position, difficulty, difficultyBehavior, positionContext
+                position, position, difficulty, difficultyBehavior, positionContext, cvSection
         );
     }//generateEnglishPrompt
 
 
-    private String generateBulgarianPrompt(String position, String difficulty) {
+    private String generateBulgarianPrompt(String position, String difficulty, String cvText) {
         String difficultyBehavior = getDifficultyBehaviorBg(difficulty);
         String positionContext = getPositionContextBg(position);
+        String cvSection = getCvSectionBg(cvText, difficulty);
 
         return String.format("""
                 Ти си опитен HR интервюиращ, провеждащ интервю за работа за позиция %s.
@@ -114,7 +121,7 @@ public class InterviewPromptService {
                 
                 ## Фокус за Позицията
                 %s
-                
+                %s
                 ## Приключване на Интервюто
                 Когато събереш достатъчно информация (след 5-7 въпроса), приключи естествено като:
                 - Благодариш на кандидата за отделеното време
@@ -130,7 +137,7 @@ public class InterviewPromptService {
                 
                 Започни интервюто сега като се представиш накратко.
                 """,
-                position, position, difficulty, difficultyBehavior, positionContext
+                position, position, difficulty, difficultyBehavior, positionContext, cvSection
         );
     }//generateBulgarianPrompt
 
@@ -323,6 +330,116 @@ public class InterviewPromptService {
                     """;
         }
     }//getPositionContextBg
+
+
+    private String getCvSectionEn(String cvText, String difficulty) {
+        if (cvText == null || cvText.isBlank()) {
+            return "";
+        }
+
+        String cvUsageInstructions = switch (difficulty.toLowerCase()) {
+            case "easy", "chill" -> """
+                    ## Candidate's CV/Resume (IMPORTANT - PRIMARY FOCUS)
+                    The candidate has provided their CV. This is a relaxed, conversational interview.
+                    Your PRIMARY focus should be on getting to know the candidate through their CV:
+                    - Ask about their projects listed - what did they build? What challenges did they face?
+                    - If they mention interests or hobbies, ask them to share more about those
+                    - Discuss their career journey and what motivates them
+                    - Ask about their favorite technologies and why they enjoy using them
+                    - Keep it light and friendly - this is more of a "get to know you" conversation
+                    - Technical questions should be minimal and conversational
+                    
+                    CV Content:
+                    ---
+                    %s
+                    ---
+                    """;
+            case "hard", "stress" -> """
+                    ## Candidate's CV/Resume (Background Context Only)
+                    The candidate has provided their CV. However, this is a HARD technical interview.
+                    Use the CV only as background context:
+                    - If they claim expertise in something, probe DEEP with hard technical questions
+                    - Challenge their claimed experience with difficult scenarios
+                    - Focus on hard technical questions for the role, not casual CV discussion
+                    - The CV helps you identify areas to challenge them on
+                    
+                    CV Content:
+                    ---
+                    %s
+                    ---
+                    """;
+            default -> """
+                    ## Candidate's CV/Resume (Balanced Reference)
+                    The candidate has provided their CV. Use it as part of a balanced interview:
+                    - Ask about interesting projects or experience from their CV
+                    - Mix CV-based questions with technical role-relevant questions
+                    - Use their background to contextualize technical discussions
+                    - Balance getting to know them with assessing their skills
+                    
+                    CV Content:
+                    ---
+                    %s
+                    ---
+                    """;
+        };
+
+        return String.format(cvUsageInstructions, cvText);
+    }//getCvSectionEn
+
+
+    private String getCvSectionBg(String cvText, String difficulty) {
+        if (cvText == null || cvText.isBlank()) {
+            return "";
+        }
+
+        String cvUsageInstructions = switch (difficulty.toLowerCase()) {
+            case "easy", "chill" -> """
+                    ## CV/Автобиография на Кандидата (ВАЖНО - ОСНОВЕН ФОКУС)
+                    Кандидатът е предоставил своето CV. Това е спокойно, разговорно интервю.
+                    Твоят ОСНОВЕН фокус трябва да е да опознаеш кандидата чрез CV-то му:
+                    - Питай за проектите му - какво е правил? Какви предизвикателства е срещнал?
+                    - Ако споменава интереси или хобита, помоли го да сподели повече
+                    - Обсъди кариерния му път и какво го мотивира
+                    - Питай за любимите му технологии и защо ги харесва
+                    - Дръж разговора лек и приятелски - това е повече "опознавателен" разговор
+                    - Техническите въпроси трябва да са минимални и разговорни
+                    
+                    Съдържание на CV:
+                    ---
+                    %s
+                    ---
+                    """;
+            case "hard", "stress" -> """
+                    ## CV/Автобиография на Кандидата (Само Фонова Информация)
+                    Кандидатът е предоставил своето CV. Въпреки това, това е ТРУДНО техническо интервю.
+                    Използвай CV-то само като фонов контекст:
+                    - Ако твърдят експертиза в нещо, задълбочи с ТРУДНИ технически въпроси
+                    - Предизвикай заявения им опит с трудни сценарии
+                    - Фокусирай се на трудни технически въпроси за ролята, не на casual CV дискусия
+                    - CV-то ти помага да идентифицираш области, в които да ги предизвикаш
+                    
+                    Съдържание на CV:
+                    ---
+                    %s
+                    ---
+                    """;
+            default -> """
+                    ## CV/Автобиография на Кандидата (Балансирана Референция)
+                    Кандидатът е предоставил своето CV. Използвай го като част от балансирано интервю:
+                    - Питай за интересни проекти или опит от CV-то им
+                    - Смесвай CV-базирани въпроси с технически въпроси за ролята
+                    - Използвай техния опит за контекст на техническите дискусии
+                    - Балансирай между опознаването им и оценката на уменията им
+                    
+                    Съдържание на CV:
+                    ---
+                    %s
+                    ---
+                    """;
+        };
+
+        return String.format(cvUsageInstructions, cvText);
+    }//getCvSectionBg
 
 
     public boolean isInterviewConcluding(String transcript) {

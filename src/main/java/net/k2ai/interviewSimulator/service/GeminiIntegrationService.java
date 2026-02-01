@@ -35,14 +35,19 @@ public class GeminiIntegrationService {
 
 
     public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, String language) {
+        return startInterview(wsSessionId, candidateName, position, difficulty, language, null);
+    }//startInterview
+
+
+    public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, String language, String cvText) {
         // Create database session
         UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty);
 
         // Create Gemini client
         GeminiLiveClient geminiClient = new GeminiLiveClient(geminiConfig.getApiKey(), geminiConfig.getLiveModel(), geminiConfig.getVoiceName());
 
-        // Generate system instruction for the AI interviewer (language-aware)
-        String systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language);
+        // Generate system instruction for the AI interviewer (language-aware, with optional CV)
+        String systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText);
         geminiClient.setSystemInstruction(systemInstruction);
 
         // Create interview state

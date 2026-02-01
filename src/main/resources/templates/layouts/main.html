@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en" class="h-full">
 
 <head th:replace="~{layouts/fragments/head :: head}"><title></title></head>
 
-<body class="bg-slate-900 text-white h-screen overflow-hidden selection:bg-blue-500 selection:text-white">
+<body class="bg-slate-900 text-white min-h-full h-full overflow-hidden selection:bg-blue-500 selection:text-white flex flex-col">
 
     <!-- Main Content Area -->
     <th:block th:replace="~{${content} :: content}"/>

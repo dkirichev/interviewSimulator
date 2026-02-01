@@ -62,15 +62,22 @@ function startInterviewSession() {
         return;
     }
     
-    // Send start message with interview parameters
-    stompClient.send('/app/interview/start', {}, JSON.stringify({
+    // Send start message with interview parameters (including optional CV text)
+    const startPayload = {
         candidateName: currentSession.candidateName,
         position: currentSession.position,
         difficulty: currentSession.difficulty,
         language: currentSession.language
-    }));
+    };
     
-    console.log('Interview start request sent:', currentSession);
+    // Add CV text if available
+    if (currentSession.cvText) {
+        startPayload.cvText = currentSession.cvText;
+    }
+    
+    stompClient.send('/app/interview/start', {}, JSON.stringify(startPayload));
+    
+    console.log('Interview start request sent:', { ...startPayload, cvText: startPayload.cvText ? '[CV TEXT PROVIDED]' : null });
 }
 
 function handleStatusMessage(message) {
@@ -80,12 +87,28 @@ function handleStatusMessage(message) {
     switch(data.type) {
         case 'CONNECTED':
             updateStatus('Connected', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
+            // Update loading step and hide loading overlay
+            if (typeof updateLoadingStep === 'function') {
+                updateLoadingStep('connect', 'done');
+            }
+            if (typeof hideLoading === 'function') {
+                hideLoading();
+            }
+            // Start the call timer
+            if (typeof startCallTimer === 'function') {
+                startCallTimer();
+            }
             hideConnectionOverlay();
             break;
         case 'TURN_COMPLETE':
             setAvatarState('idle');
+            if (typeof hideThinkingIndicator === 'function') {
+                hideThinkingIndicator();
+            }
             if (isMicActive) {
                 updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
+            } else {
+                updateStatus('Mic Muted', 'bg-red-500/20 text-red-400 border-red-500/50');
             }
             break;
         case 'INTERRUPTED':
@@ -93,6 +116,9 @@ function handleStatusMessage(message) {
             audioQueue.length = 0;
             nextPlayTime = 0;
             isPlaying = false;
+            if (typeof hideThinkingIndicator === 'function') {
+                hideThinkingIndicator();
+            }
             break;
         case 'GRADING':
             // Interview ended - immediately stop microphone to prevent audio spam
@@ -100,10 +126,16 @@ function handleStatusMessage(message) {
                 isMicActive = false;
                 stopAudioCapture();
             }
+            if (typeof stopCallTimer === 'function') {
+                stopCallTimer();
+            }
             showGradingScreen();
             break;
         case 'DISCONNECTED':
             updateStatus('Disconnected', 'bg-red-500/20 text-red-400 border-red-500/50');
+            if (typeof stopCallTimer === 'function') {
+                stopCallTimer();
+            }
             break;
     }
 }
@@ -157,15 +189,22 @@ function handleTextMessage(message) {
 // Audio capture
 async function startAudioCapture() {
     try {
-        globalStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-                channelCount: 1,
-                sampleRate: 16000,
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            }
-        });
+        // Use pre-initialized stream if available, otherwise request new one
+        if (window.preinitializedMicStream) {
+            globalStream = window.preinitializedMicStream;
+            window.preinitializedMicStream = null; // Clear it after use
+            console.log('Using pre-initialized microphone stream');
+        } else {
+            globalStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    channelCount: 1,
+                    sampleRate: 16000,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            });
+        }
 
         audioContext = new (window.AudioContext || window.webkitAudioContext)({
             sampleRate: 16000

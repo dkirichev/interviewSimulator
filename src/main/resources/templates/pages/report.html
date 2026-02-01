@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 
-<section th:fragment="reportView" id="report-view" class="view-section flex-col items-center h-full w-full overflow-y-auto bg-slate-900 p-6 md:p-12">
+<section th:fragment="reportView" id="report-view" class="view-section flex-col items-center min-h-screen w-full overflow-y-auto bg-slate-900 p-6 md:p-12">
     <div class="w-full max-w-5xl space-y-8">
         <!-- Header -->
         <div class="flex justify-between items-center border-b border-slate-800 pb-6">
@@ -114,19 +114,8 @@
                 </p>
             </div>
         </div>
-
-        <!-- Transcript -->
-        <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-            <div class="bg-slate-900/50 px-6 py-4 border-b border-slate-700">
-                <h3 class="font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-file-lines text-slate-400"></i> Interview Transcript
-                </h3>
-            </div>
-            <div class="p-6 max-h-96 overflow-y-auto space-y-4 font-mono text-sm" id="transcript-container">
-                <p class="text-slate-500 italic">Loading transcript...</p>
-            </div>
-        </div>
     </div>
 </section>
 </html>
+
 
