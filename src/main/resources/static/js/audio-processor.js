@@ -62,7 +62,7 @@ function startInterviewSession() {
         return;
     }
     
-    // Send start message with interview parameters (including optional CV text)
+    // Send start message with interview parameters (including optional CV text and voice)
     const startPayload = {
         candidateName: currentSession.candidateName,
         position: currentSession.position,
@@ -75,9 +75,19 @@ function startInterviewSession() {
         startPayload.cvText = currentSession.cvText;
     }
     
+    // Add voice selection if available
+    if (currentSession.voiceId) {
+        startPayload.voiceId = currentSession.voiceId;
+        startPayload.interviewerNameEN = currentSession.interviewerNameEN;
+        startPayload.interviewerNameBG = currentSession.interviewerNameBG;
+    }
+    
     stompClient.send('/app/interview/start', {}, JSON.stringify(startPayload));
     
-    console.log('Interview start request sent:', { ...startPayload, cvText: startPayload.cvText ? '[CV TEXT PROVIDED]' : null });
+    console.log('Interview start request sent:', { 
+        ...startPayload, 
+        cvText: startPayload.cvText ? '[CV TEXT PROVIDED]' : null 
+    });
 }
 
 function handleStatusMessage(message) {

@@ -35,19 +35,33 @@ public class GeminiIntegrationService {
 
 
     public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, String language) {
-        return startInterview(wsSessionId, candidateName, position, difficulty, language, null);
+        return startInterview(wsSessionId, candidateName, position, difficulty, language, null, null, null, null);
     }//startInterview
 
 
     public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, String language, String cvText) {
+        return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText, null, null, null);
+    }//startInterview
+
+
+    public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, 
+                               String language, String cvText, String voiceId, String interviewerNameEN, String interviewerNameBG) {
         // Create database session
         UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty);
 
-        // Create Gemini client
-        GeminiLiveClient geminiClient = new GeminiLiveClient(geminiConfig.getApiKey(), geminiConfig.getLiveModel(), geminiConfig.getVoiceName());
+        // Use provided voice or fall back to config default
+        String effectiveVoice = (voiceId != null && !voiceId.isBlank()) ? voiceId : geminiConfig.getVoiceName();
 
-        // Generate system instruction for the AI interviewer (language-aware, with optional CV)
-        String systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText);
+        // Create Gemini client with the selected voice
+        GeminiLiveClient geminiClient = new GeminiLiveClient(geminiConfig.getApiKey(), geminiConfig.getLiveModel(), effectiveVoice);
+
+        // Generate system instruction for the AI interviewer (language-aware, with optional CV and custom names)
+        String systemInstruction;
+        if (interviewerNameEN != null && interviewerNameBG != null) {
+            systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText, interviewerNameEN, interviewerNameBG);
+        } else {
+            systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText);
+        }
         geminiClient.setSystemInstruction(systemInstruction);
 
         // Create interview state
@@ -59,6 +73,8 @@ public class GeminiIntegrationService {
 
         // Connect to Gemini
         geminiClient.connect();
+
+        log.info("Started interview session {} with voice: {}", interviewSessionId, effectiveVoice);
 
         return interviewSessionId;
     }//startInterview

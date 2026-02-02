@@ -31,6 +31,9 @@ public class InterviewWebSocketController {
         String difficulty = payload.getOrDefault("difficulty", "Standard");
         String language = payload.getOrDefault("language", "en");
         String cvText = payload.get("cvText");
+        String voiceId = payload.get("voiceId");
+        String interviewerNameEN = payload.get("interviewerNameEN");
+        String interviewerNameBG = payload.get("interviewerNameBG");
 
         // Validate required fields
         if (candidateName.isBlank()) {
@@ -45,10 +48,12 @@ public class InterviewWebSocketController {
             return;
         }
 
-        UUID interviewSessionId = geminiIntegrationService.startInterview(sessionIdStr, candidateName, position, difficulty, language, cvText);
+        UUID interviewSessionId = geminiIntegrationService.startInterview(
+                sessionIdStr, candidateName, position, difficulty, language, cvText, 
+                voiceId, interviewerNameEN, interviewerNameBG);
 
-        log.info("Interview started - WebSocket: {}, Interview Session: {}, Language: {}, CV provided: {}", 
-                sessionIdStr, interviewSessionId, language, cvText != null && !cvText.isBlank());
+        log.info("Interview started - WebSocket: {}, Interview Session: {}, Language: {}, Voice: {}, CV provided: {}", 
+                sessionIdStr, interviewSessionId, language, voiceId, cvText != null && !cvText.isBlank());
     }//startInterview
 
 

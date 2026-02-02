@@ -142,13 +142,22 @@ async function handleStart(e) {
             }
         }
         
+        // Get selected voice
+        const voiceRadio = document.querySelector('input[name="voice"]:checked');
+        const voiceId = voiceRadio ? voiceRadio.value : 'Algieba';
+        const interviewerNameEN = voiceRadio ? voiceRadio.dataset.nameEn : 'George';
+        const interviewerNameBG = voiceRadio ? voiceRadio.dataset.nameBg : 'Георги';
+        
         // Step 3: Store session data for WebSocket connection
         currentSession = {
             candidateName: candidateName || 'Candidate',
             position: position,
             difficulty: difficulty,
             language: language,
-            cvText: cvText
+            cvText: cvText,
+            voiceId: voiceId,
+            interviewerNameEN: interviewerNameEN,
+            interviewerNameBG: interviewerNameBG
         };
         
         // Store mic stream for later use
@@ -408,6 +417,17 @@ function restartApp() {
     // Clear report data
     reportData = null;
     
+    // Reset voice preview audio
+    if (currentPreviewAudio) {
+        currentPreviewAudio.pause();
+        currentPreviewAudio = null;
+    }
+    currentPlayingVoiceId = null;
+    resetAllPlayButtons();
+    
+    // Reset voice display names to English (default)
+    updateVoiceDisplayNames('en');
+    
     // Reset connection overlay
     const connectionOverlay = document.getElementById('connection-overlay');
     if (connectionOverlay) {
@@ -541,9 +561,123 @@ function setupPositionSelect() {
 }
 
 
+// Voice preview functionality
+let currentPreviewAudio = null;
+let currentPlayingVoiceId = null;
+
+async function playVoicePreview(event, voiceId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const button = event.currentTarget;
+    const icon = button.querySelector('.voice-play-icon');
+    
+    // Get current language
+    const languageRadio = document.querySelector('input[name="language"]:checked');
+    const language = languageRadio ? languageRadio.value.toUpperCase() : 'EN';
+    
+    // If same voice is playing, stop it
+    if (currentPlayingVoiceId === voiceId && currentPreviewAudio && !currentPreviewAudio.paused) {
+        currentPreviewAudio.pause();
+        currentPreviewAudio.currentTime = 0;
+        resetAllPlayButtons();
+        currentPlayingVoiceId = null;
+        return;
+    }
+    
+    // Stop any currently playing preview
+    if (currentPreviewAudio) {
+        currentPreviewAudio.pause();
+        currentPreviewAudio.currentTime = 0;
+        resetAllPlayButtons();
+    }
+    
+    // Show loading state
+    icon.classList.remove('fa-play');
+    icon.classList.add('fa-spinner', 'fa-spin');
+    
+    try {
+        // Fetch audio on-demand from backend
+        const audioUrl = `/api/voices/preview/${voiceId}/${language}`;
+        
+        currentPreviewAudio = new Audio();
+        currentPreviewAudio.src = audioUrl;
+        currentPlayingVoiceId = voiceId;
+        
+        // Wait for audio to be loaded
+        await new Promise((resolve, reject) => {
+            currentPreviewAudio.oncanplaythrough = resolve;
+            currentPreviewAudio.onerror = reject;
+            currentPreviewAudio.load();
+        });
+        
+        // Update icon to pause
+        icon.classList.remove('fa-spinner', 'fa-spin');
+        icon.classList.add('fa-pause');
+        
+        // Play the audio
+        await currentPreviewAudio.play();
+        
+        // When audio ends, reset button
+        currentPreviewAudio.onended = () => {
+            icon.classList.remove('fa-pause');
+            icon.classList.add('fa-play');
+            currentPlayingVoiceId = null;
+        };
+        
+    } catch (error) {
+        console.error('Failed to play voice preview:', error);
+        icon.classList.remove('fa-spinner', 'fa-spin');
+        icon.classList.add('fa-play');
+        currentPlayingVoiceId = null;
+    }
+}
+
+
+function resetAllPlayButtons() {
+    document.querySelectorAll('.voice-play-icon').forEach(icon => {
+        icon.classList.remove('fa-pause', 'fa-spinner', 'fa-spin');
+        icon.classList.add('fa-play');
+    });
+}
+
+
+function updateVoiceDisplayNames(language) {
+    const voiceRadios = document.querySelectorAll('input[name="voice"]');
+    voiceRadios.forEach(radio => {
+        const label = radio.closest('label');
+        const nameDisplay = label.querySelector('.voice-name-display');
+        if (nameDisplay) {
+            const name = language === 'bg' ? radio.dataset.nameBg : radio.dataset.nameEn;
+            nameDisplay.textContent = name;
+        }
+    });
+}
+
+
+function setupLanguageVoiceSync() {
+    const languageRadios = document.querySelectorAll('input[name="language"]');
+    languageRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Update voice display names based on selected language
+            updateVoiceDisplayNames(this.value);
+            
+            // Stop any playing preview since language changed
+            if (currentPreviewAudio) {
+                currentPreviewAudio.pause();
+                currentPreviewAudio.currentTime = 0;
+                resetAllPlayButtons();
+                currentPlayingVoiceId = null;
+            }
+        });
+    });
+}
+
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     setupPositionSelect();
     setupCvUpload();
+    setupLanguageVoiceSync();
 });
 

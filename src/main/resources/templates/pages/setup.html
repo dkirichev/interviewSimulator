@@ -146,6 +146,81 @@
                 </div>
             </div>
 
+            <!-- Voice Selection -->
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">
+                    Interviewer Voice <span class="text-red-500">*</span>
+                </label>
+                <div class="grid grid-cols-2 gap-3" id="voice-selection">
+                    <!-- George (Algieba) - Male -->
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="voice" value="Algieba" data-name-en="George" data-name-bg="Георги" class="peer sr-only" checked>
+                        <div class="p-3 rounded-lg border border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-user text-blue-400"></i>
+                                    <span class="text-white font-medium voice-name-display">George</span>
+                                </div>
+                                <button type="button" onclick="playVoicePreview(event, 'Algieba')" class="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition" title="Play preview">
+                                    <i class="fa-solid fa-play text-xs text-slate-300 voice-play-icon"></i>
+                                </button>
+                            </div>
+                            <span class="text-xs text-slate-500">Male voice</span>
+                        </div>
+                    </label>
+                    <!-- Victoria (Kore) - Female -->
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="voice" value="Kore" data-name-en="Victoria" data-name-bg="Виктория" class="peer sr-only">
+                        <div class="p-3 rounded-lg border border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-user text-pink-400"></i>
+                                    <span class="text-white font-medium voice-name-display">Victoria</span>
+                                </div>
+                                <button type="button" onclick="playVoicePreview(event, 'Kore')" class="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition" title="Play preview">
+                                    <i class="fa-solid fa-play text-xs text-slate-300 voice-play-icon"></i>
+                                </button>
+                            </div>
+                            <span class="text-xs text-slate-500">Female voice</span>
+                        </div>
+                    </label>
+                    <!-- Max (Fenrir) - Male -->
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="voice" value="Fenrir" data-name-en="Max" data-name-bg="Макс" class="peer sr-only">
+                        <div class="p-3 rounded-lg border border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-user text-blue-400"></i>
+                                    <span class="text-white font-medium voice-name-display">Max</span>
+                                </div>
+                                <button type="button" onclick="playVoicePreview(event, 'Fenrir')" class="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition" title="Play preview">
+                                    <i class="fa-solid fa-play text-xs text-slate-300 voice-play-icon"></i>
+                                </button>
+                            </div>
+                            <span class="text-xs text-slate-500">Male voice</span>
+                        </div>
+                    </label>
+                    <!-- Diana (Despina) - Female -->
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="voice" value="Despina" data-name-en="Diana" data-name-bg="Диана" class="peer sr-only">
+                        <div class="p-3 rounded-lg border border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-user text-pink-400"></i>
+                                    <span class="text-white font-medium voice-name-display">Diana</span>
+                                </div>
+                                <button type="button" onclick="playVoicePreview(event, 'Despina')" class="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition" title="Play preview">
+                                    <i class="fa-solid fa-play text-xs text-slate-300 voice-play-icon"></i>
+                                </button>
+                            </div>
+                            <span class="text-xs text-slate-500">Female voice</span>
+                        </div>
+                    </label>
+                </div>
+                <!-- Hidden audio element for voice preview -->
+                <audio id="voice-preview-audio" class="hidden"></audio>
+            </div>
+
             <div>
                 <label class="block text-sm font-medium text-slate-300 mb-2">
                     CV / Resume <span class="text-slate-500">(Optional)</span>

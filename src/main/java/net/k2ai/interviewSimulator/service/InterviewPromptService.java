@@ -39,19 +39,24 @@ public class InterviewPromptService {
 
 
     public String generateInterviewerPrompt(String position, String difficulty, String language) {
-        return generateInterviewerPrompt(position, difficulty, language, null);
+        return generateInterviewerPrompt(position, difficulty, language, null, "Alex", "Алекс");
     }//generateInterviewerPrompt
 
 
     public String generateInterviewerPrompt(String position, String difficulty, String language, String cvText) {
-        if ("bg".equals(language)) {
-            return generateBulgarianPrompt(position, difficulty, cvText);
-        }
-        return generateEnglishPrompt(position, difficulty, cvText);
+        return generateInterviewerPrompt(position, difficulty, language, cvText, "Alex", "Алекс");
     }//generateInterviewerPrompt
 
 
-    private String generateEnglishPrompt(String position, String difficulty, String cvText) {
+    public String generateInterviewerPrompt(String position, String difficulty, String language, String cvText, String interviewerNameEN, String interviewerNameBG) {
+        if ("bg".equals(language)) {
+            return generateBulgarianPrompt(position, difficulty, cvText, interviewerNameBG);
+        }
+        return generateEnglishPrompt(position, difficulty, cvText, interviewerNameEN);
+    }//generateInterviewerPrompt
+
+
+    private String generateEnglishPrompt(String position, String difficulty, String cvText, String interviewerName) {
         String difficultyBehavior = getDifficultyBehaviorEn(difficulty);
         String positionContext = getPositionContextEn(position);
         String cvSection = getCvSectionEn(cvText, difficulty);
@@ -60,7 +65,7 @@ public class InterviewPromptService {
                 You are an experienced HR interviewer conducting a job interview for a %s position.
                 
                 ## Your Role
-                You are a professional interviewer at a reputable tech company. Your name is Alex.
+                You are a professional interviewer. Your name is %s.
                 You should sound natural, professional, and human-like in your responses.
                 
                 ## Interview Guidelines
@@ -83,7 +88,9 @@ public class InterviewPromptService {
                 - Saying something like "we'll be in touch with next steps"
                 
                 ## Important Notes
-                - Do NOT mention that you are an AI - you are Alex, the interviewer
+                - Do NOT mention that you are an AI - you are %s, the interviewer
+                - NEVER mention the company name - do not say "Company Name" or any placeholder company names
+                - If asked about the company, redirect focus to the candidate's experience and skills
                 - Keep responses SHORT and natural - avoid long monologues
                 - React naturally to the candidate's answers
                 - If the candidate gives a poor answer, probe deeper but remain professional
@@ -91,12 +98,12 @@ public class InterviewPromptService {
                 
                 Begin the interview now by introducing yourself briefly.
                 """,
-                position, position, difficulty, difficultyBehavior, positionContext, cvSection
+                position, interviewerName, position, difficulty, difficultyBehavior, positionContext, cvSection, interviewerName
         );
     }//generateEnglishPrompt
 
 
-    private String generateBulgarianPrompt(String position, String difficulty, String cvText) {
+    private String generateBulgarianPrompt(String position, String difficulty, String cvText, String interviewerName) {
         String difficultyBehavior = getDifficultyBehaviorBg(difficulty);
         String positionContext = getPositionContextBg(position);
         String cvSection = getCvSectionBg(cvText, difficulty);
@@ -105,7 +112,7 @@ public class InterviewPromptService {
                 Ти си опитен HR интервюиращ, провеждащ интервю за работа за позиция %s.
                 
                 ## Твоята Роля
-                Ти си професионален интервюиращ в реномирана технологична компания. Казваш се Алекс.
+                Ти си професионален интервюиращ. Казваш се %s.
                 Трябва да звучиш естествено, професионално и човешки в отговорите си.
                 ВАЖНО: Говори САМО на български език през цялото интервю.
                 
@@ -129,7 +136,9 @@ public class InterviewPromptService {
                 - Кажеш нещо като "ще се свържем с вас за следващите стъпки"
                 
                 ## Важни Бележки
-                - НЕ споменавай, че си AI - ти си Алекс, интервюиращият
+                - НЕ споменавай, че си AI - ти си %s, интервюиращият
+                - НИКОГА не споменавай името на компанията - не казвай "Company Name" или други placeholder имена
+                - Ако те питат за компанията, пренасочи фокуса към опита и уменията на кандидата
                 - Дръж отговорите КРАТКИ и естествени - избягвай дълги монолози
                 - Реагирай естествено на отговорите на кандидата
                 - Ако кандидатът даде слаб отговор, задълбочи, но остани професионален
@@ -137,7 +146,7 @@ public class InterviewPromptService {
                 
                 Започни интервюто сега като се представиш накратко.
                 """,
-                position, position, difficulty, difficultyBehavior, positionContext, cvSection
+                position, interviewerName, position, difficulty, difficultyBehavior, positionContext, cvSection, interviewerName
         );
     }//generateBulgarianPrompt
 
