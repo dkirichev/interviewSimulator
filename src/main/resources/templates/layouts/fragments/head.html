@@ -1,12 +1,12 @@
 <!DOCTYPE HTML>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 
 <head th:fragment="head">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!--/*@thymesVar id="pageTitle" type="String"*/-->
-    <title th:text="'AI Interview Simulator' + (${pageTitle} != null ? ' | ' + ${pageTitle} : '')">AI Interview Simulator</title>
+    <title th:text="#{global.page.title} + (${pageTitle} != null ? ' | ' + ${pageTitle} : '')">AI Interview Simulator</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
