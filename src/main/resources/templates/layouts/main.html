@@ -5,8 +5,16 @@
 
 <body class="bg-slate-900 text-white min-h-full h-full overflow-hidden selection:bg-blue-500 selection:text-white flex flex-col">
 
-    <!-- Language Switcher Dropdown (Top Right) -->
-    <div id="lang-dropdown" class="fixed top-4 right-4 z-50">
+    <!-- Top Right Controls -->
+    <div class="fixed top-4 right-4 z-50 flex items-center gap-3">
+        <!-- GitHub Link -->
+        <a href="https://github.com/dkirichev/interviewSimulator" target="_blank"
+           class="flex items-center justify-center w-10 h-10 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg text-slate-200 hover:text-white">
+            <i class="fa-brands fa-github text-xl"></i>
+        </a>
+
+        <!-- Language Switcher Dropdown -->
+        <div id="lang-dropdown" class="relative">
         <button onclick="toggleLanguageDropdown()" 
                 class="flex items-center gap-2 px-3 py-2 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg">
             <!-- Current language flag -->
@@ -40,7 +48,7 @@
                     <rect y="13.33" width="60" height="13.33" fill="#00966E"/>
                     <rect y="26.66" width="60" height="13.34" fill="#D62612"/>
                 </svg>
-                <span class="text-sm text-slate-200" th:text="#{global.language.name.bulgarian}">Bulgarian</span>
+                <span class="text-sm text-slate-200" th:text="#{global.language.name.bulgarian}" />
                 <i th:if="${#locale.language == 'bg'}" class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
             </button>
             <!-- English -->
@@ -54,10 +62,11 @@
                     <path d="M30 0V40M0 20H60" stroke="white" stroke-width="12"/>
                     <path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6"/>
                 </svg>
-                <span class="text-sm text-slate-200" th:text="#{global.language.name.english}">English</span>
+                <span class="text-sm text-slate-200" th:text="#{global.language.name.english}" />
                 <i th:if="${#locale.language == 'en'}" class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
             </button>
         </div>
+    </div>
     </div>
 
     <!-- Main Content Area -->
