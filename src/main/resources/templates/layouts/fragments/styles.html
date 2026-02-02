@@ -82,5 +82,27 @@
         display: flex;
         opacity: 1;
     }
+    
+    /* Multi-step form */
+    .form-steps-container {
+        position: relative;
+    }
+    
+    .form-step {
+        display: none;
+    }
+    
+    .form-step.active {
+        display: block;
+    }
+    
+    /* Voice preview visualizer bars */
+    .voice-bar {
+        transition: height 0.15s ease-out;
+        min-height: 4px;
+    }
+    .voice-bar.active {
+        background: linear-gradient(to top, currentColor, transparent);
+    }
 </style>
 </html>

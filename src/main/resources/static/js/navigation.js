@@ -403,6 +403,10 @@ function restartApp() {
     // Reset form
     document.getElementById('setup-form').reset();
     
+    // Reset to step 1
+    currentFormStep = 1;
+    showStep(1);
+    
     // Reset custom position visibility
     const customPositionContainer = document.getElementById('custom-position-container');
     if (customPositionContainer) {
@@ -424,6 +428,7 @@ function restartApp() {
     }
     currentPlayingVoiceId = null;
     resetAllPlayButtons();
+    stopAllVisualizers();
     
     // Reset voice display names to English (default)
     updateVoiceDisplayNames('en');
@@ -571,6 +576,7 @@ async function playVoicePreview(event, voiceId) {
     
     const button = event.currentTarget;
     const icon = button.querySelector('.voice-play-icon');
+    const buttonText = button.querySelector('span');
     
     // Get current language
     const languageRadio = document.querySelector('input[name="language"]:checked');
@@ -581,6 +587,7 @@ async function playVoicePreview(event, voiceId) {
         currentPreviewAudio.pause();
         currentPreviewAudio.currentTime = 0;
         resetAllPlayButtons();
+        stopAllVisualizers();
         currentPlayingVoiceId = null;
         return;
     }
@@ -590,11 +597,13 @@ async function playVoicePreview(event, voiceId) {
         currentPreviewAudio.pause();
         currentPreviewAudio.currentTime = 0;
         resetAllPlayButtons();
+        stopAllVisualizers();
     }
     
     // Show loading state
-    icon.classList.remove('fa-play');
+    icon.classList.remove('fa-play', 'fa-pause');
     icon.classList.add('fa-spinner', 'fa-spin');
+    if (buttonText) buttonText.textContent = 'Loading...';
     
     try {
         // Fetch audio on-demand from backend
@@ -614,14 +623,20 @@ async function playVoicePreview(event, voiceId) {
         // Update icon to pause
         icon.classList.remove('fa-spinner', 'fa-spin');
         icon.classList.add('fa-pause');
+        if (buttonText) buttonText.textContent = 'Stop Preview';
+        
+        // Start visualizer animation
+        animateVisualizer(voiceId);
         
         // Play the audio
         await currentPreviewAudio.play();
         
-        // When audio ends, reset button
+        // When audio ends, reset button and visualizer
         currentPreviewAudio.onended = () => {
             icon.classList.remove('fa-pause');
             icon.classList.add('fa-play');
+            if (buttonText) buttonText.textContent = 'Play Preview';
+            stopVisualizer(voiceId);
             currentPlayingVoiceId = null;
         };
         
@@ -629,6 +644,8 @@ async function playVoicePreview(event, voiceId) {
         console.error('Failed to play voice preview:', error);
         icon.classList.remove('fa-spinner', 'fa-spin');
         icon.classList.add('fa-play');
+        if (buttonText) buttonText.textContent = 'Play Preview';
+        stopVisualizer(voiceId);
         currentPlayingVoiceId = null;
     }
 }
@@ -638,6 +655,9 @@ function resetAllPlayButtons() {
     document.querySelectorAll('.voice-play-icon').forEach(icon => {
         icon.classList.remove('fa-pause', 'fa-spinner', 'fa-spin');
         icon.classList.add('fa-play');
+    });
+    document.querySelectorAll('button[onclick^="playVoicePreview"] span').forEach(span => {
+        span.textContent = 'Play Preview';
     });
 }
 
@@ -668,10 +688,233 @@ function setupLanguageVoiceSync() {
                 currentPreviewAudio.currentTime = 0;
                 resetAllPlayButtons();
                 currentPlayingVoiceId = null;
+                stopAllVisualizers();
             }
         });
     });
 }
+
+
+// Multi-step form wizard
+let currentFormStep = 1;
+const totalSteps = 3;
+
+
+function nextStep() {
+    if (!validateStep(currentFormStep)) {
+        return;
+    }
+    
+    if (currentFormStep < totalSteps) {
+        currentFormStep++;
+        showStep(currentFormStep);
+    }
+}
+
+
+function previousStep() {
+    if (currentFormStep > 1) {
+        currentFormStep--;
+        showStep(currentFormStep);
+    }
+}
+
+function showStep(step) {
+    // Hide all steps
+    document.querySelectorAll('.form-step').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // Show target step
+    const nextStepEl = document.getElementById(`form-step-${step}`);
+    if (nextStepEl) {
+        nextStepEl.classList.add('active');
+    }
+    
+    updateProgressIndicators(step);
+    updateNavigationButtons(step);
+}
+
+function updateProgressIndicators(step) {
+    // Update step circles
+    for (let i = 1; i <= totalSteps; i++) {
+        const stepCircle = document.getElementById(`progress-step-${i}`);
+        const stepLine = document.getElementById(`progress-line-${i}`);
+        const stepLabel = stepCircle?.nextElementSibling;
+        
+        if (i < step) {
+            // Completed step
+            stepCircle?.classList.remove('bg-slate-700', 'text-slate-400', 'bg-blue-600', 'border-blue-400');
+            stepCircle?.classList.add('bg-green-600', 'text-white', 'border-green-400');
+            stepLine?.classList.remove('bg-slate-700');
+            stepLine?.classList.add('bg-green-600');
+            if (stepLabel) {
+                stepLabel.classList.remove('text-slate-500', 'text-blue-400');
+                stepLabel.classList.add('text-green-400', 'font-medium');
+            }
+        } else if (i === step) {
+            // Current step
+            stepCircle?.classList.remove('bg-slate-700', 'text-slate-400', 'bg-green-600', 'border-green-400');
+            stepCircle?.classList.add('bg-blue-600', 'text-white', 'border-blue-400');
+            if (stepLabel) {
+                stepLabel.classList.remove('text-slate-500', 'text-green-400');
+                stepLabel.classList.add('text-blue-400', 'font-medium');
+            }
+        } else {
+            // Future step
+            stepCircle?.classList.remove('bg-blue-600', 'bg-green-600', 'border-blue-400', 'border-green-400');
+            stepCircle?.classList.add('bg-slate-700', 'text-slate-400');
+            stepLine?.classList.remove('bg-green-600', 'bg-blue-600');
+            stepLine?.classList.add('bg-slate-700');
+            if (stepLabel) {
+                stepLabel.classList.remove('text-blue-400', 'text-green-400', 'font-medium');
+                stepLabel.classList.add('text-slate-500');
+            }
+        }
+    }
+}
+
+function updateNavigationButtons(step) {
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const btnSubmit = document.getElementById('btn-submit');
+    
+    // Show/hide previous button
+    if (step === 1) {
+        btnPrev?.classList.add('hidden');
+    } else {
+        btnPrev?.classList.remove('hidden');
+    }
+    
+    // Show/hide next/submit buttons
+    if (step === totalSteps) {
+        btnNext?.classList.add('hidden');
+        btnSubmit?.classList.remove('hidden');
+    } else {
+        btnNext?.classList.remove('hidden');
+        btnSubmit?.classList.add('hidden');
+    }
+}
+
+function validateStep(step) {
+    if (step === 1) {
+        // Validate candidate name
+        const nameInput = document.getElementById('candidate-name');
+        if (!nameInput || !nameInput.value.trim()) {
+            alert('Please enter your name');
+            nameInput?.focus();
+            return false;
+        }
+    } else if (step === 2) {
+        // Validate position
+        const positionSelect = document.getElementById('job-position');
+        const customPosition = document.getElementById('custom-position');
+        const position = positionSelect?.value;
+        
+        if (!position || position === '') {
+            alert('Please select a position');
+            positionSelect?.focus();
+            return false;
+        }
+        
+        if (position === 'custom') {
+            if (!customPosition?.value.trim()) {
+                alert('Please enter a custom position');
+                customPosition?.focus();
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+
+// Audio visualizer animation
+let activeVisualizerInterval = null;
+let currentVisualizerVoiceId = null;
+
+function animateVisualizer(voiceId) {
+    // Stop any existing visualizer first
+    stopAllVisualizers();
+    
+    const visualizer = document.getElementById(`visualizer-${voiceId}`);
+    if (!visualizer) return;
+    
+    const bars = visualizer.querySelectorAll('.voice-bar');
+    currentVisualizerVoiceId = voiceId;
+    
+    // Individual bar states for smoother animation
+    let barTargets = Array.from(bars).map(() => Math.random() * 60 + 15);
+    let barCurrents = Array.from(bars).map(() => 15);
+    
+    // Create animation interval - slower for smoother effect
+    activeVisualizerInterval = setInterval(() => {
+        bars.forEach((bar, index) => {
+            // Smoothly interpolate towards target
+            barCurrents[index] += (barTargets[index] - barCurrents[index]) * 0.3;
+            
+            // Occasionally change target for organic feel
+            if (Math.random() < 0.15) {
+                barTargets[index] = Math.random() * 55 + 10; // Less sensitive range: 10-65%
+            }
+            
+            bar.style.height = `${barCurrents[index]}%`;
+            bar.style.opacity = '1';
+        });
+    }, 80); // Slightly slower interval
+}
+
+
+function stopVisualizer(voiceId) {
+    // Always clear the interval if this voice's visualizer is running
+    if (activeVisualizerInterval) {
+        clearInterval(activeVisualizerInterval);
+        activeVisualizerInterval = null;
+        currentVisualizerVoiceId = null;
+    }
+    
+    // Reset bars to default state
+    const visualizer = document.getElementById(`visualizer-${voiceId}`);
+    if (visualizer) {
+        const bars = visualizer.querySelectorAll('.voice-bar');
+        bars.forEach((bar, index) => {
+            const heights = [20, 35, 55, 70, 45, 25, 40, 30];
+            bar.style.height = `${heights[index % heights.length]}%`;
+            bar.style.opacity = '0.3';
+        });
+    }
+}
+
+
+function stopAllVisualizers() {
+    if (activeVisualizerInterval) {
+        clearInterval(activeVisualizerInterval);
+        activeVisualizerInterval = null;
+    }
+    
+    // Reset all visualizers
+    document.querySelectorAll('[id^="visualizer-"]').forEach(visualizer => {
+        const voiceId = visualizer.id.replace('visualizer-', '');
+        const bars = visualizer.querySelectorAll('.voice-bar');
+        bars.forEach((bar, index) => {
+            const heights = [20, 35, 55, 70, 45, 25, 40, 30];
+            bar.style.height = `${heights[index % heights.length]}%`;
+            bar.style.opacity = '0.3';
+        });
+    });
+    
+    currentVisualizerVoiceId = null;
+}
+
+
+// Expose functions to global scope for inline onclick handlers
+window.nextStep = nextStep;
+window.previousStep = previousStep;
+window.playVoicePreview = playVoicePreview;
+window.clearCvFile = clearCvFile;
+window.handleStart = handleStart;
+window.restartApp = restartApp;
 
 
 // Initialize on page load
