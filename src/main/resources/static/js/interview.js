@@ -183,6 +183,13 @@ function endInterview() {
     stopCallTimer();
     hideThinkingIndicator();
     
+    // Stop camera if active
+    if (isCameraActive && cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+        isCameraActive = false;
+    }
+    
     // Show grading screen
     if (connectionOverlay) {
         connectionOverlay.style.display = 'flex';
@@ -196,5 +203,74 @@ function endInterview() {
     // Tell server to end interview and start grading
     endInterviewConnection();
 }
+
+
+// Camera Toggle (Optional - Local Only)
+let isCameraActive = false;
+let cameraStream = null;
+
+async function toggleCamera() {
+    isCameraActive = !isCameraActive;
+    const btn = document.getElementById('camera-btn');
+    const icon = btn.querySelector('i');
+    const cameraOffOverlay = document.getElementById('camera-off-overlay');
+    const cameraContainer = document.getElementById('user-camera-container');
+    const cameraFeed = document.getElementById('user-camera-feed');
+    
+    if (isCameraActive) {
+        try {
+            // Request camera access
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: 'user'
+                }
+            });
+            
+            // Display camera feed
+            if (cameraFeed) {
+                cameraFeed.srcObject = cameraStream;
+            }
+            
+            // Update UI
+            btn.classList.add('bg-slate-700', 'ring-2', 'ring-green-500');
+            icon.classList.remove('fa-video-slash');
+            icon.classList.add('fa-video');
+            if (cameraOffOverlay) {
+                cameraOffOverlay.classList.add('hidden');
+            }
+            if (cameraContainer) {
+                cameraContainer.classList.remove('hidden');
+            }
+            
+        } catch (err) {
+            console.error('Camera access denied:', err);
+            alert('Camera access denied. You can continue the interview without video.');
+            isCameraActive = false;
+        }
+    } else {
+        // Stop camera
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        
+        // Update UI
+        btn.classList.remove('bg-slate-700', 'ring-2', 'ring-green-500');
+        icon.classList.remove('fa-video');
+        icon.classList.add('fa-video-slash');
+        if (cameraOffOverlay) {
+            cameraOffOverlay.classList.remove('hidden');
+        }
+        if (cameraContainer) {
+            cameraContainer.classList.add('hidden');
+        }
+        if (cameraFeed) {
+            cameraFeed.srcObject = null;
+        }
+    }
+}
+
 
 

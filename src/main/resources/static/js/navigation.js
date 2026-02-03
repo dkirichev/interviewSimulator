@@ -677,6 +677,13 @@ function updateVoiceDisplayNames(language) {
 
 function setupLanguageVoiceSync() {
     const languageRadios = document.querySelectorAll('input[name="language"]');
+    
+    // Initialize voice names based on the currently selected language
+    const selectedLanguageRadio = document.querySelector('input[name="language"]:checked');
+    if (selectedLanguageRadio) {
+        updateVoiceDisplayNames(selectedLanguageRadio.value);
+    }
+    
     languageRadios.forEach(radio => {
         radio.addEventListener('change', function() {
             // Update voice display names based on selected language

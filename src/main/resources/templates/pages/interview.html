@@ -39,6 +39,11 @@
             <audio id="ai-audio-player"></audio>
         </div>
 
+        <!-- User Camera Feed (Optional, bottom-right corner) -->
+        <div id="user-camera-container" class="absolute bottom-6 right-6 hidden">
+            <video id="user-camera-feed" autoplay playsinline muted class="w-48 h-36 rounded-xl border-2 border-slate-600 shadow-2xl object-cover bg-slate-900"></video>
+        </div>
+
         <!-- Connection Overlay -->
         <div id="connection-overlay" class="absolute inset-0 bg-black/80 z-30 flex items-center justify-center flex-col">
             <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
@@ -62,6 +67,16 @@
 
         <!-- Controls -->
         <div class="flex items-center gap-8">
+            <!-- Camera Toggle -->
+            <button id="camera-btn" onclick="toggleCamera()" class="w-16 h-16 rounded-full bg-slate-800 text-white hover:bg-slate-700 border-2 border-slate-600 flex items-center justify-center text-2xl transition shadow-lg relative overflow-hidden group">
+                <i class="fa-solid fa-video-slash group-hover:scale-110 transition-transform"></i>
+                <div class="absolute inset-0 bg-red-500/20" id="camera-off-overlay">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-full h-0.5 bg-red-500 rotate-45 transform origin-center"></div>
+                    </div>
+                </div>
+            </button>
+
             <!-- Mic Toggle -->
             <button id="mic-btn" onclick="toggleMic()" class="w-16 h-16 rounded-full bg-slate-800 text-white hover:bg-slate-700 border-2 border-slate-600 flex items-center justify-center text-2xl transition shadow-lg relative overflow-hidden group">
                 <i class="fa-solid fa-microphone group-hover:scale-110 transition-transform"></i>
