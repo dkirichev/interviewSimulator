@@ -9,29 +9,29 @@
             <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         </div>
 
-        <div class="w-full max-w-4xl px-4 my-8">
+        <div class="w-full max-w-4xl px-4 py-4">
             <!-- Header -->
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600/20 text-blue-400 mb-4">
-                    <i class="fa-solid fa-robot text-3xl"></i>
+            <div class="text-center mb-4">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-600/20 text-blue-400 mb-2">
+                    <i class="fa-solid fa-robot text-2xl"></i>
                 </div>
-                <h1 class="text-3xl font-bold tracking-tight text-white" th:text="#{setup.title}">Interview Setup</h1>
-                <p class="text-slate-400 mt-2 text-sm" th:text="#{setup.subtitle}">Configure your interview session</p>
+                <h1 class="text-2xl font-bold tracking-tight text-white" th:text="#{setup.title}">Interview Setup</h1>
+                <p class="text-slate-400 mt-1 text-sm" th:text="#{setup.subtitle}">Configure your interview session</p>
             </div>
 
             <!-- Progress Steps -->
             <th:block th:replace="~{pages/setup/fragments/progress :: progressIndicator(currentStep=${currentStep})}"/>
 
             <!-- Form Container -->
-            <div class="bg-slate-800/80 p-10 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md">
+            <div class="bg-slate-800/80 p-6 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md">
                 <form th:action="@{/setup/step3}" th:object="${setupForm}" method="post" id="step3-form">
                     <!-- Step Title -->
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold text-white mb-2" th:text="#{setup.step3.title}">Voice & Language</h2>
+                    <div class="text-center mb-4">
+                        <h2 class="text-xl font-bold text-white mb-1" th:text="#{setup.step3.title}">Voice & Language</h2>
                         <p class="text-slate-400 text-sm" th:text="#{setup.step3.subtitle}">Choose your interviewer</p>
                     </div>
 
-                    <div class="space-y-6">
+                    <div class="space-y-4">
                         <!-- Language Selection -->
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-3">
@@ -79,17 +79,17 @@
                                 <!-- George (Algieba) -->
                                 <label class="cursor-pointer group">
                                     <input type="radio" th:field="*{voiceId}" value="Algieba" class="peer sr-only">
-                                    <div class="p-4 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
-                                        <div class="flex items-center gap-3 mb-3">
-                                            <div class="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center">
-                                                <i class="fa-solid fa-user text-blue-400 text-xl"></i>
+                                    <div class="p-3 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <div class="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center">
+                                                <i class="fa-solid fa-user text-blue-400 text-lg"></i>
                                             </div>
                                             <div>
-                                                <div class="text-white font-semibold text-lg voice-name" data-name-en="George" data-name-bg="Георги">George</div>
+                                                <div class="text-white font-semibold voice-name" data-name-en="George" data-name-bg="Георги">George</div>
                                                 <div class="text-xs text-slate-500" th:text="#{setup.voice.male}">Male</div>
                                             </div>
                                         </div>
-                                        <div class="flex items-end justify-center gap-[3px] h-12 mb-3 px-2" id="visualizer-Algieba">
+                                        <div class="flex items-end justify-center gap-[3px] h-8 mb-2 px-2" id="visualizer-Algieba">
                                             <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 20%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 35%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 55%;"></div>
@@ -99,7 +99,7 @@
                                             <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 40%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 25%;"></div>
                                         </div>
-                                        <button type="button" onclick="playVoicePreview(event, 'Algieba')" class="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
+                                        <button type="button" onclick="playVoicePreview(event, 'Algieba')" class="w-full py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
                                             <i class="fa-solid fa-play text-sm voice-play-icon"></i>
                                             <span class="text-sm font-medium" th:text="#{setup.voice.playPreview}">Play Preview</span>
                                         </button>
@@ -109,17 +109,17 @@
                                 <!-- Victoria (Kore) -->
                                 <label class="cursor-pointer group">
                                     <input type="radio" th:field="*{voiceId}" value="Kore" class="peer sr-only">
-                                    <div class="p-4 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
-                                        <div class="flex items-center gap-3 mb-3">
-                                            <div class="w-12 h-12 rounded-full bg-pink-600/20 flex items-center justify-center">
-                                                <i class="fa-solid fa-user text-pink-400 text-xl"></i>
+                                    <div class="p-3 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <div class="w-10 h-10 rounded-full bg-pink-600/20 flex items-center justify-center">
+                                                <i class="fa-solid fa-user text-pink-400 text-lg"></i>
                                             </div>
                                             <div>
-                                                <div class="text-white font-semibold text-lg voice-name" data-name-en="Victoria" data-name-bg="Виктория">Victoria</div>
+                                                <div class="text-white font-semibold voice-name" data-name-en="Victoria" data-name-bg="Виктория">Victoria</div>
                                                 <div class="text-xs text-slate-500" th:text="#{setup.voice.female}">Female</div>
                                             </div>
                                         </div>
-                                        <div class="flex items-end justify-center gap-[3px] h-12 mb-3 px-2" id="visualizer-Kore">
+                                        <div class="flex items-end justify-center gap-[3px] h-8 mb-2 px-2" id="visualizer-Kore">
                                             <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 20%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 35%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 55%;"></div>
@@ -129,7 +129,7 @@
                                             <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 40%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 25%;"></div>
                                         </div>
-                                        <button type="button" onclick="playVoicePreview(event, 'Kore')" class="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
+                                        <button type="button" onclick="playVoicePreview(event, 'Kore')" class="w-full py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
                                             <i class="fa-solid fa-play text-sm voice-play-icon"></i>
                                             <span class="text-sm font-medium" th:text="#{setup.voice.playPreview}">Play Preview</span>
                                         </button>
@@ -139,17 +139,17 @@
                                 <!-- Max (Fenrir) -->
                                 <label class="cursor-pointer group">
                                     <input type="radio" th:field="*{voiceId}" value="Fenrir" class="peer sr-only">
-                                    <div class="p-4 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
-                                        <div class="flex items-center gap-3 mb-3">
-                                            <div class="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center">
-                                                <i class="fa-solid fa-user text-blue-400 text-xl"></i>
+                                    <div class="p-3 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <div class="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center">
+                                                <i class="fa-solid fa-user text-blue-400 text-lg"></i>
                                             </div>
                                             <div>
-                                                <div class="text-white font-semibold text-lg voice-name" data-name-en="Max" data-name-bg="Макс">Max</div>
+                                                <div class="text-white font-semibold voice-name" data-name-en="Max" data-name-bg="Макс">Max</div>
                                                 <div class="text-xs text-slate-500" th:text="#{setup.voice.male}">Male</div>
                                             </div>
                                         </div>
-                                        <div class="flex items-end justify-center gap-[3px] h-12 mb-3 px-2" id="visualizer-Fenrir">
+                                        <div class="flex items-end justify-center gap-[3px] h-8 mb-2 px-2" id="visualizer-Fenrir">
                                             <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 20%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 35%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 55%;"></div>
@@ -159,7 +159,7 @@
                                             <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 40%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 25%;"></div>
                                         </div>
-                                        <button type="button" onclick="playVoicePreview(event, 'Fenrir')" class="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
+                                        <button type="button" onclick="playVoicePreview(event, 'Fenrir')" class="w-full py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
                                             <i class="fa-solid fa-play text-sm voice-play-icon"></i>
                                             <span class="text-sm font-medium" th:text="#{setup.voice.playPreview}">Play Preview</span>
                                         </button>
@@ -169,17 +169,17 @@
                                 <!-- Diana (Despina) -->
                                 <label class="cursor-pointer group">
                                     <input type="radio" th:field="*{voiceId}" value="Despina" class="peer sr-only">
-                                    <div class="p-4 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
-                                        <div class="flex items-center gap-3 mb-3">
-                                            <div class="w-12 h-12 rounded-full bg-pink-600/20 flex items-center justify-center">
-                                                <i class="fa-solid fa-user text-pink-400 text-xl"></i>
+                                    <div class="p-3 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <div class="w-10 h-10 rounded-full bg-pink-600/20 flex items-center justify-center">
+                                                <i class="fa-solid fa-user text-pink-400 text-lg"></i>
                                             </div>
                                             <div>
-                                                <div class="text-white font-semibold text-lg voice-name" data-name-en="Diana" data-name-bg="Диана">Diana</div>
+                                                <div class="text-white font-semibold voice-name" data-name-en="Diana" data-name-bg="Диана">Diana</div>
                                                 <div class="text-xs text-slate-500" th:text="#{setup.voice.female}">Female</div>
                                             </div>
                                         </div>
-                                        <div class="flex items-end justify-center gap-[3px] h-12 mb-3 px-2" id="visualizer-Despina">
+                                        <div class="flex items-end justify-center gap-[3px] h-8 mb-2 px-2" id="visualizer-Despina">
                                             <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 20%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 35%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 55%;"></div>
@@ -189,7 +189,7 @@
                                             <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 40%;"></div>
                                             <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 25%;"></div>
                                         </div>
-                                        <button type="button" onclick="playVoicePreview(event, 'Despina')" class="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
+                                        <button type="button" onclick="playVoicePreview(event, 'Despina')" class="w-full py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
                                             <i class="fa-solid fa-play text-sm voice-play-icon"></i>
                                             <span class="text-sm font-medium" th:text="#{setup.voice.playPreview}">Play Preview</span>
                                         </button>
@@ -201,7 +201,7 @@
                     </div>
 
                     <!-- Navigation Buttons -->
-                    <div class="flex items-center justify-between mt-10 pt-6 border-t border-slate-700">
+                    <div class="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
                         <a th:href="@{/setup/step2}"
                            class="px-6 py-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-medium transition">
                             <i class="fa-solid fa-arrow-left mr-2"></i>

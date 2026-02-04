@@ -14,6 +14,12 @@ let playbackAudioContext;
 let nextPlayTime = 0;  // Track when next chunk should start for gapless playback
 const CROSSFADE_SAMPLES = 64;  // Samples to crossfade between chunks to eliminate clicks
 
+// Track if introduction has completed (for one-time auto-unmute)
+let hasIntroductionCompleted = false;
+
+// Track if AI is currently speaking (to prevent interruption)
+let isAISpeaking = false;
+
 // Session data
 let currentSession = {
     candidateName: '',
@@ -119,6 +125,12 @@ function startInterviewSession() {
         return;
     }
     
+    // Reset introduction flag for new session
+    hasIntroductionCompleted = false;
+    
+    // Reset AI speaking flag
+    isAISpeaking = false;
+    
     // Send start message with interview parameters (including optional CV text and voice)
     const startPayload = {
         candidateName: currentSession.candidateName,
@@ -180,12 +192,19 @@ function handleStatusMessage(message) {
                 hideThinkingIndicator();
             }
             
+            // AI finished speaking - allow user audio to be sent again
+            isAISpeaking = false;
+            
             // Hide connection overlay if still visible (AI finished speaking)
             hideConnectionOverlay();
             
-            // Auto-enable mic after AI finishes speaking (if not already on)
-            if (!isMicActive && typeof enableMicAfterAI === 'function') {
-                enableMicAfterAI();
+            // Auto-enable mic ONLY after the first AI turn (introduction)
+            // After that, user controls their own mute state
+            if (!hasIntroductionCompleted) {
+                hasIntroductionCompleted = true;
+                if (!isMicActive && typeof enableMicAfterAI === 'function') {
+                    enableMicAfterAI();
+                }
             } else if (isMicActive) {
                 updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
             } else {
@@ -226,6 +245,9 @@ function handleAudioMessage(message) {
     if (data.data) {
         // Hide connection overlay on first audio (AI has started speaking)
         hideConnectionOverlay();
+        
+        // Mark AI as speaking (prevents sending user audio)
+        isAISpeaking = true;
         
         // Queue audio for playback
         const audioBytes = base64ToArrayBuffer(data.data);
@@ -353,7 +375,8 @@ async function startAudioCapture() {
         processor = audioContext.createScriptProcessor(4096, 1, 1);
 
         processor.onaudioprocess = (e) => {
-            if (!isMicActive || !stompClient || !isConnected) return;
+            // Don't send audio if: mic off, not connected, or AI is speaking
+            if (!isMicActive || !stompClient || !isConnected || isAISpeaking) return;
 
             const inputData = e.inputBuffer.getChannelData(0);
 
