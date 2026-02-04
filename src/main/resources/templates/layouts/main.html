@@ -1,79 +1,92 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" class="h-full">
 
-<head th:replace="~{layouts/fragments/head :: head}"><title></title></head>
+<head th:replace="~{layouts/fragments/head :: head}">
+	<title></title>
+</head>
 
-<body class="bg-slate-900 text-white min-h-full h-full overflow-hidden selection:bg-blue-500 selection:text-white flex flex-col">
+<body
+		class="bg-slate-900 text-white min-h-full h-full overflow-hidden selection:bg-blue-500 selection:text-white flex flex-col">
 
-    <!-- Top Right Controls -->
-    <div class="fixed top-4 right-4 z-50 flex items-center gap-3">
-        <!-- GitHub Link -->
-        <a href="https://github.com/dkirichev/interviewSimulator" target="_blank"
-           class="flex items-center justify-center w-10 h-10 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg text-slate-200 hover:text-white">
-            <i class="fa-brands fa-github text-xl"></i>
-        </a>
+<!-- Top Right Controls -->
+<div class="fixed top-4 right-4 z-50 flex items-center gap-3">
+	<!-- GitHub Link -->
+	<a href="https://github.com/dkirichev/interviewSimulator" target="_blank"
+			class="flex items-center justify-center w-10 h-10 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg text-slate-200 hover:text-white">
+		<i class="fa-brands fa-github text-xl"></i>
+	</a>
 
-        <!-- Language Switcher Dropdown -->
-        <div id="lang-dropdown" class="relative">
-        <button onclick="toggleLanguageDropdown()" 
-                class="flex items-center gap-2 px-3 py-2 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg">
-            <!-- Current language flag -->
-            <th:block th:if="${#locale.language == 'bg'}">
-                <svg class="w-6 h-4 rounded overflow-hidden" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="13.33" fill="white"/>
-                    <rect y="13.33" width="60" height="13.33" fill="#00966E"/>
-                    <rect y="26.66" width="60" height="13.34" fill="#D62612"/>
-                </svg>
-            </th:block>
-            <th:block th:if="${#locale.language == 'en'}">
-                <svg class="w-6 h-4 rounded overflow-hidden" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="40" fill="#012169"/>
-                    <path d="M0 0L60 40M60 0L0 40" stroke="white" stroke-width="8"/>
-                    <path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4"/>
-                    <path d="M30 0V40M0 20H60" stroke="white" stroke-width="12"/>
-                    <path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6"/>
-                </svg>
-            </th:block>
-            <i id="lang-dropdown-arrow" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
-        </button>
-        
-        <!-- Dropdown Menu -->
-        <div id="lang-dropdown-menu" class="hidden absolute right-0 mt-2 w-44 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
-            <!-- Bulgarian -->
-            <button onclick="changeLanguage('bg')" 
-                    class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors"
-                    th:classappend="${#locale.language == 'bg'} ? 'bg-slate-700/50' : ''">
-                <svg class="w-6 h-4 rounded overflow-hidden flex-shrink-0" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="13.33" fill="white"/>
-                    <rect y="13.33" width="60" height="13.33" fill="#00966E"/>
-                    <rect y="26.66" width="60" height="13.34" fill="#D62612"/>
-                </svg>
-                <span class="text-sm text-slate-200" th:text="#{global.language.name.bulgarian}" />
-                <i th:if="${#locale.language == 'bg'}" class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
-            </button>
-            <!-- English -->
-            <button onclick="changeLanguage('en')" 
-                    class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors"
-                    th:classappend="${#locale.language == 'en'} ? 'bg-slate-700/50' : ''">
-                <svg class="w-6 h-4 rounded overflow-hidden flex-shrink-0" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="40" fill="#012169"/>
-                    <path d="M0 0L60 40M60 0L0 40" stroke="white" stroke-width="8"/>
-                    <path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4"/>
-                    <path d="M30 0V40M0 20H60" stroke="white" stroke-width="12"/>
-                    <path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6"/>
-                </svg>
-                <span class="text-sm text-slate-200" th:text="#{global.language.name.english}" />
-                <i th:if="${#locale.language == 'en'}" class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
-            </button>
-        </div>
-    </div>
-    </div>
+	<!-- Language Switcher Dropdown -->
+	<div id="lang-dropdown" class="relative group">
 
-    <!-- Main Content Area -->
-    <th:block th:replace="~{${content} :: content}"/>
+		<button id="lang-dropdown-btn" onclick="toggleLanguageDropdown()"
+				class="flex items-center gap-2 px-3 py-2 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg">
+			<!-- Current language flags - toggle visibility via JS -->
+			<svg id="current-flag-bg" th:classappend="${#locale.language != 'bg'} ? 'hidden' : ''"
+					class="w-6 h-4 rounded overflow-hidden" viewBox="0 0 60 40" fill="none"
+					xmlns="http://www.w3.org/2000/svg">
+				<rect width="60" height="13.33" fill="white" />
+				<rect y="13.33" width="60" height="13.33" fill="#00966E" />
+				<rect y="26.66" width="60" height="13.34" fill="#D62612" />
+			</svg>
+			<svg id="current-flag-en" th:classappend="${#locale.language != 'en'} ? 'hidden' : ''"
+					class="w-6 h-4 rounded overflow-hidden" viewBox="0 0 60 40" fill="none"
+					xmlns="http://www.w3.org/2000/svg">
+				<rect width="60" height="40" fill="#012169" />
+				<path d="M0 0L60 40M60 0L0 40" stroke="white" stroke-width="8" />
+				<path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4" />
+				<path d="M30 0V40M0 20H60" stroke="white" stroke-width="12" />
+				<path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6" />
+			</svg>
+			<i id="lang-dropdown-arrow"
+					class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
+		</button>
 
-    <!-- JavaScript Body Bottom -->
-    <th:block th:replace="~{layouts/fragments/bodyBottom :: bodyBottom}"/>
+		<!-- Dropdown Menu -->
+		<div id="lang-dropdown-menu"
+				class="hidden absolute right-0 mt-2 w-44 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
+			<!-- Bulgarian -->
+			<button id="lang-option-bg" onclick="changeLanguage('bg')"
+					class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors"
+					th:classappend="${#locale.language == 'bg'} ? 'bg-slate-700/50' : ''">
+				<svg class="w-6 h-4 rounded overflow-hidden flex-shrink-0" viewBox="0 0 60 40" fill="none"
+						xmlns="http://www.w3.org/2000/svg">
+					<rect width="60" height="13.33" fill="white" />
+					<rect y="13.33" width="60" height="13.33" fill="#00966E" />
+					<rect y="26.66" width="60" height="13.34" fill="#D62612" />
+				</svg>
+				<span class="text-sm text-slate-200" data-i18n="global.language.name.bulgarian"
+						th:text="#{global.language.name.bulgarian}" />
+				<i id="lang-check-bg" th:classappend="${#locale.language != 'bg'} ? 'hidden' : ''"
+						class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
+			</button>
+			<!-- English -->
+			<button id="lang-option-en" onclick="changeLanguage('en')"
+					class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors"
+					th:classappend="${#locale.language == 'en'} ? 'bg-slate-700/50' : ''">
+				<svg class="w-6 h-4 rounded overflow-hidden flex-shrink-0" viewBox="0 0 60 40" fill="none"
+						xmlns="http://www.w3.org/2000/svg">
+					<rect width="60" height="40" fill="#012169" />
+					<path d="M0 0L60 40M60 0L0 40" stroke="white" stroke-width="8" />
+					<path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4" />
+					<path d="M30 0V40M0 20H60" stroke="white" stroke-width="12" />
+					<path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6" />
+				</svg>
+				<span class="text-sm text-slate-200" data-i18n="global.language.name.english"
+						th:text="#{global.language.name.english}" />
+				<i id="lang-check-en" th:classappend="${#locale.language != 'en'} ? 'hidden' : ''"
+						class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
+			</button>
+		</div>
+	</div>
+</div>
+
+<!-- Main Content Area -->
+<th:block th:replace="~{${content} :: content}" />
+
+<!-- JavaScript Body Bottom -->
+<th:block th:replace="~{layouts/fragments/bodyBottom :: bodyBottom}" />
 
 </body>
+
 </html>
