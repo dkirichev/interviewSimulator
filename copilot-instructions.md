@@ -1,4 +1,4 @@
-# CLAUDE.md
+# copilot-instructions.md
 
 AI assistant guidance for the Interview Simulator project.
 
@@ -6,7 +6,16 @@ AI assistant guidance for the Interview Simulator project.
 
 **AI-Powered Job Interview Simulator** using Gemini Live API with real-time bidirectional audio.
 
-**Stack:** Spring Boot 4.0.0 | Java 21 | PostgreSQL | Thymeleaf | WebSocket/STOMP | OkHttp | Lombok
+**Stack:** Spring Boot 4.0.0 | Java 21 | PostgreSQL | Thymeleaf | WebSocket/STOMP | OkHttp | Lombok | PDFBox | Apache POI
+
+**Features:**
+- Real-time voice conversation with AI interviewer
+- Multi-language support (English/Bulgarian)
+- CV/Resume upload and parsing (PDF/DOCX)
+- Voice selection (4 interviewer voices)
+- DEV/PROD modes (backend vs user-provided API keys)
+- Position-specific and difficulty-aware interviews
+- Automatic grading and detailed feedback
 
 ---
 
@@ -156,18 +165,28 @@ public class MyEntity {
 
 | Client → Server | Purpose |
 |-----------------|---------|
-| `/app/interview/start` | Start interview session |
-| `/app/interview/audio` | Send audio chunk |
-| `/app/interview/end` | End interview |
+| `/app/interview/start` | Start interview session with config |
+| `/app/interview/audio` | Send audio chunk (base64 PCM) |
+| `/app/interview/end` | End interview manually |
 | `/app/interview/mic-off` | Signal mic muted |
 
 | Server → Client | Purpose |
 |-----------------|---------|
 | `/user/queue/status` | Connection/turn status |
 | `/user/queue/audio` | AI audio response |
-| `/user/queue/transcript` | Speech transcription |
+| `/user/queue/transcript` | Speech transcription (user/AI) |
 | `/user/queue/report` | Final grading report |
-| `/user/queue/error` | Error messages |
+| `/user/queue/error` | Error messages (with flags: rateLimited, invalidKey, requiresApiKey) |
+
+## REST API Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/api/cv/upload` | Upload CV (PDF/DOCX), returns extracted text |
+| `GET` | `/api/mode` | Get app mode (DEV/PROD) |
+| `POST` | `/api/validate-key` | Validate Gemini API key |
+| `GET` | `/api/voices` | Get available voice options |
+| `GET` | `/api/voices/preview/{voiceId}/{language}` | Get voice preview WAV |
 
 ---
 
@@ -180,6 +199,57 @@ mvn test                   # All tests
 mvn test -Dtest=MyTest     # Specific test
 mvn flyway:migrate         # Apply DB migrations
 ```
+
+### Environment Variables for Development
+
+```bash
+export APP_MODE=DEV
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_NAME=interview_db
+export DB_USERNAME=postgres
+export DB_PASSWORD=secret
+export GEMINI_API_KEY=AIza...
+```
+
+---
+
+## Service Layer Overview
+
+| Service | Responsibility |
+|---------|----------------|
+| `GeminiIntegrationService` | Session lifecycle, WebSocket routing, reconnection |
+| `GeminiLiveClient` | Low-level WebSocket to Gemini API |
+| `InterviewService` | Database CRUD for sessions |
+| `GradingService` | AI-powered evaluation after interview |
+| `InterviewPromptService` | Language/difficulty/position-aware prompts |
+| `CvProcessingService` | PDF/DOCX text extraction |
+
+---
+
+## Internationalization (i18n)
+
+Message files: `messages.properties`, `messages_bg.properties`, `messages_en.properties`
+
+### Naming Convention for Messages
+```properties
+# Format: section.subsection.element.attribute
+setup.step1.candidateName=Candidate Name
+setup.step1.candidateName.placeholder=e.g., John Doe
+report.verdict.strongHire=STRONG HIRE
+apikey.modal.title=Gemini API Key Required
+```
+
+### Using in Templates
+```html
+<span th:text="#{setup.title}" />
+<input th:placeholder="#{setup.step1.candidateName.placeholder}" />
+```
+
+### Adding New Translations
+1. Add key to `messages.properties` (English)
+2. Add Bulgarian translation to `messages_bg.properties`
+3. Use `#{key.name}` in Thymeleaf templates
 
 ---
 
@@ -194,3 +264,5 @@ mvn flyway:migrate         # Apply DB migrations
 - [ ] Custom exceptions used
 - [ ] Tests written
 - [ ] Flyway migration for DB changes
+- [ ] i18n messages for new UI text
+- [ ] Both English and Bulgarian translations added
