@@ -90,6 +90,9 @@ In PROD mode:
 | Controller | Purpose |
 |------------|---------|
 | `InterviewWebSocketController` | STOMP endpoint handlers (`/app/interview/*`) |
+| `PageController` | Main page routing, redirects to setup wizard |
+| `SetupController` | Multi-step interview setup wizard (`/setup/step1/2/3`) |
+| `ReportController` | Server-rendered interview report (`/report/{sessionId}`) |
 | `CvController` | REST endpoint for CV upload (`/api/cv/upload`) |
 | `ApiKeyController` | API key validation and mode check (`/api/validate-key`, `/api/mode`) |
 | `VoiceController` | Voice list and preview audio (`/api/voices/*`) |

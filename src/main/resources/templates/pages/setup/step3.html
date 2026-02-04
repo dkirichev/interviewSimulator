@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<div th:fragment="content">
+    <section class="view-section active flex-col justify-center items-center min-h-screen w-full relative overflow-auto">
+        <!-- Background Decor -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+            <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        </div>
+
+        <div class="w-full max-w-4xl px-4 my-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600/20 text-blue-400 mb-4">
+                    <i class="fa-solid fa-robot text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold tracking-tight text-white" th:text="#{setup.title}">Interview Setup</h1>
+                <p class="text-slate-400 mt-2 text-sm" th:text="#{setup.subtitle}">Configure your interview session</p>
+            </div>
+
+            <!-- Progress Steps -->
+            <th:block th:replace="~{pages/setup/fragments/progress :: progressIndicator(currentStep=${currentStep})}"/>
+
+            <!-- Form Container -->
+            <div class="bg-slate-800/80 p-10 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md">
+                <form th:action="@{/setup/step3}" th:object="${setupForm}" method="post" id="step3-form">
+                    <!-- Step Title -->
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-white mb-2" th:text="#{setup.step3.title}">Voice & Language</h2>
+                        <p class="text-slate-400 text-sm" th:text="#{setup.step3.subtitle}">Choose your interviewer</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Language Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-3">
+                                <span th:text="#{setup.step3.interviewLanguage}">Interview Language</span>
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Bulgarian -->
+                                <label class="cursor-pointer">
+                                    <input type="radio" th:field="*{language}" value="bg" class="peer sr-only">
+                                    <div class="flex items-center justify-center gap-3 py-4 rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-400 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-400 transition hover:bg-slate-800">
+                                        <svg class="w-8 h-6 rounded overflow-hidden" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect width="60" height="13.33" fill="white"/>
+                                            <rect y="13.33" width="60" height="13.33" fill="#00966E"/>
+                                            <rect y="26.66" width="60" height="13.34" fill="#D62612"/>
+                                        </svg>
+                                        <span class="font-medium" th:text="#{global.language.name.bulgarian}">Български</span>
+                                    </div>
+                                </label>
+                                <!-- English -->
+                                <label class="cursor-pointer">
+                                    <input type="radio" th:field="*{language}" value="en" class="peer sr-only">
+                                    <div class="flex items-center justify-center gap-3 py-4 rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-400 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-400 transition hover:bg-slate-800">
+                                        <svg class="w-8 h-6 rounded overflow-hidden" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect width="60" height="40" fill="#012169"/>
+                                            <path d="M0 0L60 40M60 0L0 40" stroke="white" stroke-width="8"/>
+                                            <path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4"/>
+                                            <path d="M30 0V40M0 20H60" stroke="white" stroke-width="12"/>
+                                            <path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6"/>
+                                        </svg>
+                                        <span class="font-medium" th:text="#{global.language.name.english}">English</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Voice Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-3">
+                                <span th:text="#{setup.step3.interviewerVoice}">Interviewer Voice</span>
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <div class="grid grid-cols-2 gap-4">
+
+                                <!-- George (Algieba) -->
+                                <label class="cursor-pointer group">
+                                    <input type="radio" th:field="*{voiceId}" value="Algieba" class="peer sr-only">
+                                    <div class="p-4 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center">
+                                                <i class="fa-solid fa-user text-blue-400 text-xl"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-white font-semibold text-lg voice-name" data-name-en="George" data-name-bg="Георги">George</div>
+                                                <div class="text-xs text-slate-500" th:text="#{setup.voice.male}">Male</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-end justify-center gap-[3px] h-12 mb-3 px-2" id="visualizer-Algieba">
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 20%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 35%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 55%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 70%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 45%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 30%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 40%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 25%;"></div>
+                                        </div>
+                                        <button type="button" onclick="playVoicePreview(event, 'Algieba')" class="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-play text-sm voice-play-icon"></i>
+                                            <span class="text-sm font-medium" th:text="#{setup.voice.playPreview}">Play Preview</span>
+                                        </button>
+                                    </div>
+                                </label>
+
+                                <!-- Victoria (Kore) -->
+                                <label class="cursor-pointer group">
+                                    <input type="radio" th:field="*{voiceId}" value="Kore" class="peer sr-only">
+                                    <div class="p-4 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-12 h-12 rounded-full bg-pink-600/20 flex items-center justify-center">
+                                                <i class="fa-solid fa-user text-pink-400 text-xl"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-white font-semibold text-lg voice-name" data-name-en="Victoria" data-name-bg="Виктория">Victoria</div>
+                                                <div class="text-xs text-slate-500" th:text="#{setup.voice.female}">Female</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-end justify-center gap-[3px] h-12 mb-3 px-2" id="visualizer-Kore">
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 20%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 35%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 55%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 70%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 45%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 30%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 40%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 25%;"></div>
+                                        </div>
+                                        <button type="button" onclick="playVoicePreview(event, 'Kore')" class="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-play text-sm voice-play-icon"></i>
+                                            <span class="text-sm font-medium" th:text="#{setup.voice.playPreview}">Play Preview</span>
+                                        </button>
+                                    </div>
+                                </label>
+
+                                <!-- Max (Fenrir) -->
+                                <label class="cursor-pointer group">
+                                    <input type="radio" th:field="*{voiceId}" value="Fenrir" class="peer sr-only">
+                                    <div class="p-4 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center">
+                                                <i class="fa-solid fa-user text-blue-400 text-xl"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-white font-semibold text-lg voice-name" data-name-en="Max" data-name-bg="Макс">Max</div>
+                                                <div class="text-xs text-slate-500" th:text="#{setup.voice.male}">Male</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-end justify-center gap-[3px] h-12 mb-3 px-2" id="visualizer-Fenrir">
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 20%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 35%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 55%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 70%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 45%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 30%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 40%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-blue-600 to-cyan-400 rounded-full opacity-30" style="height: 25%;"></div>
+                                        </div>
+                                        <button type="button" onclick="playVoicePreview(event, 'Fenrir')" class="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-play text-sm voice-play-icon"></i>
+                                            <span class="text-sm font-medium" th:text="#{setup.voice.playPreview}">Play Preview</span>
+                                        </button>
+                                    </div>
+                                </label>
+
+                                <!-- Diana (Despina) -->
+                                <label class="cursor-pointer group">
+                                    <input type="radio" th:field="*{voiceId}" value="Despina" class="peer sr-only">
+                                    <div class="p-4 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-12 h-12 rounded-full bg-pink-600/20 flex items-center justify-center">
+                                                <i class="fa-solid fa-user text-pink-400 text-xl"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-white font-semibold text-lg voice-name" data-name-en="Diana" data-name-bg="Диана">Diana</div>
+                                                <div class="text-xs text-slate-500" th:text="#{setup.voice.female}">Female</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-end justify-center gap-[3px] h-12 mb-3 px-2" id="visualizer-Despina">
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 20%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 35%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 55%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 70%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 45%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 30%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 40%;"></div>
+                                            <div class="voice-bar w-2 bg-gradient-to-t from-pink-600 to-rose-400 rounded-full opacity-30" style="height: 25%;"></div>
+                                        </div>
+                                        <button type="button" onclick="playVoicePreview(event, 'Despina')" class="w-full py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-play text-sm voice-play-icon"></i>
+                                            <span class="text-sm font-medium" th:text="#{setup.voice.playPreview}">Play Preview</span>
+                                        </button>
+                                    </div>
+                                </label>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex items-center justify-between mt-10 pt-6 border-t border-slate-700">
+                        <a th:href="@{/setup/step2}"
+                           class="px-6 py-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-medium transition">
+                            <i class="fa-solid fa-arrow-left mr-2"></i>
+                            <span th:text="#{setup.button.back}">Back</span>
+                        </a>
+                        <button type="submit"
+                                class="px-8 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold transition shadow-lg shadow-green-500/30">
+                            <i class="fa-solid fa-rocket mr-2"></i>
+                            <span th:text="#{setup.button.startInterview}">Start Interview</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Voice Preview JavaScript (minimal, needed for audio playback) -->
+    <script th:inline="javascript">
+        // Wrap in IIFE to avoid variable conflicts
+        (function() {
+            let currentPreviewAudio = null;
+            let currentPlayingVoiceId = null;
+            let activeVisualizerInterval = null;
+
+            // Update voice names based on selected language
+            function updateVoiceNames() {
+                const languageRadio = document.querySelector('input[name="language"]:checked');
+                const lang = languageRadio ? languageRadio.value : 'en';
+
+                document.querySelectorAll('.voice-name').forEach(el => {
+                    const name = lang === 'bg' ? el.dataset.nameBg : el.dataset.nameEn;
+                    el.textContent = name;
+                });
+            }
+
+            // Listen to language changes
+            document.querySelectorAll('input[name="language"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    updateVoiceNames();
+                    // Stop any playing preview when language changes
+                    if (currentPreviewAudio) {
+                        currentPreviewAudio.pause();
+                        currentPreviewAudio.currentTime = 0;
+                        resetAllPlayButtons();
+                        stopAllVisualizers();
+                        currentPlayingVoiceId = null;
+                    }
+                });
+            });
+
+            // Initialize voice names on page load
+            document.addEventListener('DOMContentLoaded', updateVoiceNames);
+
+            // Make playVoicePreview available globally
+            window.playVoicePreview = async function(event, voiceId) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const button = event.currentTarget;
+                const icon = button.querySelector('.voice-play-icon');
+
+                const languageRadio = document.querySelector('input[name="language"]:checked');
+                const language = languageRadio ? languageRadio.value.toUpperCase() : 'EN';
+
+                // If same voice is playing, stop it
+                if (currentPlayingVoiceId === voiceId && currentPreviewAudio && !currentPreviewAudio.paused) {
+                    currentPreviewAudio.pause();
+                    currentPreviewAudio.currentTime = 0;
+                    resetAllPlayButtons();
+                    stopAllVisualizers();
+                    currentPlayingVoiceId = null;
+                    return;
+                }
+
+                // Stop any currently playing preview
+                if (currentPreviewAudio) {
+                    currentPreviewAudio.pause();
+                    currentPreviewAudio.currentTime = 0;
+                    resetAllPlayButtons();
+                    stopAllVisualizers();
+                }
+
+                // Show loading state
+                icon.classList.remove('fa-play', 'fa-pause');
+                icon.classList.add('fa-spinner', 'fa-spin');
+
+                try {
+                    const audioUrl = `/api/voices/preview/${voiceId}/${language}`;
+                    currentPreviewAudio = new Audio(audioUrl);
+                    currentPlayingVoiceId = voiceId;
+
+                    await new Promise((resolve, reject) => {
+                        currentPreviewAudio.oncanplaythrough = resolve;
+                        currentPreviewAudio.onerror = reject;
+                        currentPreviewAudio.load();
+                    });
+
+                    icon.classList.remove('fa-spinner', 'fa-spin');
+                    icon.classList.add('fa-pause');
+
+                    animateVisualizer(voiceId);
+                    await currentPreviewAudio.play();
+
+                    currentPreviewAudio.onended = () => {
+                        icon.classList.remove('fa-pause');
+                        icon.classList.add('fa-play');
+                        stopVisualizer(voiceId);
+                        currentPlayingVoiceId = null;
+                    };
+
+                } catch (error) {
+                    console.error('Failed to play voice preview:', error);
+                    icon.classList.remove('fa-spinner', 'fa-spin');
+                    icon.classList.add('fa-play');
+                    stopVisualizer(voiceId);
+                    currentPlayingVoiceId = null;
+                }
+            };
+
+            function resetAllPlayButtons() {
+                document.querySelectorAll('.voice-play-icon').forEach(icon => {
+                    icon.classList.remove('fa-pause', 'fa-spinner', 'fa-spin');
+                    icon.classList.add('fa-play');
+                });
+            }
+
+            function animateVisualizer(voiceId) {
+                stopAllVisualizers();
+                const visualizer = document.getElementById(`visualizer-${voiceId}`);
+                if (!visualizer) return;
+
+                const bars = visualizer.querySelectorAll('.voice-bar');
+                let barTargets = Array.from(bars).map(() => Math.random() * 60 + 15);
+                let barCurrents = Array.from(bars).map(() => 15);
+
+                activeVisualizerInterval = setInterval(() => {
+                    bars.forEach((bar, index) => {
+                        barCurrents[index] += (barTargets[index] - barCurrents[index]) * 0.3;
+                        if (Math.random() < 0.15) {
+                            barTargets[index] = Math.random() * 55 + 10;
+                        }
+                        bar.style.height = `${barCurrents[index]}%`;
+                        bar.style.opacity = '1';
+                    });
+                }, 80);
+            }
+
+            function stopVisualizer(voiceId) {
+                if (activeVisualizerInterval) {
+                    clearInterval(activeVisualizerInterval);
+                    activeVisualizerInterval = null;
+                }
+                const visualizer = document.getElementById(`visualizer-${voiceId}`);
+                if (visualizer) {
+                    const bars = visualizer.querySelectorAll('.voice-bar');
+                    const heights = [20, 35, 55, 70, 45, 30, 40, 25];
+                    bars.forEach((bar, index) => {
+                        bar.style.height = `${heights[index % heights.length]}%`;
+                        bar.style.opacity = '0.3';
+                    });
+                }
+            }
+
+            function stopAllVisualizers() {
+                if (activeVisualizerInterval) {
+                    clearInterval(activeVisualizerInterval);
+                    activeVisualizerInterval = null;
+                }
+                document.querySelectorAll('[id^="visualizer-"]').forEach(visualizer => {
+                    const bars = visualizer.querySelectorAll('.voice-bar');
+                    const heights = [20, 35, 55, 70, 45, 30, 40, 25];
+                    bars.forEach((bar, index) => {
+                        bar.style.height = `${heights[index % heights.length]}%`;
+                        bar.style.opacity = '0.3';
+                    });
+                });
+            }
+        })();
+    </script>
+</div>
+
+</html>

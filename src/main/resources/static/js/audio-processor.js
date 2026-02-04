@@ -22,6 +22,71 @@ let currentSession = {
     language: 'en'
 };
 
+
+/**
+ * Start interview from server-provided session data.
+ * Called by interview-standalone.html when the page loads.
+ * Reads from window.interviewSession set by Thymeleaf.
+ */
+function startInterviewFromSession() {
+    // Check if session data is available (set by Thymeleaf in interview-standalone.html)
+    if (window.interviewSession) {
+        currentSession = {
+            candidateName: window.interviewSession.candidateName || 'Candidate',
+            position: window.interviewSession.position || 'Developer',
+            difficulty: window.interviewSession.difficulty || 'Easy',
+            language: window.interviewSession.language || 'bg',
+            cvText: window.interviewSession.cvText || null,
+            voiceId: window.interviewSession.voiceId || 'Algieba',
+            interviewerNameEN: window.interviewSession.interviewerNameEN || 'George',
+            interviewerNameBG: window.interviewSession.interviewerNameBG || 'Георги'
+        };
+        
+        console.log('Starting interview from session:', {
+            ...currentSession,
+            cvText: currentSession.cvText ? '[CV TEXT PROVIDED]' : null
+        });
+        
+        // Request microphone and start
+        requestMicrophoneAndConnect();
+    } else {
+        console.error('No interview session data found');
+        alert('Session expired. Please restart the setup.');
+        window.location.href = '/setup/step1';
+    }
+}
+
+
+/**
+ * Request microphone permission and connect to WebSocket.
+ */
+async function requestMicrophoneAndConnect() {
+    try {
+        // Request microphone permission
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                channelCount: 1,
+                sampleRate: 16000,
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            }
+        });
+        
+        // Store stream for later use
+        window.preinitializedMicStream = stream;
+        
+        // Connect to WebSocket
+        connectToBackend();
+        
+    } catch (error) {
+        console.error('Microphone access denied:', error);
+        alert('Microphone access is required for the interview. Please allow access and try again.');
+        window.location.href = '/setup/step3';
+    }
+}
+
+
 // Connect to backend WebSocket
 function connectToBackend() {
     console.log("Connecting to WebSocket...");
@@ -106,28 +171,40 @@ function handleStatusMessage(message) {
     switch(data.type) {
         case 'CONNECTED':
             updateStatus('Connected', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
-            // Update loading step and hide loading overlay
+            // Update loading step (but keep overlay visible until AI speaks)
             if (typeof updateLoadingStep === 'function') {
                 updateLoadingStep('connect', 'done');
-            }
-            if (typeof hideLoading === 'function') {
-                hideLoading();
             }
             // Start the call timer
             if (typeof startCallTimer === 'function') {
                 startCallTimer();
             }
-            hideConnectionOverlay();
+            // Update overlay message to show we're waiting for AI
+            const overlay = document.getElementById('connection-overlay');
+            if (overlay) {
+                const overlayText = overlay.querySelector('p');
+                if (overlayText) {
+                    overlayText.innerText = 'Waiting for interviewer...';
+                }
+            }
+            // DON'T hide overlay yet - wait for first audio or TURN_COMPLETE
             break;
         case 'TURN_COMPLETE':
             setAvatarState('idle');
             if (typeof hideThinkingIndicator === 'function') {
                 hideThinkingIndicator();
             }
-            if (isMicActive) {
+            
+            // Hide connection overlay if still visible (AI finished speaking)
+            hideConnectionOverlay();
+            
+            // Auto-enable mic after AI finishes speaking (if not already on)
+            if (!isMicActive && typeof enableMicAfterAI === 'function') {
+                enableMicAfterAI();
+            } else if (isMicActive) {
                 updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
             } else {
-                updateStatus('Mic Muted', 'bg-red-500/20 text-red-400 border-red-500/50');
+                updateStatus('Your Turn', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
             }
             break;
         case 'INTERRUPTED':
@@ -162,6 +239,9 @@ function handleStatusMessage(message) {
 function handleAudioMessage(message) {
     const data = JSON.parse(message.body);
     if (data.data) {
+        // Hide connection overlay on first audio (AI has started speaking)
+        hideConnectionOverlay();
+        
         // Queue audio for playback
         const audioBytes = base64ToArrayBuffer(data.data);
         audioQueue.push(audioBytes);
@@ -174,6 +254,11 @@ function handleAudioMessage(message) {
         // Update UI to show AI is speaking
         setAvatarState('talking');
         updateStatus('AI Speaking', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
+        
+        // Hide thinking indicator when AI starts speaking
+        if (typeof hideThinkingIndicator === 'function') {
+            hideThinkingIndicator();
+        }
     }
 }
 
@@ -189,9 +274,18 @@ function handleReportMessage(message) {
     const data = JSON.parse(message.body);
     console.log('Report received:', data);
     
-    // Store report data and switch to report view
-    displayReport(data);
-    switchView('report');
+    // Redirect to server-rendered report page
+    if (data.sessionId) {
+        window.location.href = '/report/' + data.sessionId;
+    } else {
+        // Fallback: use displayReport if sessionId not available
+        if (typeof displayReport === 'function') {
+            displayReport(data);
+        }
+        if (typeof switchView === 'function') {
+            switchView('report');
+        }
+    }
 }
 
 function handleErrorMessage(message) {

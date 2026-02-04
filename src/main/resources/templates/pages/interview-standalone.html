@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<!--
+    Interview Page (Standalone)
+    This page reads setup data from the server-side session and passes it to JavaScript
+    for the WebSocket-based interview.
+-->
+<div th:fragment="content">
+    <!-- Pass setup data to JavaScript -->
+    <script th:inline="javascript">
+        // Session data from server (populated by Thymeleaf)
+        window.interviewSession = {
+            candidateName: /*[[${setupForm.candidateName}]]*/ 'Candidate',
+            position: /*[[${setupForm.effectivePosition}]]*/ 'Developer',
+            difficulty: /*[[${setupForm.difficulty}]]*/ 'Easy',
+            language: /*[[${setupForm.language}]]*/ 'bg',
+            cvText: /*[[${setupForm.cvText}]]*/ null,
+            voiceId: /*[[${setupForm.voiceId}]]*/ 'Algieba',
+            interviewerNameEN: /*[[${setupForm.interviewerNameEN}]]*/ 'George',
+            interviewerNameBG: /*[[${setupForm.interviewerNameBG}]]*/ 'Георги'
+        };
+    </script>
+
+    <section id="interview-view" class="view-section active flex-col min-h-screen w-full">
+        <!-- Header / Status Bar -->
+        <header class="h-20 border-b border-slate-800 bg-slate-900/90 backdrop-blur flex items-center justify-between px-8 sticky top-0 z-20">
+            <div class="flex items-center gap-4">
+                <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                <span class="text-slate-400 text-base font-medium">
+                    <span th:text="#{interview.liveSession}">Live Session:</span>
+                    <span id="session-role" class="text-white text-lg font-semibold" th:text="${setupForm.effectivePosition}">Java Dev</span>
+                </span>
+            </div>
+
+            <!-- Call Duration Clock (centered) -->
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-clock text-slate-500"></i>
+                <span id="call-duration" class="text-xl font-mono text-white">00:00</span>
+            </div>
+
+            <!-- Spacer to maintain 3-column layout with centered clock -->
+            <div class="w-40"></div>
+        </header>
+
+        <!-- Main Content (Avatar) -->
+        <main class="flex-1 relative flex items-center justify-center bg-black overflow-hidden group">
+            <!-- Avatar Container -->
+            <div id="avatar-display" class="relative w-full h-full max-w-4xl max-h-[80vh] flex items-center justify-center transition-all duration-300">
+                <div class="w-72 h-72 md:w-[28rem] md:h-[28rem] rounded-full bg-gradient-to-t from-slate-700 to-slate-600 flex items-center justify-center border-4 border-slate-700 shadow-2xl avatar-idle" id="avatar-visual">
+                    <i class="fa-solid fa-user-tie text-[10rem] text-slate-800 opacity-50"></i>
+                </div>
+                <!-- Thinking indicator -->
+                <div id="thinking-indicator" class="absolute bottom-16 left-1/2 -translate-x-1/2 hidden">
+                    <div class="flex items-center gap-3 px-6 py-4 bg-slate-800/95 rounded-2xl border-2 border-blue-500/50 shadow-lg shadow-blue-500/20">
+                        <div class="flex gap-1.5">
+                            <div class="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style="animation-delay: 0ms;"></div>
+                            <div class="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style="animation-delay: 150ms;"></div>
+                            <div class="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style="animation-delay: 300ms;"></div>
+                        </div>
+                        <span class="text-blue-300 text-base font-medium ml-2" th:text="#{interview.thinking}">Thinking...</span>
+                    </div>
+                </div>
+                <audio id="ai-audio-player"></audio>
+            </div>
+
+            <!-- User Camera Feed (Optional) -->
+            <div id="user-camera-container" class="absolute bottom-6 right-6 hidden">
+                <video id="user-camera-feed" autoplay playsinline muted class="w-48 h-36 rounded-xl border-2 border-slate-600 shadow-2xl object-cover bg-slate-900"></video>
+            </div>
+
+            <!-- Connection Overlay -->
+            <div id="connection-overlay" class="absolute inset-0 bg-black/80 z-30 flex items-center justify-center flex-col">
+                <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+                <p class="text-blue-400 font-mono text-base" th:text="#{interview.connecting}">Establishing Secure Websocket...</p>
+            </div>
+        </main>
+
+        <!-- Bottom Controls -->
+        <footer class="h-32 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-10 md:px-24 z-20">
+            <!-- Audio Visualizer -->
+            <div class="flex items-end gap-1.5 h-12 w-40" id="visualizer-container">
+                <div class="bar" style="animation-delay: 0ms;"></div>
+                <div class="bar" style="animation-delay: 100ms;"></div>
+                <div class="bar" style="animation-delay: 200ms;"></div>
+                <div class="bar" style="animation-delay: 50ms;"></div>
+                <div class="bar" style="animation-delay: 150ms;"></div>
+                <div class="bar" style="animation-delay: 250ms;"></div>
+                <div class="bar" style="animation-delay: 75ms;"></div>
+                <div class="bar" style="animation-delay: 125ms;"></div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center gap-8">
+                <!-- Camera Toggle -->
+                <button id="camera-btn" onclick="toggleCamera()"
+                        class="w-16 h-16 rounded-full bg-slate-800 text-white hover:bg-slate-700 border-2 border-slate-600 flex items-center justify-center text-2xl transition shadow-lg relative overflow-hidden group">
+                    <i class="fa-solid fa-video-slash group-hover:scale-110 transition-transform"></i>
+                    <div class="absolute inset-0 bg-red-500/20" id="camera-off-overlay">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-full h-0.5 bg-red-500 rotate-45 transform origin-center"></div>
+                        </div>
+                    </div>
+                </button>
+
+                <!-- Mic Toggle -->
+                <button id="mic-btn" onclick="toggleMic()"
+                        class="w-16 h-16 rounded-full bg-slate-800 text-white hover:bg-slate-700 border-2 border-slate-600 flex items-center justify-center text-2xl transition shadow-lg relative overflow-hidden group">
+                    <i class="fa-solid fa-microphone group-hover:scale-110 transition-transform"></i>
+                    <div class="absolute inset-0 bg-red-500/20" id="mic-mute-overlay">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-full h-0.5 bg-red-500 rotate-45 transform origin-center"></div>
+                        </div>
+                    </div>
+                </button>
+
+                <!-- End Call -->
+                <button onclick="endInterview()"
+                        class="w-16 h-16 rounded-full bg-red-600 text-white hover:bg-red-500 shadow-lg shadow-red-600/30 flex items-center justify-center text-2xl transition transform hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-phone-slash"></i>
+                </button>
+            </div>
+
+            <!-- Status Badge -->
+            <div class="w-40 hidden md:flex justify-end">
+                <div id="status-badge" class="px-4 py-1.5 rounded-full text-sm font-bold tracking-wider uppercase bg-slate-800 text-slate-400 border border-slate-700"
+                     th:text="#{interview.status.initializing}">INITIALIZING</div>
+            </div>
+        </footer>
+    </section>
+
+    <!-- Interview Scripts -->
+    <script th:inline="javascript">
+        // Auto-start interview when page loads (uses window.interviewSession set above)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mark interview as active so mic/end buttons work
+            isInterviewActive = true;
+
+            // The audio-processor.js will read from window.interviewSession
+            if (typeof startInterviewFromSession === 'function') {
+                startInterviewFromSession();
+            } else {
+                // Fallback: wait for scripts to load
+                setTimeout(function() {
+                    if (typeof startInterviewFromSession === 'function') {
+                        startInterviewFromSession();
+                    }
+                }, 500);
+            }
+        });
+    </script>
+</div>
+
+</html>

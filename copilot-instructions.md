@@ -182,11 +182,42 @@ public class MyEntity {
 
 | Method | Path | Purpose |
 |--------|------|---------|
+| `GET` | `/` | Redirects to `/setup/step1` |
+| `GET` | `/setup/step1` | Setup wizard - Step 1 (Profile) |
+| `GET` | `/setup/step2` | Setup wizard - Step 2 (Details + CV) |
+| `GET` | `/setup/step3` | Setup wizard - Step 3 (Voice + Language) |
+| `GET` | `/interview` | Interview page (requires completed setup in session) |
+| `GET` | `/report/{sessionId}` | Server-rendered report page |
 | `POST` | `/api/cv/upload` | Upload CV (PDF/DOCX), returns extracted text |
 | `GET` | `/api/mode` | Get app mode (DEV/PROD) |
 | `POST` | `/api/validate-key` | Validate Gemini API key |
 | `GET` | `/api/voices` | Get available voice options |
 | `GET` | `/api/voices/preview/{voiceId}/{language}` | Get voice preview WAV |
+
+---
+
+## Frontend Architecture
+
+**Approach:** Server-rendered multi-page wizard with minimal JavaScript
+
+### Page Flow
+```
+/setup/step1 → /setup/step2 → /setup/step3 → /interview → /report/{id}
+```
+
+### Session Management
+- Form data stored in HTTP session via `@SessionAttributes("setupForm")`
+- Persists across wizard steps and language switches
+- Cleared after interview starts (one-time use)
+- Uses `SessionStatus.setComplete()` for proper cleanup
+
+### JavaScript (1,409 lines total - 41% reduced)
+- `audio-processor.js` (588 lines) - WebSocket + audio processing
+- `interview.js` (308 lines) - Interview UI controls
+- `apikey.js` (363 lines) - API key modal
+- `language-switcher.js` (150 lines) - Language switching
+
+All JavaScript is essential for browser APIs (WebSocket, Web Audio, getUserMedia).
 
 ---
 

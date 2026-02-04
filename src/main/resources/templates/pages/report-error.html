@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<!--
+    Report Error Page
+    Shown when a report is not found or session ID is invalid.
+-->
+<div th:fragment="content">
+    <section class="view-section active flex-col items-center justify-center min-h-screen w-full bg-slate-900">
+        <div class="text-center max-w-md px-6">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                <i class="fa-solid fa-exclamation-triangle text-4xl text-red-400"></i>
+            </div>
+            
+            <h1 class="text-2xl font-bold text-white mb-3">Report Not Found</h1>
+            
+            <p class="text-slate-400 mb-8" th:text="${error}">
+                The requested report could not be found. It may have expired or the session ID is invalid.
+            </p>
+            
+            <a th:href="@{/setup/step1}"
+               class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span th:text="#{report.newInterview}">Start New Interview</span>
+            </a>
+        </div>
+    </section>
+</div>
+
+</html>

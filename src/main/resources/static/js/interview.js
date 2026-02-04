@@ -12,6 +12,38 @@ const thinkingIndicator = document.getElementById('thinking-indicator');
 const callDurationEl = document.getElementById('call-duration');
 
 
+/**
+ * Called after AI finishes speaking to auto-enable mic.
+ * This gives the user their turn to speak.
+ */
+function enableMicAfterAI() {
+    if (!isInterviewActive) return;
+    
+    // Enable mic
+    isMicActive = true;
+    const btn = document.getElementById('mic-btn');
+    if (!btn) return;
+    
+    const icon = btn.querySelector('i');
+    const muteOverlay = document.getElementById('mic-mute-overlay');
+    
+    btn.classList.add('bg-slate-700', 'ring-2', 'ring-green-500');
+    if (icon) {
+        icon.classList.remove('fa-microphone-slash');
+        icon.classList.add('fa-microphone');
+    }
+    if (muteOverlay) {
+        muteOverlay.classList.add('hidden');
+    }
+    
+    updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
+    hideThinkingIndicator();
+    
+    startAudioCapture();
+    startVisualizer();
+}
+
+
 function startInterviewSimulation() {
     isInterviewActive = true;
     isMicActive = false;
