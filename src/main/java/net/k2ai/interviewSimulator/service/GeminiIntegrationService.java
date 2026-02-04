@@ -64,8 +64,10 @@ public class GeminiIntegrationService {
         }
         geminiClient.setSystemInstruction(systemInstruction);
 
-        // Create interview state
+        // Create interview state (store voice and instruction for potential reconnection)
         InterviewState state = new InterviewState(interviewSessionId, geminiClient, candidateName, position, difficulty, language);
+        state.setVoiceId(effectiveVoice);
+        state.setSystemInstruction(systemInstruction);
         activeSessions.put(wsSessionId, state);
 
         // Setup callbacks
@@ -81,20 +83,33 @@ public class GeminiIntegrationService {
 
 
     private void setupGeminiCallbacks(String wsSessionId, InterviewState state) {
+        setupGeminiCallbacks(wsSessionId, state, true);
+    }//setupGeminiCallbacks
+
+
+    private void setupGeminiCallbacks(String wsSessionId, InterviewState state, boolean isNewSession) {
         GeminiLiveClient client = state.getGeminiClient();
 
-        // When Gemini is ready - send initial greeting to trigger AI to speak first
+        // When Gemini is ready
         client.setOnConnected(() -> {
-            log.info("Gemini ready for session: {}", wsSessionId);
-            sendToClient(wsSessionId, "/queue/status", Map.of(
-                    "type", "CONNECTED",
-                    "message", "AI interviewer ready"
-            ));
-
-            // Send greeting to trigger AI to introduce itself
-            String greeting = "bg".equals(state.getLanguage()) ? "Здравейте!" : "Hello!";
-            client.sendText(greeting);
-            log.debug("Sent initial greeting to trigger AI: {}", greeting);
+            log.info("Gemini ready for session: {} (new: {})", wsSessionId, isNewSession);
+            
+            if (isNewSession) {
+                // New session - send greeting to trigger AI to introduce itself
+                sendToClient(wsSessionId, "/queue/status", Map.of(
+                        "type", "CONNECTED",
+                        "message", "AI interviewer ready"
+                ));
+                String greeting = "bg".equals(state.getLanguage()) ? "Здравейте!" : "Hello!";
+                client.sendText(greeting);
+                log.debug("Sent initial greeting to trigger AI: {}", greeting);
+            } else {
+                // Resumed session - just notify reconnection complete
+                state.setReconnecting(false);
+                log.info("Session resumed successfully for: {}", wsSessionId);
+                // Send any buffered audio
+                state.flushBufferedAudio(client);
+            }
         });
 
         // When receiving audio from Gemini
@@ -169,17 +184,72 @@ public class GeminiIntegrationService {
             ));
         });
 
-        // On connection closed
+        // Handle GoAway - server is about to close connection, trigger reconnection
+        client.setOnGoAway(timeLeft -> {
+            log.warn("GoAway received for session {}, time left: {}. Initiating reconnection...", wsSessionId, timeLeft);
+            if (!state.isEnded() && !state.isReconnecting()) {
+                initiateReconnection(wsSessionId, state);
+            }
+        });
+
+        // On connection closed - attempt reconnection if unexpected
         client.setOnClosed(() -> {
             log.info("Gemini connection closed for session: {}", wsSessionId);
-            if (!state.isEnded()) {
-                sendToClient(wsSessionId, "/queue/status", Map.of(
-                        "type", "DISCONNECTED",
-                        "message", "Connection lost"
-                ));
+            if (!state.isEnded() && !state.isReconnecting()) {
+                // Unexpected close - try to reconnect
+                String handle = client.getSessionResumptionHandle();
+                if (handle != null) {
+                    log.info("Attempting to reconnect with resumption handle...");
+                    initiateReconnection(wsSessionId, state);
+                } else {
+                    sendToClient(wsSessionId, "/queue/status", Map.of(
+                            "type", "DISCONNECTED",
+                            "message", "Connection lost"
+                    ));
+                }
             }
         });
     }//setupGeminiCallbacks
+
+
+    private void initiateReconnection(String wsSessionId, InterviewState state) {
+        if (state.isEnded() || state.isReconnecting()) {
+            return;
+        }
+
+        state.setReconnecting(true);
+        String resumptionHandle = state.getGeminiClient().getSessionResumptionHandle();
+
+        if (resumptionHandle == null) {
+            log.error("Cannot reconnect - no resumption handle available for session: {}", wsSessionId);
+            state.setReconnecting(false);
+            sendToClient(wsSessionId, "/queue/status", Map.of(
+                    "type", "DISCONNECTED",
+                    "message", "Connection lost - no resumption token"
+            ));
+            return;
+        }
+
+        log.info("Initiating session reconnection for: {}", wsSessionId);
+
+        // Close old connection gracefully
+        state.getGeminiClient().close();
+
+        // Create new client with same configuration
+        String effectiveVoice = state.getVoiceId() != null ? state.getVoiceId() : geminiConfig.getVoiceName();
+        GeminiLiveClient newClient = new GeminiLiveClient(geminiConfig.getApiKey(), geminiConfig.getLiveModel(), effectiveVoice);
+        newClient.setSystemInstruction(state.getSystemInstruction());
+
+        // Update state with new client
+        state.setGeminiClient(newClient);
+
+        // Setup callbacks for resumed session
+        setupGeminiCallbacks(wsSessionId, state, false);
+
+        // Connect with resumption handle
+        newClient.connect(resumptionHandle);
+        log.info("Reconnection initiated with resumption handle for session: {}", wsSessionId);
+    }//initiateReconnection
 
 
     public void sendAudioToGemini(String wsSessionId, String base64Audio) {
@@ -192,6 +262,13 @@ public class GeminiIntegrationService {
 
         try {
             byte[] audioData = Base64.getDecoder().decode(base64Audio);
+            
+            // Buffer audio during reconnection
+            if (state.isReconnecting()) {
+                state.bufferAudio(audioData);
+                return;
+            }
+            
             state.getGeminiClient().sendAudio(audioData);
         } catch (Exception e) {
             log.error("Failed to send audio for session: {}", wsSessionId, e);
@@ -307,9 +384,11 @@ public class GeminiIntegrationService {
     // Inner class to track interview state
     private static class InterviewState {
 
+        private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(InterviewState.class);
+
         private final UUID interviewSessionId;
 
-        private final GeminiLiveClient geminiClient;
+        private GeminiLiveClient geminiClient;
 
         private final String candidateName;
 
@@ -328,6 +407,16 @@ public class GeminiIntegrationService {
         private final StringBuilder currentTurnTranscript = new StringBuilder();
 
         private boolean ended = false;
+
+        // For session resumption
+        private boolean reconnecting = false;
+
+        private String voiceId;
+
+        private String systemInstruction;
+
+        // Buffer for audio during reconnection
+        private final java.util.List<byte[]> audioBuffer = new java.util.ArrayList<>();
 
 
         public InterviewState(UUID interviewSessionId, GeminiLiveClient geminiClient,
@@ -349,6 +438,11 @@ public class GeminiIntegrationService {
         public GeminiLiveClient getGeminiClient() {
             return geminiClient;
         }//getGeminiClient
+
+
+        public void setGeminiClient(GeminiLiveClient geminiClient) {
+            this.geminiClient = geminiClient;
+        }//setGeminiClient
 
 
         public String getLanguage() {
@@ -396,6 +490,54 @@ public class GeminiIntegrationService {
         public void setEnded(boolean ended) {
             this.ended = ended;
         }//setEnded
+
+
+        public boolean isReconnecting() {
+            return reconnecting;
+        }//isReconnecting
+
+
+        public void setReconnecting(boolean reconnecting) {
+            this.reconnecting = reconnecting;
+        }//setReconnecting
+
+
+        public String getVoiceId() {
+            return voiceId;
+        }//getVoiceId
+
+
+        public void setVoiceId(String voiceId) {
+            this.voiceId = voiceId;
+        }//setVoiceId
+
+
+        public String getSystemInstruction() {
+            return systemInstruction;
+        }//getSystemInstruction
+
+
+        public void setSystemInstruction(String systemInstruction) {
+            this.systemInstruction = systemInstruction;
+        }//setSystemInstruction
+
+
+        public synchronized void bufferAudio(byte[] audioData) {
+            if (reconnecting) {
+                audioBuffer.add(audioData);
+            }
+        }//bufferAudio
+
+
+        public synchronized void flushBufferedAudio(GeminiLiveClient client) {
+            if (!audioBuffer.isEmpty()) {
+                log.info("Flushing {} buffered audio packets after reconnection", audioBuffer.size());
+                for (byte[] audio : audioBuffer) {
+                    client.sendAudio(audio);
+                }
+                audioBuffer.clear();
+            }
+        }//flushBufferedAudio
 
     }//InterviewState
 

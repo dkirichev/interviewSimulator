@@ -17,6 +17,9 @@ public class GeminiLiveClient {
 
     private static final String WS_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
 
+    // Safety margin before 15-minute limit (reconnect at 14 minutes)
+    private static final long SESSION_TIMEOUT_MS = 14 * 60 * 1000;
+
     private final OkHttpClient client;
 
     private final ObjectMapper objectMapper;
@@ -32,6 +35,11 @@ public class GeminiLiveClient {
     private boolean isConnected = false;
 
     private String systemInstruction;
+
+    // Session resumption support
+    private String sessionResumptionHandle = null;
+
+    private long sessionStartTime = 0;
 
     private Consumer<byte[]> onAudioReceived;
 
@@ -50,6 +58,10 @@ public class GeminiLiveClient {
     private Runnable onTurnComplete;
 
     private Runnable onInterrupted;
+
+    private Consumer<String> onGoAway;
+
+    private Runnable onSessionResumptionReady;
 
 
     public GeminiLiveClient(String apiKey, String model, String voiceName) {
@@ -70,15 +82,24 @@ public class GeminiLiveClient {
 
 
     public void connect() {
+        connect(null);
+    }//connect
+
+
+    public void connect(String resumptionHandle) {
         String url = WS_URL + "?key=" + apiKey;
         Request request = new Request.Builder()
                 .url(url)
                 .build();
 
+        // Store resumption handle for setup message
+        this.sessionResumptionHandle = resumptionHandle;
+        this.sessionStartTime = System.currentTimeMillis();
+
         webSocket = client.newWebSocket(request, new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
-                log.info("Gemini WebSocket connected");
+                log.info("Gemini WebSocket connected" + (resumptionHandle != null ? " (resuming session)" : ""));
                 isConnected = true;
                 sendSetupMessage();
             }//onOpen
@@ -154,8 +175,25 @@ public class GeminiLiveClient {
 
             setup.set("generationConfig", generationConfig);
 
-            // System instruction (camelCase)
-            if (systemInstruction != null && !systemInstruction.isBlank()) {
+            // Context window compression - enables UNLIMITED session length
+            // Without this, audio-only sessions are limited to 15 minutes
+            ObjectNode contextWindowCompression = objectMapper.createObjectNode();
+            ObjectNode slidingWindow = objectMapper.createObjectNode();
+            contextWindowCompression.set("slidingWindow", slidingWindow);
+            setup.set("contextWindowCompression", contextWindowCompression);
+
+            // Session resumption - allows resuming if connection drops
+            ObjectNode sessionResumption = objectMapper.createObjectNode();
+            if (sessionResumptionHandle != null) {
+                // Resume existing session
+                sessionResumption.put("handle", sessionResumptionHandle);
+                log.info("Resuming session with handle: {}...", 
+                        sessionResumptionHandle.substring(0, Math.min(20, sessionResumptionHandle.length())));
+            }
+            setup.set("sessionResumption", sessionResumption);
+
+            // System instruction (camelCase) - only for new sessions, not resumptions
+            if (sessionResumptionHandle == null && systemInstruction != null && !systemInstruction.isBlank()) {
                 ObjectNode sysInstr = objectMapper.createObjectNode();
                 ArrayNode parts = objectMapper.createArrayNode();
                 ObjectNode textPart = objectMapper.createObjectNode();
@@ -172,7 +210,8 @@ public class GeminiLiveClient {
             root.set("setup", setup);
 
             String json = objectMapper.writeValueAsString(root);
-            log.info("Sending Gemini setup message");
+            log.info("Sending Gemini setup message (compression: enabled, resumption: {})", 
+                    sessionResumptionHandle != null ? "resuming" : "new");
             log.debug("Setup payload: {}", json);
             webSocket.send(json);
         } catch (Exception e) {
@@ -285,6 +324,20 @@ public class GeminiLiveClient {
                 return;
             }
 
+            // Handle session resumption update - store token for reconnection
+            if (root.has("sessionResumptionUpdate")) {
+                JsonNode update = root.get("sessionResumptionUpdate");
+                if (update.has("resumable") && update.get("resumable").asBoolean() && update.has("newHandle")) {
+                    String newHandle = update.get("newHandle").asText();
+                    this.sessionResumptionHandle = newHandle;
+                    log.debug("Received session resumption handle: {}...", 
+                            newHandle.substring(0, Math.min(20, newHandle.length())));
+                    if (onSessionResumptionReady != null) {
+                        onSessionResumptionReady.run();
+                    }
+                }
+            }
+
             // Handle server content
             if (root.has("serverContent")) {
                 JsonNode serverContent = root.get("serverContent");
@@ -364,11 +417,14 @@ public class GeminiLiveClient {
                 }
             }
 
-            // Handle go away (connection will close soon)
+            // Handle go away (connection will close soon) - trigger reconnection
             if (root.has("goAway")) {
                 JsonNode goAway = root.get("goAway");
                 String timeLeft = goAway.has("timeLeft") ? goAway.get("timeLeft").asText() : "unknown";
-                log.warn("Gemini connection will close soon. Time left: {}", timeLeft);
+                log.warn("Gemini GoAway received! Connection will close. Time left: {}", timeLeft);
+                if (onGoAway != null) {
+                    onGoAway.accept(timeLeft);
+                }
             }
 
         } catch (Exception e) {
@@ -438,5 +494,31 @@ public class GeminiLiveClient {
     public void setOnInterrupted(Runnable callback) {
         this.onInterrupted = callback;
     }//setOnInterrupted
+
+
+    public void setOnGoAway(Consumer<String> callback) {
+        this.onGoAway = callback;
+    }//setOnGoAway
+
+
+    public void setOnSessionResumptionReady(Runnable callback) {
+        this.onSessionResumptionReady = callback;
+    }//setOnSessionResumptionReady
+
+
+    public String getSessionResumptionHandle() {
+        return sessionResumptionHandle;
+    }//getSessionResumptionHandle
+
+
+    public long getSessionStartTime() {
+        return sessionStartTime;
+    }//getSessionStartTime
+
+
+    public boolean isApproachingTimeout() {
+        if (sessionStartTime == 0) return false;
+        return (System.currentTimeMillis() - sessionStartTime) > SESSION_TIMEOUT_MS;
+    }//isApproachingTimeout
 
 }//GeminiLiveClient
