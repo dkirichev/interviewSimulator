@@ -65,6 +65,7 @@
                             <div id="custom-position-container" 
                                  th:classappend="${setupForm.position != 'custom'} ? 'hidden' : ''"
                                  class="mt-3">
+                                <label for="custom-position" class="sr-only">Custom Position</label>
                                 <input type="text"
                                        id="custom-position"
                                        th:field="*{customPosition}"
@@ -152,6 +153,7 @@
 
                             <!-- Upload area (show only if no file uploaded) -->
                             <div th:if="${setupForm.cvFileName == null}" id="cv-upload-area" class="relative border-2 border-dashed border-slate-700 rounded-xl p-8 text-center hover:border-blue-500 transition cursor-pointer bg-slate-900/50">
+                                <label for="cv-file-input" class="sr-only">Upload CV File</label>
                                 <input type="file"
                                        id="cv-file-input"
                                        name="cvFile"

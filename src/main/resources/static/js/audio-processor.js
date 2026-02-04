@@ -42,11 +42,6 @@ function startInterviewFromSession() {
             interviewerNameBG: window.interviewSession.interviewerNameBG || 'Георги'
         };
         
-        console.log('Starting interview from session:', {
-            ...currentSession,
-            cvText: currentSession.cvText ? '[CV TEXT PROVIDED]' : null
-        });
-        
         // Request microphone and start
         requestMicrophoneAndConnect();
     } else {
@@ -89,18 +84,15 @@ async function requestMicrophoneAndConnect() {
 
 // Connect to backend WebSocket
 function connectToBackend() {
-    console.log("Connecting to WebSocket...");
     
     const socket = new SockJS('/ws/interview');
     stompClient = Stomp.over(socket);
     
     // Disable debug logging in production
     stompClient.debug = function(str) {
-        console.debug(str);
     };
     
     stompClient.connect({}, function(frame) {
-        console.log('Connected to WebSocket:', frame);
         isConnected = true;
         
         // Subscribe to user-specific queues
@@ -156,17 +148,10 @@ function startInterviewSession() {
     }
     
     stompClient.send('/app/interview/start', {}, JSON.stringify(startPayload));
-    
-    console.log('Interview start request sent:', { 
-        ...startPayload, 
-        cvText: startPayload.cvText ? '[CV TEXT PROVIDED]' : null,
-        userApiKey: startPayload.userApiKey ? '[API KEY PROVIDED]' : null
-    });
 }
 
 function handleStatusMessage(message) {
     const data = JSON.parse(message.body);
-    console.log('Status:', data);
     
     switch(data.type) {
         case 'CONNECTED':
@@ -264,7 +249,6 @@ function handleAudioMessage(message) {
 
 function handleTranscriptMessage(message) {
     const data = JSON.parse(message.body);
-    console.log('Transcript:', data.speaker, '-', data.text);
     
     // Store transcript for display
     appendToLiveTranscript(data.speaker, data.text);
@@ -272,7 +256,6 @@ function handleTranscriptMessage(message) {
 
 function handleReportMessage(message) {
     const data = JSON.parse(message.body);
-    console.log('Report received:', data);
     
     // Redirect to server-rendered report page
     if (data.sessionId) {
@@ -339,7 +322,6 @@ function handleErrorMessage(message) {
 
 function handleTextMessage(message) {
     const data = JSON.parse(message.body);
-    console.log('Text from AI:', data.text);
 }
 
 // Audio capture
@@ -349,7 +331,6 @@ async function startAudioCapture() {
         if (window.preinitializedMicStream) {
             globalStream = window.preinitializedMicStream;
             window.preinitializedMicStream = null; // Clear it after use
-            console.log('Using pre-initialized microphone stream');
         } else {
             globalStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
@@ -387,7 +368,6 @@ async function startAudioCapture() {
         input.connect(processor);
         processor.connect(audioContext.destination);
         
-        console.log('Audio capture started');
 
     } catch (err) {
         console.error("Mic Error:", err);
@@ -406,7 +386,6 @@ function stopAudioCapture() {
         stompClient.send('/app/interview/mic-off', {}, '');
     }
     
-    console.log('Audio capture stopped');
 }
 
 // Convert Float32Array to Int16Array (PCM)
@@ -459,12 +438,9 @@ async function playNextAudio() {
             });
             nextPlayTime = 0;
             const actualRate = playbackAudioContext.sampleRate;
-            console.log('AudioContext initialized. Requested: 24000Hz, Actual:', actualRate + 'Hz');
             
             // Warn if browser doesn't support 24kHz (will cause pitch/speed issues)
             if (actualRate !== 24000) {
-                console.warn('Browser does not support 24kHz AudioContext! Audio will play at', actualRate, 'Hz - expect quality issues.');
-                console.warn('Consider using AudioContext resampling or OfflineAudioContext for proper playback.');
             }
         }
         

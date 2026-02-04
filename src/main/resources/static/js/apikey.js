@@ -21,7 +21,7 @@ async function checkAppMode() {
                 showApiKeyModal();
             } else {
                 // Optionally validate stored key on load
-                console.log('Using stored API key');
+                
             }
         } else {
             // DEV mode - hide modal if visible
