@@ -34,6 +34,7 @@ public class InterviewWebSocketController {
         String voiceId = payload.get("voiceId");
         String interviewerNameEN = payload.get("interviewerNameEN");
         String interviewerNameBG = payload.get("interviewerNameBG");
+        String userApiKey = payload.get("userApiKey"); // User-provided API key for PROD mode
 
         // Validate required fields
         if (candidateName.isBlank()) {
@@ -50,10 +51,10 @@ public class InterviewWebSocketController {
 
         UUID interviewSessionId = geminiIntegrationService.startInterview(
                 sessionIdStr, candidateName, position, difficulty, language, cvText, 
-                voiceId, interviewerNameEN, interviewerNameBG);
+                voiceId, interviewerNameEN, interviewerNameBG, userApiKey);
 
-        log.info("Interview started - WebSocket: {}, Interview Session: {}, Language: {}, Voice: {}, CV provided: {}", 
-                sessionIdStr, interviewSessionId, language, voiceId, cvText != null && !cvText.isBlank());
+        log.info("Interview started - WebSocket: {}, Interview Session: {}, Language: {}, Voice: {}, CV provided: {}, User API key: {}", 
+                sessionIdStr, interviewSessionId, language, voiceId, cvText != null && !cvText.isBlank(), userApiKey != null);
     }//startInterview
 
 

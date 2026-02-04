@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.k2ai.interviewSimulator.config.GeminiConfig;
 import net.k2ai.interviewSimulator.entity.InterviewFeedback;
+import net.k2ai.interviewSimulator.exception.RateLimitException;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -35,25 +36,43 @@ public class GeminiIntegrationService {
 
 
     public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, String language) {
-        return startInterview(wsSessionId, candidateName, position, difficulty, language, null, null, null, null);
+        return startInterview(wsSessionId, candidateName, position, difficulty, language, null, null, null, null, null);
     }//startInterview
 
 
     public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, String language, String cvText) {
-        return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText, null, null, null);
+        return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText, null, null, null, null);
     }//startInterview
 
 
     public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, 
                                String language, String cvText, String voiceId, String interviewerNameEN, String interviewerNameBG) {
+        return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText, voiceId, interviewerNameEN, interviewerNameBG, null);
+    }//startInterview
+
+
+    public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, 
+                               String language, String cvText, String voiceId, String interviewerNameEN, 
+                               String interviewerNameBG, String userApiKey) {
         // Create database session
         UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty);
+
+        // Determine which API key to use
+        String effectiveApiKey = determineApiKey(userApiKey);
+        if (effectiveApiKey == null || effectiveApiKey.isBlank()) {
+            log.error("No API key available for session: {}", wsSessionId);
+            sendToClient(wsSessionId, "/queue/error", Map.of(
+                    "message", "API key required. Please provide a valid Gemini API key.",
+                    "requiresApiKey", true
+            ));
+            return interviewSessionId;
+        }
 
         // Use provided voice or fall back to config default
         String effectiveVoice = (voiceId != null && !voiceId.isBlank()) ? voiceId : geminiConfig.getVoiceName();
 
-        // Create Gemini client with the selected voice
-        GeminiLiveClient geminiClient = new GeminiLiveClient(geminiConfig.getApiKey(), geminiConfig.getLiveModel(), effectiveVoice);
+        // Create Gemini client with the selected voice and effective API key
+        GeminiLiveClient geminiClient = new GeminiLiveClient(effectiveApiKey, geminiConfig.getLiveModel(), effectiveVoice);
 
         // Generate system instruction for the AI interviewer (language-aware, with optional CV and custom names)
         String systemInstruction;
@@ -64,10 +83,11 @@ public class GeminiIntegrationService {
         }
         geminiClient.setSystemInstruction(systemInstruction);
 
-        // Create interview state (store voice and instruction for potential reconnection)
+        // Create interview state (store voice, instruction, and API key for potential reconnection)
         InterviewState state = new InterviewState(interviewSessionId, geminiClient, candidateName, position, difficulty, language);
         state.setVoiceId(effectiveVoice);
         state.setSystemInstruction(systemInstruction);
+        state.setUserApiKey(effectiveApiKey);
         activeSessions.put(wsSessionId, state);
 
         // Setup callbacks
@@ -76,10 +96,25 @@ public class GeminiIntegrationService {
         // Connect to Gemini
         geminiClient.connect();
 
-        log.info("Started interview session {} with voice: {}", interviewSessionId, effectiveVoice);
+        log.info("Started interview session {} with voice: {}, using {}", 
+                interviewSessionId, effectiveVoice, userApiKey != null ? "user API key" : "backend API key");
 
         return interviewSessionId;
     }//startInterview
+
+
+    /**
+     * Determines which API key to use based on mode and availability
+     */
+    private String determineApiKey(String userApiKey) {
+        if (geminiConfig.isProdMode()) {
+            // PROD mode - must use user-provided key
+            return userApiKey;
+        } else {
+            // DEV mode - use backend key
+            return geminiConfig.getApiKey();
+        }
+    }//determineApiKey
 
 
     private void setupGeminiCallbacks(String wsSessionId, InterviewState state) {
@@ -176,12 +211,26 @@ public class GeminiIntegrationService {
             ));
         });
 
-        // On error
+        // On error - detect rate limit and invalid key errors
         client.setOnError(error -> {
             log.error("Gemini error for session {}: {}", wsSessionId, error);
-            sendToClient(wsSessionId, "/queue/error", Map.of(
-                    "message", error
-            ));
+            
+            // Check for rate limit or invalid key errors
+            if (error != null && error.startsWith("RATE_LIMIT:")) {
+                sendToClient(wsSessionId, "/queue/error", Map.of(
+                        "message", error.substring("RATE_LIMIT:".length()),
+                        "rateLimited", true
+                ));
+            } else if (error != null && error.startsWith("INVALID_KEY:")) {
+                sendToClient(wsSessionId, "/queue/error", Map.of(
+                        "message", error.substring("INVALID_KEY:".length()),
+                        "invalidKey", true
+                ));
+            } else {
+                sendToClient(wsSessionId, "/queue/error", Map.of(
+                        "message", error
+                ));
+            }
         });
 
         // Handle GoAway - server is about to close connection, trigger reconnection
@@ -235,9 +284,10 @@ public class GeminiIntegrationService {
         // Close old connection gracefully
         state.getGeminiClient().close();
 
-        // Create new client with same configuration
+        // Create new client with same configuration (use stored API key)
         String effectiveVoice = state.getVoiceId() != null ? state.getVoiceId() : geminiConfig.getVoiceName();
-        GeminiLiveClient newClient = new GeminiLiveClient(geminiConfig.getApiKey(), geminiConfig.getLiveModel(), effectiveVoice);
+        String effectiveApiKey = state.getUserApiKey();
+        GeminiLiveClient newClient = new GeminiLiveClient(effectiveApiKey, geminiConfig.getLiveModel(), effectiveVoice);
         newClient.setSystemInstruction(state.getSystemInstruction());
 
         // Update state with new client
@@ -328,7 +378,7 @@ public class GeminiIntegrationService {
     private void triggerGrading(String wsSessionId, InterviewState state) {
         new Thread(() -> {
             try {
-                InterviewFeedback feedback = gradingService.gradeInterview(state.getInterviewSessionId());
+                InterviewFeedback feedback = gradingService.gradeInterview(state.getInterviewSessionId(), state.getUserApiKey());
 
                 Map<String, Object> reportData = new HashMap<>();
                 reportData.put("sessionId", state.getInterviewSessionId().toString());
@@ -343,6 +393,12 @@ public class GeminiIntegrationService {
                 reportData.put("transcript", state.getFullTranscript());
 
                 sendToClient(wsSessionId, "/queue/report", reportData);
+            } catch (RateLimitException e) {
+                log.error("Rate limit exceeded during grading for session: {}", state.getInterviewSessionId());
+                sendToClient(wsSessionId, "/queue/error", Map.of(
+                        "message", "API rate limit exceeded. Please use a new API key.",
+                        "rateLimited", true
+                ));
             } catch (Exception e) {
                 log.error("Grading failed for session: {}", state.getInterviewSessionId(), e);
                 sendToClient(wsSessionId, "/queue/error", Map.of(
@@ -414,6 +470,9 @@ public class GeminiIntegrationService {
         private String voiceId;
 
         private String systemInstruction;
+
+        // User's API key (for PROD mode and reconnection)
+        private String userApiKey;
 
         // Buffer for audio during reconnection
         private final java.util.List<byte[]> audioBuffer = new java.util.ArrayList<>();
@@ -520,6 +579,16 @@ public class GeminiIntegrationService {
         public void setSystemInstruction(String systemInstruction) {
             this.systemInstruction = systemInstruction;
         }//setSystemInstruction
+
+
+        public String getUserApiKey() {
+            return userApiKey;
+        }//getUserApiKey
+
+
+        public void setUserApiKey(String userApiKey) {
+            this.userApiKey = userApiKey;
+        }//setUserApiKey
 
 
         public synchronized void bufferAudio(byte[] audioData) {

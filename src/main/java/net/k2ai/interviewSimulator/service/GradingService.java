@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.k2ai.interviewSimulator.config.GeminiConfig;
 import net.k2ai.interviewSimulator.entity.InterviewFeedback;
 import net.k2ai.interviewSimulator.entity.InterviewSession;
+import net.k2ai.interviewSimulator.exception.RateLimitException;
 import net.k2ai.interviewSimulator.repository.InterviewFeedbackRepository;
 import net.k2ai.interviewSimulator.repository.InterviewSessionRepository;
 import okhttp3.*;
@@ -37,8 +38,25 @@ public class GradingService {
             .build();
 
 
+    /**
+     * Grade interview using backend API key (for DEV mode or backward compatibility)
+     */
     public InterviewFeedback gradeInterview(UUID sessionId) {
+        return gradeInterview(sessionId, null);
+    }//gradeInterview
+
+
+    /**
+     * Grade interview with optional user-provided API key
+     */
+    public InterviewFeedback gradeInterview(UUID sessionId, String userApiKey) {
         log.info("Starting grading for session: {}", sessionId);
+
+        // Determine which API key to use
+        String effectiveApiKey = determineApiKey(userApiKey);
+        if (effectiveApiKey == null || effectiveApiKey.isBlank()) {
+            throw new IllegalStateException("No API key available for grading");
+        }
 
         InterviewSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found: " + sessionId));
@@ -51,7 +69,7 @@ public class GradingService {
 
         try {
             String prompt = buildGradingPrompt(session);
-            String response = callGeminiApi(prompt);
+            String response = callGeminiApi(prompt, effectiveApiKey);
             InterviewFeedback feedback = parseGradingResponse(response, session);
 
             // Save to database
@@ -63,11 +81,28 @@ public class GradingService {
 
             log.info("Grading complete for session: {}. Score: {}", sessionId, saved.getOverallScore());
             return saved;
+        } catch (RateLimitException e) {
+            // Re-throw rate limit exceptions for caller to handle
+            throw e;
         } catch (Exception e) {
             log.error("Failed to grade interview for session: {}", sessionId, e);
             return createDefaultFeedback(session);
         }
     }//gradeInterview
+
+
+    /**
+     * Determines which API key to use based on mode and availability
+     */
+    private String determineApiKey(String userApiKey) {
+        if (geminiConfig.isProdMode()) {
+            // PROD mode - must use user-provided key
+            return userApiKey;
+        } else {
+            // DEV mode - use backend key
+            return geminiConfig.getApiKey();
+        }
+    }//determineApiKey
 
 
     private String buildGradingPrompt(InterviewSession session) {
@@ -118,8 +153,8 @@ public class GradingService {
     }//buildGradingPrompt
 
 
-    private String callGeminiApi(String prompt) throws IOException {
-        String url = String.format(GEMINI_API_URL, geminiConfig.getGradingModel(), geminiConfig.getApiKey());
+    private String callGeminiApi(String prompt, String apiKey) throws IOException {
+        String url = String.format(GEMINI_API_URL, geminiConfig.getGradingModel(), apiKey);
 
         String requestBody = String.format("""
                 {
@@ -144,6 +179,12 @@ public class GradingService {
             if (!response.isSuccessful()) {
                 String errorBody = response.body() != null ? response.body().string() : "No response body";
                 log.error("Gemini API error: {} - {}", response.code(), errorBody);
+                
+                // Check for rate limit (429 RESOURCE_EXHAUSTED)
+                if (response.code() == 429) {
+                    throw new RateLimitException("API rate limit exceeded: " + errorBody);
+                }
+                
                 throw new IOException("Gemini API error: " + response.code());
             }
 

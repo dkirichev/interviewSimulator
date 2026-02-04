@@ -82,11 +82,20 @@ function startInterviewSession() {
         startPayload.interviewerNameBG = currentSession.interviewerNameBG;
     }
     
+    // Add user API key for PROD mode (from localStorage)
+    if (typeof getStoredApiKey === 'function') {
+        const userApiKey = getStoredApiKey();
+        if (userApiKey) {
+            startPayload.userApiKey = userApiKey;
+        }
+    }
+    
     stompClient.send('/app/interview/start', {}, JSON.stringify(startPayload));
     
     console.log('Interview start request sent:', { 
         ...startPayload, 
-        cvText: startPayload.cvText ? '[CV TEXT PROVIDED]' : null 
+        cvText: startPayload.cvText ? '[CV TEXT PROVIDED]' : null,
+        userApiKey: startPayload.userApiKey ? '[API KEY PROVIDED]' : null
     });
 }
 
@@ -188,6 +197,49 @@ function handleReportMessage(message) {
 function handleErrorMessage(message) {
     const data = JSON.parse(message.body);
     console.error('Error from server:', data.message);
+    
+    // Check if this is a rate limit error
+    if (data.rateLimited) {
+        // Handle rate limit - clear cached key and show modal
+        if (typeof handleRateLimitError === 'function') {
+            handleRateLimitError();
+        } else {
+            alert('API rate limit exceeded. Please use a new API key.');
+        }
+        // Go back to setup view
+        if (typeof switchView === 'function') {
+            switchView('setup');
+        }
+        return;
+    }
+    
+    // Check if API key is invalid
+    if (data.invalidKey) {
+        // Handle invalid key - clear cached key and show modal
+        if (typeof clearApiKeyAndShowModal === 'function') {
+            clearApiKeyAndShowModal();
+        } else if (typeof showApiKeyModal === 'function') {
+            showApiKeyModal();
+        } else {
+            alert('Invalid API key. Please provide a valid Gemini API key.');
+        }
+        // Go back to setup view
+        if (typeof switchView === 'function') {
+            switchView('setup');
+        }
+        return;
+    }
+    
+    // Check if API key is required (PROD mode without key)
+    if (data.requiresApiKey) {
+        if (typeof showApiKeyModal === 'function') {
+            showApiKeyModal();
+        } else {
+            alert('API key required. Please provide a valid Gemini API key.');
+        }
+        return;
+    }
+    
     alert('Error: ' + data.message);
 }
 

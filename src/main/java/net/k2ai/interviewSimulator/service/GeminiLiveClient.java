@@ -142,6 +142,33 @@ public class GeminiLiveClient {
             public void onFailure(WebSocket webSocket, Throwable t, Response response) {
                 log.error("Gemini WebSocket error", t);
                 isConnected = false;
+                
+                // Check for rate limit or authentication errors from response
+                if (response != null) {
+                    int code = response.code();
+                    log.error("Gemini WebSocket failure - HTTP code: {}", code);
+                    
+                    if (code == 429) {
+                        // Rate limit exceeded
+                        if (onError != null) {
+                            onError.accept("RATE_LIMIT:API rate limit exceeded");
+                        }
+                        return;
+                    } else if (code == 401 || code == 403) {
+                        // Invalid or unauthorized API key
+                        if (onError != null) {
+                            onError.accept("INVALID_KEY:Invalid or unauthorized API key");
+                        }
+                        return;
+                    } else if (code == 400) {
+                        // Bad request - possibly invalid key format
+                        if (onError != null) {
+                            onError.accept("INVALID_KEY:Invalid API key");
+                        }
+                        return;
+                    }
+                }
+                
                 if (onError != null) {
                     onError.accept(t.getMessage());
                 }
