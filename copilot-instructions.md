@@ -297,3 +297,18 @@ apikey.modal.title=Gemini API Key Required
 - [ ] Flyway migration for DB changes
 - [ ] i18n messages for new UI text
 - [ ] Both English and Bulgarian translations added
+
+---
+
+## Documentation
+
+For complete documentation, see the `docs/` folder:
+
+| Document | Description |
+|----------|-------------|
+| [README.md](README.md) | Project overview and quick start |
+| [docs/SETUP.md](docs/SETUP.md) | Local development setup |
+| [docs/DOCKER.md](docs/DOCKER.md) | Docker deployment guide |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture |
+| [docs/API.md](docs/API.md) | REST and WebSocket API reference |
+| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Contribution guidelines |

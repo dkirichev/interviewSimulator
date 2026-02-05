@@ -1,0 +1,55 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: interview-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-interview_simulator}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - interview-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-interview_simulator}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: interview-app
+    ports:
+      - "8080:8080"
+    environment:
+      # Application mode: PROD requires users to provide their own API key
+      APP_MODE: ${APP_MODE:-PROD}
+      # Database connection
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-interview_simulator}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      # Optional: Only needed in DEV mode
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # JVM options
+      JAVA_OPTS: ${JAVA_OPTS:-"-Xmx512m -Xms256m"}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - interview-network
+    restart: unless-stopped
+
+networks:
+  interview-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
