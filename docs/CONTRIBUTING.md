@@ -1,6 +1,7 @@
 # 🤝 Contributing Guide
 
-Thank you for your interest in contributing to the AI Interview Simulator! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to the AI Interview Simulator! This document provides guidelines and
+instructions for contributing.
 
 ## Table of Contents
 
@@ -43,6 +44,7 @@ A clear description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Click on '...'
 3. See error
@@ -54,6 +56,7 @@ What you expected to happen.
 If applicable, add screenshots.
 
 **Environment:**
+
 - OS: [e.g., Windows 11, macOS 14, Ubuntu 22.04]
 - Browser: [e.g., Chrome 120, Firefox 121]
 - Java Version: [e.g., 21.0.1]
@@ -66,9 +69,9 @@ We welcome feature suggestions! Please:
 1. Check if the feature already exists or is planned
 2. Create an issue with the "Feature Request" label
 3. Describe:
-   - **The problem** you're trying to solve
-   - **Your proposed solution**
-   - **Alternatives** you've considered
+    - **The problem** you're trying to solve
+    - **Your proposed solution**
+    - **Alternatives** you've considered
 
 ### 🔧 Submitting Code
 
@@ -114,11 +117,13 @@ source .env
 ### IDE Setup
 
 **IntelliJ IDEA (Recommended):**
+
 1. Open the project folder
 2. Enable annotation processing: Settings → Build → Compiler → Annotation Processors
 3. Install Lombok plugin if prompted
 
 **VS Code:**
+
 1. Install "Extension Pack for Java"
 2. Install "Spring Boot Extension Pack"
 3. Open the project folder
@@ -131,69 +136,72 @@ We maintain strict code formatting standards. **These are non-negotiable.**
 
 ### Java Formatting
 
-| Rule | Example |
-|------|---------|
-| **File ends with empty line** | All files must end with a newline |
-| **Two empty lines between methods** | Includes before first method |
-| **One empty line between fields** | Each field declaration separated |
-| **Closing brace comments** | `}//methodName` and `}//ClassName` |
-| **Tab indentation** | Use tabs, not spaces |
-| **Same-line braces** | `if (x) {` not `if (x)\n{` |
+| Rule                                | Example                            |
+|-------------------------------------|------------------------------------|
+| **File ends with empty line**       | All files must end with a newline  |
+| **Two empty lines between methods** | Includes before first method       |
+| **One empty line between fields**   | Each field declaration separated   |
+| **Closing brace comments**          | `}//methodName` and `}//ClassName` |
+| **Tab indentation**                 | Use tabs, not spaces               |
+| **Same-line braces**                | `if (x) {` not `if (x)\n{`         |
 
 ### Example
 
 ```java
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class MyService {
 
-    private final MyRepository repository;
+	private final MyRepository repository;
 
-    private final OtherService otherService;
-
-
-    public void doWork() {
-        log.info("Working");
-    }//doWork
+	private final OtherService otherService;
 
 
-    public void doOtherWork() {
-        log.info("Other work");
-    }//doOtherWork
+	public void doWork() {
+		log.info("Working");
+	}//doWork
+
+
+	public void doOtherWork() {
+		log.info("Other work");
+	}//doOtherWork
 
 }//MyService
 ```
 
 ### Required Annotations
 
-| Annotation | Use Case |
-|------------|----------|
-| `@Slf4j` | All services/controllers (auto-injects `log`) |
-| `@RequiredArgsConstructor` | Constructor injection for `final` fields |
-| `@Data` | Entities (getters/setters/equals/hashCode) |
-| `@Builder` | Fluent object construction |
+| Annotation                 | Use Case                                      |
+|----------------------------|-----------------------------------------------|
+| `@Slf4j`                   | All services/controllers (auto-injects `log`) |
+| `@RequiredArgsConstructor` | Constructor injection for `final` fields      |
+| `@Data`                    | Entities (getters/setters/equals/hashCode)    |
+| `@Builder`                 | Fluent object construction                    |
 
 ### Naming Conventions
 
-| Type | Pattern | Example |
-|------|---------|---------|
-| Entity | CamelCase | `InterviewSession` |
-| Table | snake_case | `interview_sessions` |
-| Service | `{Name}Service` | `InterviewService` |
+| Type       | Pattern              | Example                      |
+|------------|----------------------|------------------------------|
+| Entity     | CamelCase            | `InterviewSession`           |
+| Table      | snake_case           | `interview_sessions`         |
+| Service    | `{Name}Service`      | `InterviewService`           |
 | Repository | `{Entity}Repository` | `InterviewSessionRepository` |
-| Controller | `{Name}Controller` | `SetupController` |
-| Migration | `V{n}__{desc}.sql` | `V1__initial_schema.sql` |
+| Controller | `{Name}Controller`   | `SetupController`            |
+| Migration  | `V{n}__{desc}.sql`   | `V1__initial_schema.sql`     |
 
 ### Logging Standards
 
 **Log these:**
+
 - External API calls
 - WebSocket events
 - Errors and exceptions
 - State changes
 
 **Don't log:**
+
 - Simple CRUD operations
 - Getters/setters
 - Every method entry/exit
@@ -203,7 +211,9 @@ public class MyService {
 log.info("Started");
 
 // ✅ Good
-log.info("Started session {} for {}", sessionId, candidateName);
+log.
+
+info("Started session {} for {}",sessionId, candidateName);
 ```
 
 ---
@@ -224,15 +234,15 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Types
 
-| Type | Description |
-|------|-------------|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `docs` | Documentation changes |
-| `style` | Code style (formatting, no logic change) |
-| `refactor` | Code refactoring |
-| `test` | Adding or updating tests |
-| `chore` | Maintenance tasks |
+| Type       | Description                              |
+|------------|------------------------------------------|
+| `feat`     | New feature                              |
+| `fix`      | Bug fix                                  |
+| `docs`     | Documentation changes                    |
+| `style`    | Code style (formatting, no logic change) |
+| `refactor` | Code refactoring                         |
+| `test`     | Adding or updating tests                 |
+| `chore`    | Maintenance tasks                        |
 
 ### Examples
 
@@ -266,9 +276,9 @@ test(cv): add tests for DOCX processing
    ```
 
 3. **Check code style:**
-   - Ensure all files end with newline
-   - Verify closing brace comments
-   - Check proper spacing between methods
+    - Ensure all files end with newline
+    - Verify closing brace comments
+    - Check proper spacing between methods
 
 4. **Update documentation** if needed
 
@@ -278,18 +288,22 @@ When creating a PR, include:
 
 ```markdown
 ## Description
+
 Brief description of changes.
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## How Has This Been Tested?
+
 Describe the tests you ran.
 
 ## Checklist
+
 - [ ] My code follows the style guidelines
 - [ ] I have added tests for new functionality
 - [ ] I have updated documentation
@@ -329,24 +343,25 @@ Describe the tests you ran.
 ### Example
 
 ```java
+
 @SpringBootTest
 class GradingServiceTest {
 
-    @Autowired
-    private GradingService gradingService;
+	@Autowired
+	private GradingService gradingService;
 
 
-    @Test
-    void gradeInterview_shouldReturnValidScores() {
-        // Arrange
-        UUID sessionId = createTestSession();
-        
-        // Act
-        InterviewFeedback feedback = gradingService.gradeInterview(sessionId);
-        
-        // Assert
-        assertThat(feedback.getOverallScore()).isBetween(0, 100);
-    }//gradeInterview_shouldReturnValidScores
+	@Test
+	void gradeInterview_shouldReturnValidScores() {
+		// Arrange
+		UUID sessionId = createTestSession();
+
+		// Act
+		InterviewFeedback feedback = gradingService.gradeInterview(sessionId);
+
+		// Assert
+		assertThat(feedback.getOverallScore()).isBetween(0, 100);
+	}//gradeInterview_shouldReturnValidScores
 
 }//GradingServiceTest
 ```
