@@ -12,21 +12,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/legal")
 public class LegalController {
 
-    private static final String LAYOUT = "layouts/main";
+	private static final String LAYOUT = "layouts/main";
 
-    @GetMapping("/privacy")
-    public String showPrivacyPolicy(Model model) {
-        model.addAttribute("content", "pages/legal/privacy");
-        model.addAttribute("pageTitle", "Privacy Policy");
-        model.addAttribute("showLegalLinks", true);
-        return LAYOUT;
-    }
+	@GetMapping("/privacy")
+	public String showPrivacyPolicy(Model model) {
+		model.addAttribute("content", "pages/legal/privacy");
+		model.addAttribute("pageTitle", "Privacy Policy");
+		model.addAttribute("showLegalLinks", true);
+		return LAYOUT;
+	}
 
-    @GetMapping("/terms")
-    public String showTermsAndConditions(Model model) {
-        model.addAttribute("content", "pages/legal/terms");
-        model.addAttribute("pageTitle", "Terms & Conditions");
-        model.addAttribute("showLegalLinks", true);
-        return LAYOUT;
-    }
+	@GetMapping("/terms")
+	public String showTermsAndConditions(Model model) {
+		model.addAttribute("content", "pages/legal/terms");
+		model.addAttribute("pageTitle", "Terms & Conditions");
+		model.addAttribute("showLegalLinks", true);
+		return LAYOUT;
+	}
 }

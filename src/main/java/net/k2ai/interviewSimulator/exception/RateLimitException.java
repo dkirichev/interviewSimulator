@@ -5,13 +5,13 @@ package net.k2ai.interviewSimulator.exception;
  */
 public class RateLimitException extends RuntimeException {
 
-    public RateLimitException(String message) {
-        super(message);
-    }//RateLimitException
+	public RateLimitException(String message) {
+		super(message);
+	}//RateLimitException
 
 
-    public RateLimitException(String message, Throwable cause) {
-        super(message, cause);
-    }//RateLimitException
+	public RateLimitException(String message, Throwable cause) {
+		super(message, cause);
+	}//RateLimitException
 
 }//RateLimitException

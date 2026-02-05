@@ -18,14 +18,14 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = SafeTextValidator.class)
 public @interface SafeText {
 
-    String message() default "{validation.safeText}";
+	String message() default "{validation.safeText}";
 
-    int min() default 2;
+	int min() default 2;
 
-    int max() default 50;
+	int max() default 50;
 
-    Class<?>[] groups() default {};
+	Class<?>[] groups() default {};
 
-    Class<? extends Payload>[] payload() default {};
+	Class<? extends Payload>[] payload() default {};
 
 }

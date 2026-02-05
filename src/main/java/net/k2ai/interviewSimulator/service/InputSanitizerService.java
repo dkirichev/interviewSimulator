@@ -11,150 +11,150 @@ import java.util.regex.Pattern;
 @Service
 public class InputSanitizerService {
 
-    private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]*>");
-    private static final Pattern SCRIPT_PATTERN = Pattern.compile(
-            "(?i)<script[^>]*>.*?</script>|javascript:|on\\w+\\s*=", Pattern.DOTALL
-    );
-    private static final Pattern SQL_INJECTION_PATTERN = Pattern.compile(
-            "(?i)(--|;|'|\"\\s*(or|and)\\s+|union\\s+select|insert\\s+into|delete\\s+from|drop\\s+table)",
-            Pattern.CASE_INSENSITIVE
-    );
+	private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]*>");
+	private static final Pattern SCRIPT_PATTERN = Pattern.compile(
+			"(?i)<script[^>]*>.*?</script>|javascript:|on\\w+\\s*=", Pattern.DOTALL
+	);
+	private static final Pattern SQL_INJECTION_PATTERN = Pattern.compile(
+			"(?i)(--|;|'|\"\\s*(or|and)\\s+|union\\s+select|insert\\s+into|delete\\s+from|drop\\s+table)",
+			Pattern.CASE_INSENSITIVE
+	);
 
-    /**
-     * Sanitizes text for safe display in HTML.
-     * Escapes HTML special characters to prevent XSS.
-     */
-    public String sanitizeForHtml(String input) {
-        if (input == null) {
-            return null;
-        }
-        return input
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#x27;");
-    }
+	/**
+	 * Sanitizes text for safe display in HTML.
+	 * Escapes HTML special characters to prevent XSS.
+	 */
+	public String sanitizeForHtml(String input) {
+		if (input == null) {
+			return null;
+		}
+		return input
+				.replace("&", "&amp;")
+				.replace("<", "&lt;")
+				.replace(">", "&gt;")
+				.replace("\"", "&quot;")
+				.replace("'", "&#x27;");
+	}
 
-    /**
-     * Sanitizes text for use in prompts sent to AI services.
-     * Removes potentially dangerous content while preserving readability.
-     */
-    public String sanitizeForPrompt(String input) {
-        if (input == null) {
-            return null;
-        }
+	/**
+	 * Sanitizes text for use in prompts sent to AI services.
+	 * Removes potentially dangerous content while preserving readability.
+	 */
+	public String sanitizeForPrompt(String input) {
+		if (input == null) {
+			return null;
+		}
 
-        String sanitized = input;
+		String sanitized = input;
 
-        // Remove script tags and javascript: URLs
-        sanitized = SCRIPT_PATTERN.matcher(sanitized).replaceAll("");
+		// Remove script tags and javascript: URLs
+		sanitized = SCRIPT_PATTERN.matcher(sanitized).replaceAll("");
 
-        // Remove HTML tags (keep content)
-        sanitized = HTML_TAG_PATTERN.matcher(sanitized).replaceAll("");
+		// Remove HTML tags (keep content)
+		sanitized = HTML_TAG_PATTERN.matcher(sanitized).replaceAll("");
 
-        // Trim and normalize whitespace
-        sanitized = sanitized.replaceAll("\\s+", " ").trim();
+		// Trim and normalize whitespace
+		sanitized = sanitized.replaceAll("\\s+", " ").trim();
 
-        return sanitized;
-    }
+		return sanitized;
+	}
 
-    /**
-     * Sanitizes a candidate name - only allows letters, spaces, hyphens, and apostrophes.
-     * Returns null if input is invalid.
-     */
-    public String sanitizeName(String input) {
-        if (input == null || input.isBlank()) {
-            return null;
-        }
+	/**
+	 * Sanitizes a candidate name - only allows letters, spaces, hyphens, and apostrophes.
+	 * Returns null if input is invalid.
+	 */
+	public String sanitizeName(String input) {
+		if (input == null || input.isBlank()) {
+			return null;
+		}
 
-        String trimmed = input.trim();
+		String trimmed = input.trim();
 
-        // Only allow letters (Unicode), spaces, hyphens, apostrophes
-        if (!trimmed.matches("^[\\p{L}\\s\\-']+$")) {
-            return null;
-        }
+		// Only allow letters (Unicode), spaces, hyphens, apostrophes
+		if (!trimmed.matches("^[\\p{L}\\s\\-']+$")) {
+			return null;
+		}
 
-        // Limit length
-        if (trimmed.length() > 30) {
-            trimmed = trimmed.substring(0, 30);
-        }
+		// Limit length
+		if (trimmed.length() > 30) {
+			trimmed = trimmed.substring(0, 30);
+		}
 
-        return trimmed;
-    }
+		return trimmed;
+	}
 
-    /**
-     * Sanitizes a position/job title - allows letters, numbers, spaces, and basic punctuation.
-     * Returns null if input contains dangerous characters.
-     */
-    public String sanitizePosition(String input) {
-        if (input == null || input.isBlank()) {
-            return null;
-        }
+	/**
+	 * Sanitizes a position/job title - allows letters, numbers, spaces, and basic punctuation.
+	 * Returns null if input contains dangerous characters.
+	 */
+	public String sanitizePosition(String input) {
+		if (input == null || input.isBlank()) {
+			return null;
+		}
 
-        String trimmed = input.trim();
+		String trimmed = input.trim();
 
-        // Check for dangerous patterns
-        if (SQL_INJECTION_PATTERN.matcher(trimmed).find()) {
-            return null;
-        }
-        if (SCRIPT_PATTERN.matcher(trimmed).find()) {
-            return null;
-        }
+		// Check for dangerous patterns
+		if (SQL_INJECTION_PATTERN.matcher(trimmed).find()) {
+			return null;
+		}
+		if (SCRIPT_PATTERN.matcher(trimmed).find()) {
+			return null;
+		}
 
-        // Only allow safe characters
-        if (!trimmed.matches("^[\\p{L}\\p{N}\\s.,+\\-#()/&]+$")) {
-            return null;
-        }
+		// Only allow safe characters
+		if (!trimmed.matches("^[\\p{L}\\p{N}\\s.,+\\-#()/&]+$")) {
+			return null;
+		}
 
-        // Limit length
-        if (trimmed.length() > 50) {
-            trimmed = trimmed.substring(0, 50);
-        }
+		// Limit length
+		if (trimmed.length() > 50) {
+			trimmed = trimmed.substring(0, 50);
+		}
 
-        return trimmed;
-    }
+		return trimmed;
+	}
 
-    /**
-     * Sanitizes CV text - removes dangerous content while preserving document structure.
-     */
-    public String sanitizeCvText(String input) {
-        if (input == null) {
-            return null;
-        }
+	/**
+	 * Sanitizes CV text - removes dangerous content while preserving document structure.
+	 */
+	public String sanitizeCvText(String input) {
+		if (input == null) {
+			return null;
+		}
 
-        String sanitized = input;
+		String sanitized = input;
 
-        // Remove script tags and javascript
-        sanitized = SCRIPT_PATTERN.matcher(sanitized).replaceAll("");
+		// Remove script tags and javascript
+		sanitized = SCRIPT_PATTERN.matcher(sanitized).replaceAll("");
 
-        // Remove HTML tags
-        sanitized = HTML_TAG_PATTERN.matcher(sanitized).replaceAll("");
+		// Remove HTML tags
+		sanitized = HTML_TAG_PATTERN.matcher(sanitized).replaceAll("");
 
-        // Limit total length to prevent memory issues (100KB max)
-        if (sanitized.length() > 100_000) {
-            sanitized = sanitized.substring(0, 100_000);
-        }
+		// Limit total length to prevent memory issues (100KB max)
+		if (sanitized.length() > 100_000) {
+			sanitized = sanitized.substring(0, 100_000);
+		}
 
-        return sanitized;
-    }
+		return sanitized;
+	}
 
-    /**
-     * Validates that a value is one of the allowed values.
-     * Returns the value if valid, or the default value if not.
-     */
-    public String validateEnum(String input, String[] allowedValues, String defaultValue) {
-        if (input == null || input.isBlank()) {
-            return defaultValue;
-        }
+	/**
+	 * Validates that a value is one of the allowed values.
+	 * Returns the value if valid, or the default value if not.
+	 */
+	public String validateEnum(String input, String[] allowedValues, String defaultValue) {
+		if (input == null || input.isBlank()) {
+			return defaultValue;
+		}
 
-        for (String allowed : allowedValues) {
-            if (allowed.equals(input)) {
-                return input;
-            }
-        }
+		for (String allowed : allowedValues) {
+			if (allowed.equals(input)) {
+				return input;
+			}
+		}
 
-        return defaultValue;
-    }
+		return defaultValue;
+	}
 
 }

@@ -16,10 +16,10 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = ValidVoiceValidator.class)
 public @interface ValidVoice {
 
-    String message() default "{validation.voice.invalid}";
+	String message() default "{validation.voice.invalid}";
 
-    Class<?>[] groups() default {};
+	Class<?>[] groups() default {};
 
-    Class<? extends Payload>[] payload() default {};
+	Class<? extends Payload>[] payload() default {};
 
 }

@@ -17,30 +17,30 @@ import java.util.UUID;
 @AllArgsConstructor
 public class InterviewSession {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
-    @Column(nullable = false)
-    private String candidateName;
+	@Column(nullable = false)
+	private String candidateName;
 
-    @Column(nullable = false)
-    private String jobPosition;
+	@Column(nullable = false)
+	private String jobPosition;
 
-    @Column(nullable = false)
-    private String difficulty;
+	@Column(nullable = false)
+	private String difficulty;
 
-    @Column(nullable = false)
-    private LocalDateTime startedAt;
+	@Column(nullable = false)
+	private LocalDateTime startedAt;
 
-    private LocalDateTime endedAt;
+	private LocalDateTime endedAt;
 
-    @Column(columnDefinition = "TEXT")
-    private String transcript;
+	@Column(columnDefinition = "TEXT")
+	private String transcript;
 
-    private Integer score;
+	private Integer score;
 
-    @Column(columnDefinition = "TEXT")
-    private String feedbackJson;
+	@Column(columnDefinition = "TEXT")
+	private String feedbackJson;
 
 }//InterviewSession

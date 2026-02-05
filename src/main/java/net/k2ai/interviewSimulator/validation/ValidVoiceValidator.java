@@ -11,14 +11,14 @@ import java.util.Set;
  */
 public class ValidVoiceValidator implements ConstraintValidator<ValidVoice, String> {
 
-    private static final Set<String> VALID_VOICES = Set.of("Algieba", "Kore", "Fenrir", "Despina");
+	private static final Set<String> VALID_VOICES = Set.of("Algieba", "Kore", "Fenrir", "Despina");
 
-    @Override
-    public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value == null || value.isBlank()) {
-            return true; // Let @NotBlank handle empty values
-        }
-        return VALID_VOICES.contains(value);
-    }
+	@Override
+	public boolean isValid(String value, ConstraintValidatorContext context) {
+		if (value == null || value.isBlank()) {
+			return true; // Let @NotBlank handle empty values
+		}
+		return VALID_VOICES.contains(value);
+	}
 
 }

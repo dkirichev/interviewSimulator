@@ -17,14 +17,14 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = LettersOnlyValidator.class)
 public @interface LettersOnly {
 
-    String message() default "{validation.lettersOnly}";
+	String message() default "{validation.lettersOnly}";
 
-    int min() default 2;
+	int min() default 2;
 
-    int max() default 30;
+	int max() default 30;
 
-    Class<?>[] groups() default {};
+	Class<?>[] groups() default {};
 
-    Class<? extends Payload>[] payload() default {};
+	Class<? extends Payload>[] payload() default {};
 
 }

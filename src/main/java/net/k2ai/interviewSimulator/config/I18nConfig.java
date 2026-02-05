@@ -14,24 +14,24 @@ import java.util.Locale;
 @Configuration
 public class I18nConfig implements WebMvcConfigurer {
 
-    @Bean
-    public LocaleResolver localeResolver() {
-        CookieLocaleResolver resolver = new CookieLocaleResolver("ui_lang");
-        resolver.setDefaultLocale(new Locale("bg")); // Bulgarian as default
-        resolver.setCookieMaxAge(Duration.ofDays(365)); // Cache for 1 year
-        resolver.setCookiePath("/");
-        return resolver;
-    }
+	@Bean
+	public LocaleResolver localeResolver() {
+		CookieLocaleResolver resolver = new CookieLocaleResolver("ui_lang");
+		resolver.setDefaultLocale(new Locale("bg")); // Bulgarian as default
+		resolver.setCookieMaxAge(Duration.ofDays(365)); // Cache for 1 year
+		resolver.setCookiePath("/");
+		return resolver;
+	}
 
-    @Bean
-    public LocaleChangeInterceptor localeChangeInterceptor() {
-        LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
-        interceptor.setParamName("lang");
-        return interceptor;
-    }
+	@Bean
+	public LocaleChangeInterceptor localeChangeInterceptor() {
+		LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
+		interceptor.setParamName("lang");
+		return interceptor;
+	}
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(localeChangeInterceptor());
-    }
+	@Override
+	public void addInterceptors(InterceptorRegistry registry) {
+		registry.addInterceptor(localeChangeInterceptor());
+	}
 }

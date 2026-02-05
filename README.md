@@ -161,6 +161,10 @@ export APP_MODE=DEV
 <br><strong>Gemini AI</strong>
 </td>
 <td align="center" width="120">
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/thymeleaf/thymeleaf-original.svg" width="48" height="48" alt="Thymeleaf" />
+<br><strong>Thymeleaf</strong>
+</td>
+<td align="center" width="120">
 <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" width="48" height="48" alt="Docker" />
 <br><strong>Docker</strong>
 </td>
@@ -173,12 +177,13 @@ export APP_MODE=DEV
 - Flyway database migrations
 - OkHttp for Gemini WebSocket client
 - Apache PDFBox & POI for CV parsing
+- Thymeleaf for server-side templating
 
 **Frontend:**
 - Vanilla JavaScript (minimal, ~1,400 lines)
+- Thymeleaf templates with i18n support
 - Tailwind CSS (via CDN)
 - Web Audio API for audio capture/playback
-- Thymeleaf server-side rendering
 
 **AI:**
 - Gemini 2.5 Flash (real-time audio conversations)

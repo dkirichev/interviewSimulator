@@ -14,25 +14,25 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 @Component
 public class WebSocketEventListener {
 
-    private final GeminiIntegrationService geminiIntegrationService;
+	private final GeminiIntegrationService geminiIntegrationService;
 
 
-    @EventListener
-    public void handleWebSocketConnected(SessionConnectedEvent event) {
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String sessionId = headerAccessor.getSessionId();
-        log.info("WebSocket connected: {}", sessionId);
-    }//handleWebSocketConnected
+	@EventListener
+	public void handleWebSocketConnected(SessionConnectedEvent event) {
+		StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
+		String sessionId = headerAccessor.getSessionId();
+		log.info("WebSocket connected: {}", sessionId);
+	}//handleWebSocketConnected
 
 
-    @EventListener
-    public void handleWebSocketDisconnect(SessionDisconnectEvent event) {
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String sessionId = headerAccessor.getSessionId();
-        log.info("WebSocket disconnected: {}", sessionId);
+	@EventListener
+	public void handleWebSocketDisconnect(SessionDisconnectEvent event) {
+		StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
+		String sessionId = headerAccessor.getSessionId();
+		log.info("WebSocket disconnected: {}", sessionId);
 
-        // Cleanup any active interview session
-        geminiIntegrationService.handleDisconnect(sessionId);
-    }//handleWebSocketDisconnect
+		// Cleanup any active interview session
+		geminiIntegrationService.handleDisconnect(sessionId);
+	}//handleWebSocketDisconnect
 
 }//WebSocketEventListener

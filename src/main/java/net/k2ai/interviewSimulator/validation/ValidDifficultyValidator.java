@@ -11,14 +11,14 @@ import java.util.Set;
  */
 public class ValidDifficultyValidator implements ConstraintValidator<ValidDifficulty, String> {
 
-    private static final Set<String> VALID_DIFFICULTIES = Set.of("Easy", "Standard", "Hard");
+	private static final Set<String> VALID_DIFFICULTIES = Set.of("Easy", "Standard", "Hard");
 
-    @Override
-    public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value == null || value.isBlank()) {
-            return true; // Let @NotBlank handle empty values
-        }
-        return VALID_DIFFICULTIES.contains(value);
-    }
+	@Override
+	public boolean isValid(String value, ConstraintValidatorContext context) {
+		if (value == null || value.isBlank()) {
+			return true; // Let @NotBlank handle empty values
+		}
+		return VALID_DIFFICULTIES.contains(value);
+	}
 
 }

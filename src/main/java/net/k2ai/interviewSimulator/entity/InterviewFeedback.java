@@ -17,45 +17,45 @@ import java.util.UUID;
 @AllArgsConstructor
 public class InterviewFeedback {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
-    @OneToOne
-    @JoinColumn(name = "session_id", nullable = false)
-    private InterviewSession session;
+	@OneToOne
+	@JoinColumn(name = "session_id", nullable = false)
+	private InterviewSession session;
 
-    @Column(nullable = false)
-    private Integer overallScore;
+	@Column(nullable = false)
+	private Integer overallScore;
 
-    @Column(nullable = false)
-    private Integer communicationScore;
+	@Column(nullable = false)
+	private Integer communicationScore;
 
-    @Column(nullable = false)
-    private Integer technicalScore;
+	@Column(nullable = false)
+	private Integer technicalScore;
 
-    @Column(nullable = false)
-    private Integer confidenceScore;
+	@Column(nullable = false)
+	private Integer confidenceScore;
 
-    @Column(columnDefinition = "TEXT")
-    private String strengths;
+	@Column(columnDefinition = "TEXT")
+	private String strengths;
 
-    @Column(columnDefinition = "TEXT")
-    private String improvements;
+	@Column(columnDefinition = "TEXT")
+	private String improvements;
 
-    @Column(columnDefinition = "TEXT")
-    private String detailedAnalysis;
+	@Column(columnDefinition = "TEXT")
+	private String detailedAnalysis;
 
-    @Column(length = 50)
-    private String verdict;
+	@Column(length = 50)
+	private String verdict;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+	@Column(nullable = false)
+	private LocalDateTime createdAt;
 
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }//onCreate
+	@PrePersist
+	protected void onCreate() {
+		createdAt = LocalDateTime.now();
+	}//onCreate
 
 }//InterviewFeedback

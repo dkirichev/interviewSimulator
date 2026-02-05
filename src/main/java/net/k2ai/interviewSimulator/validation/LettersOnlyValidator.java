@@ -12,45 +12,45 @@ import java.util.regex.Pattern;
  */
 public class LettersOnlyValidator implements ConstraintValidator<LettersOnly, String> {
 
-    // Unicode ranges: Latin letters, Cyrillic letters, spaces, hyphens, apostrophes
-    private static final Pattern LETTERS_ONLY_PATTERN = Pattern.compile(
-            "^[\\p{L}\\s\\-']+$", Pattern.UNICODE_CHARACTER_CLASS
-    );
+	// Unicode ranges: Latin letters, Cyrillic letters, spaces, hyphens, apostrophes
+	private static final Pattern LETTERS_ONLY_PATTERN = Pattern.compile(
+			"^[\\p{L}\\s\\-']+$", Pattern.UNICODE_CHARACTER_CLASS
+	);
 
-    private int min;
-    private int max;
+	private int min;
+	private int max;
 
-    @Override
-    public void initialize(LettersOnly annotation) {
-        this.min = annotation.min();
-        this.max = annotation.max();
-    }
+	@Override
+	public void initialize(LettersOnly annotation) {
+		this.min = annotation.min();
+		this.max = annotation.max();
+	}
 
-    @Override
-    public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value == null || value.isBlank()) {
-            return true; // Let @NotBlank handle empty values
-        }
+	@Override
+	public boolean isValid(String value, ConstraintValidatorContext context) {
+		if (value == null || value.isBlank()) {
+			return true; // Let @NotBlank handle empty values
+		}
 
-        String trimmed = value.trim();
+		String trimmed = value.trim();
 
-        // Check length
-        if (trimmed.length() < min || trimmed.length() > max) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("{validation.name.size}")
-                    .addConstraintViolation();
-            return false;
-        }
+		// Check length
+		if (trimmed.length() < min || trimmed.length() > max) {
+			context.disableDefaultConstraintViolation();
+			context.buildConstraintViolationWithTemplate("{validation.name.size}")
+					.addConstraintViolation();
+			return false;
+		}
 
-        // Check pattern - only letters, spaces, hyphens, apostrophes
-        if (!LETTERS_ONLY_PATTERN.matcher(trimmed).matches()) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("{validation.lettersOnly}")
-                    .addConstraintViolation();
-            return false;
-        }
+		// Check pattern - only letters, spaces, hyphens, apostrophes
+		if (!LETTERS_ONLY_PATTERN.matcher(trimmed).matches()) {
+			context.disableDefaultConstraintViolation();
+			context.buildConstraintViolationWithTemplate("{validation.lettersOnly}")
+					.addConstraintViolation();
+			return false;
+		}
 
-        return true;
-    }
+		return true;
+	}
 
 }

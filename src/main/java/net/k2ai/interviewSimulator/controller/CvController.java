@@ -18,34 +18,34 @@ import java.util.Map;
 @RequestMapping("/api/cv")
 public class CvController {
 
-    private final CvProcessingService cvProcessingService;
+	private final CvProcessingService cvProcessingService;
 
 
-    @PostMapping("/upload")
-    public ResponseEntity<Map<String, Object>> uploadCv(@RequestParam("file") MultipartFile file) {
-        try {
-            String extractedText = cvProcessingService.extractText(file);
+	@PostMapping("/upload")
+	public ResponseEntity<Map<String, Object>> uploadCv(@RequestParam("file") MultipartFile file) {
+		try {
+			String extractedText = cvProcessingService.extractText(file);
 
-            log.info("CV processed successfully, extracted {} characters", extractedText.length());
+			log.info("CV processed successfully, extracted {} characters", extractedText.length());
 
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "text", extractedText,
-                    "characterCount", extractedText.length()
-            ));
-        } catch (IllegalArgumentException e) {
-            log.warn("CV validation failed: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", e.getMessage()
-            ));
-        } catch (Exception e) {
-            log.error("CV processing failed", e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                    "success", false,
-                    "error", "Failed to process CV: " + e.getMessage()
-            ));
-        }
-    }//uploadCv
+			return ResponseEntity.ok(Map.of(
+					"success", true,
+					"text", extractedText,
+					"characterCount", extractedText.length()
+			));
+		} catch (IllegalArgumentException e) {
+			log.warn("CV validation failed: {}", e.getMessage());
+			return ResponseEntity.badRequest().body(Map.of(
+					"success", false,
+					"error", e.getMessage()
+			));
+		} catch (Exception e) {
+			log.error("CV processing failed", e);
+			return ResponseEntity.internalServerError().body(Map.of(
+					"success", false,
+					"error", "Failed to process CV: " + e.getMessage()
+			));
+		}
+	}//uploadCv
 
 }//CvController

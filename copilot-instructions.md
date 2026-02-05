@@ -29,7 +29,7 @@ These rules are **non-negotiable**:
 | Two empty lines between methods | Includes before first method |
 | One empty line between fields | Each field declaration separated |
 | Closing brace comments | `}//methodName` and `}//ClassName` |
-| 4-space indentation | No tabs |
+| Tab indentation | Use tabs, not spaces |
 | Same-line braces | `if (x) {` not `if (x)\n{` |
 
 ```java

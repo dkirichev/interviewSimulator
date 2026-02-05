@@ -11,14 +11,14 @@ import java.util.Set;
  */
 public class ValidLanguageValidator implements ConstraintValidator<ValidLanguage, String> {
 
-    private static final Set<String> VALID_LANGUAGES = Set.of("en", "bg");
+	private static final Set<String> VALID_LANGUAGES = Set.of("en", "bg");
 
-    @Override
-    public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value == null || value.isBlank()) {
-            return true; // Let @NotBlank handle empty values
-        }
-        return VALID_LANGUAGES.contains(value);
-    }
+	@Override
+	public boolean isValid(String value, ConstraintValidatorContext context) {
+		if (value == null || value.isBlank()) {
+			return true; // Let @NotBlank handle empty values
+		}
+		return VALID_LANGUAGES.contains(value);
+	}
 
 }

@@ -2,73 +2,73 @@
 <html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 
 <div th:fragment="content">
-    <section class="view-section active flex-col justify-center items-center min-h-screen w-full relative overflow-auto">
-        <!--/*  Background Decor  */-->
-        <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-            <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        </div>
+	<section class="view-section active flex-col justify-center items-center min-h-screen w-full relative overflow-auto">
+		<!--/*  Background Decor  */-->
+		<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+			<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+			<div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+		</div>
 
-        <div class="w-full max-w-4xl px-4 my-8">
-            <!--/*  Header  */-->
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center mb-4">
-                    <img th:src="@{/media/logo.png}" alt="Logo" class="h-20 w-auto">
-                </div>
-                <h1 class="text-3xl font-bold tracking-tight text-white" th:text="#{setup.title}">Interview Setup</h1>
-                <p class="text-slate-400 mt-2 text-sm" th:text="#{setup.subtitle}">Configure your interview session</p>
-            </div>
+		<div class="w-full max-w-4xl px-4 my-8">
+			<!--/*  Header  */-->
+			<div class="text-center mb-8">
+				<div class="inline-flex items-center justify-center mb-4">
+					<img th:src="@{/media/logo.png}" alt="Logo" class="h-20 w-auto">
+				</div>
+				<h1 class="text-3xl font-bold tracking-tight text-white" th:text="#{setup.title}">Interview Setup</h1>
+				<p class="text-slate-400 mt-2 text-sm" th:text="#{setup.subtitle}">Configure your interview session</p>
+			</div>
 
-            <!--/*  Progress Steps  */-->
-            <th:block th:replace="~{pages/setup/fragments/progress :: progressIndicator(currentStep=${currentStep})}"/>
+			<!--/*  Progress Steps  */-->
+			<th:block th:replace="~{pages/setup/fragments/progress :: progressIndicator(currentStep=${currentStep})}" />
 
-            <!--/*  Form Container  */-->
-            <div class="bg-slate-800/80 p-10 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md">
-                <form th:action="@{/setup/step1}" th:object="${setupForm}" method="post">
-                    <!--/*  Step Title  */-->
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold text-white mb-2" th:text="#{setup.step1.title}">Your Profile</h2>
-                        <p class="text-slate-400 text-sm" th:text="#{setup.step1.subtitle}">Tell us about yourself</p>
-                    </div>
+			<!--/*  Form Container  */-->
+			<div class="bg-slate-800/80 p-10 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md">
+				<form th:action="@{/setup/step1}" th:object="${setupForm}" method="post">
+					<!--/*  Step Title  */-->
+					<div class="text-center mb-8">
+						<h2 class="text-2xl font-bold text-white mb-2" th:text="#{setup.step1.title}">Your Profile</h2>
+						<p class="text-slate-400 text-sm" th:text="#{setup.step1.subtitle}">Tell us about yourself</p>
+					</div>
 
-                    <!--/*  Candidate Name Field  */-->
-                    <div class="max-w-md mx-auto">
-                        <label class="block text-sm font-medium text-slate-300 mb-3" for="candidate-name">
-                            <span th:text="#{setup.step1.candidateName}">Your Name</span>
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text"
-                               id="candidate-name"
-                               th:field="*{candidateName}"
-                               th:placeholder="#{setup.step1.candidateName.placeholder}"
-                               th:classappend="${#fields.hasErrors('candidateName')} ? 'border-red-500 focus:border-red-500' : ''"
-                               class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-5 py-4 text-white text-lg focus:outline-none focus:border-blue-500 transition"
-                               maxlength="30"
-                               pattern="[\p{L}\s\-']+"
-                               title="Only letters, spaces, and hyphens allowed"
-                               autocomplete="name">
-                        <p class="mt-1 text-xs text-slate-500">Only letters, spaces, and hyphens (max 30 characters)</p>
+					<!--/*  Candidate Name Field  */-->
+					<div class="max-w-md mx-auto">
+						<label class="block text-sm font-medium text-slate-300 mb-3" for="candidate-name">
+							<span th:text="#{setup.step1.candidateName}">Your Name</span>
+							<span class="text-red-500">*</span>
+						</label>
+						<input type="text"
+								id="candidate-name"
+								th:field="*{candidateName}"
+								th:placeholder="#{setup.step1.candidateName.placeholder}"
+								th:classappend="${#fields.hasErrors('candidateName')} ? 'border-red-500 focus:border-red-500' : ''"
+								class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-5 py-4 text-white text-lg focus:outline-none focus:border-blue-500 transition"
+								maxlength="30"
+								pattern="[\p{L}\s\-']+"
+								title="Only letters, spaces, and hyphens allowed"
+								autocomplete="name">
+						<p class="mt-1 text-xs text-slate-500">Only letters, spaces, and hyphens (max 30 characters)</p>
 
-                        <!--/*  Error message  */-->
-                        <p th:if="${#fields.hasErrors('candidateName')}" 
-                           th:errors="*{candidateName}"
-                           class="mt-2 text-sm text-red-400 flex items-center gap-1">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                        </p>
-                    </div>
+						<!--/*  Error message  */-->
+						<p th:if="${#fields.hasErrors('candidateName')}"
+								th:errors="*{candidateName}"
+								class="mt-2 text-sm text-red-400 flex items-center gap-1">
+							<i class="fa-solid fa-circle-exclamation"></i>
+						</p>
+					</div>
 
-                    <!--/*  Navigation Buttons  */-->
-                    <div class="flex items-center justify-end mt-10 pt-6 border-t border-slate-700">
-                        <button type="submit"
-                                class="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-500/30">
-                            <span th:text="#{setup.button.next}">Next</span>
-                            <i class="fa-solid fa-arrow-right ml-2"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </section>
+					<!--/*  Navigation Buttons  */-->
+					<div class="flex items-center justify-end mt-10 pt-6 border-t border-slate-700">
+						<button type="submit"
+								class="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-500/30">
+							<span th:text="#{setup.button.next}">Next</span>
+							<i class="fa-solid fa-arrow-right ml-2"></i>
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</section>
 </div>
 
 </html>

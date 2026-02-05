@@ -16,10 +16,10 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = ValidDifficultyValidator.class)
 public @interface ValidDifficulty {
 
-    String message() default "{validation.difficulty.invalid}";
+	String message() default "{validation.difficulty.invalid}";
 
-    Class<?>[] groups() default {};
+	Class<?>[] groups() default {};
 
-    Class<? extends Payload>[] payload() default {};
+	Class<? extends Payload>[] payload() default {};
 
 }
