@@ -8,6 +8,9 @@
     <!--/*@thymesVar id="pageTitle" type="String"*/-->
     <title th:text="#{global.page.title} + (${pageTitle} != null ? ' | ' + ${pageTitle} : '')" />
     
+    <!--/*  Favicon  */-->
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    
     <!--/*  Tailwind CSS  */-->
     <script src="https://cdn.tailwindcss.com"></script>
     
