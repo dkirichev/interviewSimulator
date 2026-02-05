@@ -1,8 +1,10 @@
 package net.k2ai.interviewSimulator.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.k2ai.interviewSimulator.config.GeminiConfig;
+import net.k2ai.interviewSimulator.service.RateLimitService;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -25,6 +27,7 @@ public class ApiKeyController {
     private static final Pattern API_KEY_PATTERN = Pattern.compile("^AIza[A-Za-z0-9_-]{35,}$");
 
     private final GeminiConfig geminiConfig;
+    private final RateLimitService rateLimitService;
 
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
@@ -48,7 +51,14 @@ public class ApiKeyController {
      * Validates a user-provided Gemini API key
      */
     @PostMapping("/validate-key")
-    public ResponseEntity<Map<String, Object>> validateApiKey(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<Map<String, Object>> validateApiKey(
+            @RequestBody Map<String, String> payload,
+            HttpServletRequest request) {
+        
+        // Rate limit by IP address
+        String clientIp = getClientIp(request);
+        rateLimitService.checkRateLimit(clientIp);
+        
         String apiKey = payload.get("apiKey");
 
         // Basic validation - check format before making network request
@@ -73,12 +83,12 @@ public class ApiKeyController {
 
         // Validate by calling Gemini API
         try {
-            Request request = new Request.Builder()
+            Request httpRequest = new Request.Builder()
                     .url(GEMINI_MODELS_URL + apiKey)
                     .get()
                     .build();
 
-            try (Response response = httpClient.newCall(request).execute()) {
+            try (Response response = httpClient.newCall(httpRequest).execute()) {
                 if (response.isSuccessful()) {
                     log.info("API key validated successfully");
                     return ResponseEntity.ok(Map.of(
@@ -117,5 +127,15 @@ public class ApiKeyController {
             ));
         }
     }//validateApiKey
+
+
+    private String getClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            // Take the first IP in case of multiple proxies
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
 
 }//ApiKeyController

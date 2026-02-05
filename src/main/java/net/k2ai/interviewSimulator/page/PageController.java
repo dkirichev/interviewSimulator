@@ -1,4 +1,4 @@
-package net.k2ai.interviewSimulator.test;
+package net.k2ai.interviewSimulator.page;
 
 import jakarta.servlet.http.HttpSession;
 import net.k2ai.interviewSimulator.dto.InterviewSetupDTO;

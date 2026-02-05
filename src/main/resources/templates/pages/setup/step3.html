@@ -38,7 +38,10 @@
                                 <span th:text="#{setup.step3.interviewLanguage}">Interview Language</span>
                                 <span class="text-red-500">*</span>
                             </label>
-                            <div class="grid grid-cols-2 gap-4">
+                            <p th:if="${#fields.hasErrors('language')}" th:errors="*{language}" class="mb-2 text-sm text-red-400 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                            </p>
+                            <div class="grid grid-cols-2 gap-4" th:classappend="${#fields.hasErrors('language')} ? 'ring-2 ring-red-500 rounded-xl' : ''">
                                 <!-- Bulgarian -->
                                 <label class="cursor-pointer">
                                     <input type="radio" th:field="*{language}" value="bg" class="peer sr-only">
@@ -74,7 +77,10 @@
                                 <span th:text="#{setup.step3.interviewerVoice}">Interviewer Voice</span>
                                 <span class="text-red-500">*</span>
                             </label>
-                            <div class="grid grid-cols-2 gap-4">
+                            <p th:if="${#fields.hasErrors('voiceId')}" th:errors="*{voiceId}" class="mb-2 text-sm text-red-400 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                            </p>
+                            <div class="grid grid-cols-2 gap-4" th:classappend="${#fields.hasErrors('voiceId')} ? 'ring-2 ring-red-500 rounded-xl' : ''">
 
                                 <!-- George (Algieba) -->
                                 <label class="cursor-pointer group">

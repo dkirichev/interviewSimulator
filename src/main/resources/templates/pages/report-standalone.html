@@ -6,8 +6,14 @@
     Displays interview feedback from the database.
 -->
 <div th:fragment="content">
-    <section class="view-section active flex-col items-center min-h-screen w-full overflow-y-auto bg-slate-900 p-6 md:p-12">
-        <div class="w-full max-w-5xl space-y-8">
+    <section class="view-section active flex-col items-center min-h-screen w-full relative overflow-auto">
+        <!-- Background Decor -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+            <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        </div>
+
+        <div class="w-full max-w-5xl px-4 py-4 space-y-6">
             <!-- Header -->
             <div class="flex justify-between items-center border-b border-slate-800 pb-6">
                 <div>
@@ -136,21 +142,21 @@
 
             <!-- Detailed Analysis -->
             <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-                <div class="bg-slate-900/50 px-6 py-4 border-b border-slate-700">
+                <div class="bg-slate-900/50 px-6 py-3 border-b border-slate-700">
                     <h3 class="font-bold flex items-center gap-2">
                         <i class="fa-solid fa-magnifying-glass-chart text-slate-400"></i>
                         <span th:text="#{report.detailedAnalysis}">Detailed Analysis</span>
                     </h3>
                 </div>
-                <div class="p-6">
-                    <p class="text-slate-300 leading-relaxed whitespace-pre-line" th:text="${feedback.detailedAnalysis}">
+                <div class="p-4 max-h-64 overflow-y-auto">
+                    <p class="text-slate-300 leading-relaxed whitespace-pre-line text-sm" th:text="${feedback.detailedAnalysis}">
                         Detailed analysis of the interview...
                     </p>
                 </div>
             </div>
 
             <!-- Start New Interview Button -->
-            <div class="text-center pt-4">
+            <div class="text-center py-4">
                 <a th:href="@{/setup/step1}"
                    class="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-500/30">
                     <i class="fa-solid fa-rotate-right"></i>

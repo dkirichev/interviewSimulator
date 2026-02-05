@@ -111,9 +111,16 @@ function toggleMic() {
             muteOverlay.classList.remove('hidden');
         }
         
-        updateStatus('Processing...', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
-        showThinkingIndicator();
-        setAvatarState('thinking');
+        // Only show thinking indicator if AI is not currently speaking
+        // (thinking only makes sense when waiting for AI response)
+        if (typeof isAISpeakingNow === 'function' && isAISpeakingNow()) {
+            updateStatus('Muted', 'bg-slate-500/20 text-slate-400 border-slate-500/50');
+            setAvatarState('talking');
+        } else {
+            updateStatus('Processing...', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
+            showThinkingIndicator();
+            setAvatarState('thinking');
+        }
         
         stopAudioCapture();
         stopVisualizer();

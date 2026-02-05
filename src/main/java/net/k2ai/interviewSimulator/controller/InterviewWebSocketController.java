@@ -3,6 +3,7 @@ package net.k2ai.interviewSimulator.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.k2ai.interviewSimulator.service.GeminiIntegrationService;
+import net.k2ai.interviewSimulator.service.InputSanitizerService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -10,6 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -17,8 +19,13 @@ import java.util.UUID;
 @Controller
 public class InterviewWebSocketController {
 
+    private static final Set<String> VALID_DIFFICULTIES = Set.of("Easy", "Standard", "Hard");
+    private static final Set<String> VALID_LANGUAGES = Set.of("en", "bg");
+    private static final Set<String> VALID_VOICES = Set.of("Algieba", "Kore", "Fenrir", "Despina");
+
     private final GeminiIntegrationService geminiIntegrationService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final InputSanitizerService sanitizerService;
 
 
     @MessageMapping("/interview/start")
@@ -26,27 +33,52 @@ public class InterviewWebSocketController {
         String sessionIdStr = headerAccessor.getSessionId();
         log.info("Starting interview for WebSocket session: {}", sessionIdStr);
 
-        String candidateName = payload.getOrDefault("candidateName", "").trim();
-        String position = payload.getOrDefault("position", "").trim();
+        // Extract and sanitize inputs
+        String candidateName = sanitizerService.sanitizeName(payload.getOrDefault("candidateName", ""));
+        String position = sanitizerService.sanitizePosition(payload.getOrDefault("position", ""));
         String difficulty = payload.getOrDefault("difficulty", "Standard");
         String language = payload.getOrDefault("language", "en");
-        String cvText = payload.get("cvText");
+        String cvText = sanitizerService.sanitizeCvText(payload.get("cvText"));
         String voiceId = payload.get("voiceId");
-        String interviewerNameEN = payload.get("interviewerNameEN");
-        String interviewerNameBG = payload.get("interviewerNameBG");
-        String userApiKey = payload.get("userApiKey"); // User-provided API key for PROD mode
+        String interviewerNameEN = sanitizerService.sanitizeName(payload.get("interviewerNameEN"));
+        String interviewerNameBG = sanitizerService.sanitizeName(payload.get("interviewerNameBG"));
+        String userApiKey = payload.get("userApiKey");
 
         // Validate required fields
-        if (candidateName.isBlank()) {
-            log.warn("Validation failed: candidateName is required");
-            sendError(sessionIdStr, "Candidate name is required");
+        if (candidateName == null || candidateName.isBlank()) {
+            log.warn("Validation failed: candidateName is invalid or missing");
+            sendError(sessionIdStr, "Candidate name is required and must contain only letters");
             return;
         }
 
-        if (position.isBlank()) {
-            log.warn("Validation failed: position is required");
+        if (position == null || position.isBlank()) {
+            log.warn("Validation failed: position is invalid or missing");
             sendError(sessionIdStr, "Target position is required");
             return;
+        }
+
+        // Validate enums
+        if (!VALID_DIFFICULTIES.contains(difficulty)) {
+            log.warn("Validation failed: invalid difficulty '{}'", difficulty);
+            difficulty = "Standard";
+        }
+
+        if (!VALID_LANGUAGES.contains(language)) {
+            log.warn("Validation failed: invalid language '{}'", language);
+            language = "en";
+        }
+
+        if (voiceId == null || !VALID_VOICES.contains(voiceId)) {
+            log.warn("Validation failed: invalid voiceId '{}'", voiceId);
+            voiceId = "Algieba";
+        }
+
+        // Set default interviewer names if not provided
+        if (interviewerNameEN == null || interviewerNameEN.isBlank()) {
+            interviewerNameEN = "George";
+        }
+        if (interviewerNameBG == null || interviewerNameBG.isBlank()) {
+            interviewerNameBG = "Георги";
         }
 
         UUID interviewSessionId = geminiIntegrationService.startInterview(

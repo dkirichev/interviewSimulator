@@ -70,8 +70,14 @@
                                        id="custom-position"
                                        th:field="*{customPosition}"
                                        th:placeholder="#{setup.step2.customPosition.placeholder}"
-                                       class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-blue-500 transition">
-                                <p th:if="${#fields.hasErrors('customPosition')}" th:errors="*{customPosition}" class="mt-2 text-sm text-red-400"></p>
+                                       th:classappend="${#fields.hasErrors('customPosition')} ? 'border-red-500 focus:border-red-500' : ''"
+                                       class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-blue-500 transition"
+                                       maxlength="50"
+                                       autocomplete="off">
+                                <p class="mt-1 text-xs text-slate-500">Letters, numbers, and basic punctuation (max 50 characters)</p>
+                                <p th:if="${#fields.hasErrors('customPosition')}" th:errors="*{customPosition}" class="mt-2 text-sm text-red-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                </p>
                             </div>
                         </div>
 
@@ -167,7 +173,18 @@
                                 </div>
                             </div>
 
-                            <p th:if="${#fields.hasErrors('cvFile')}" th:errors="*{cvFile}" class="mt-2 text-sm text-red-400"></p>
+                            <!-- Client-side error display (for JS validation) -->
+                            <div id="cv-error-client" class="hidden mt-2 p-3 bg-red-500/10 border border-red-500/50 rounded-lg">
+                                <p id="cv-error-message" class="text-sm text-red-400 flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                    <span></span>
+                                </p>
+                            </div>
+
+                            <!-- Server-side error display -->
+                            <p th:if="${#fields.hasErrors('cvFile')}" th:errors="*{cvFile}" class="mt-2 text-sm text-red-400 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                            </p>
                         </div>
                     </div>
 
@@ -199,7 +216,25 @@
             }
         }
 
+        function showCvError(message) {
+            const errorContainer = document.getElementById('cv-error-client');
+            const errorMessage = document.getElementById('cv-error-message');
+            if (errorContainer && errorMessage) {
+                errorMessage.textContent = message;
+                errorContainer.classList.remove('hidden');
+            }
+        }
+
+        function hideCvError() {
+            const errorContainer = document.getElementById('cv-error-client');
+            if (errorContainer) {
+                errorContainer.classList.add('hidden');
+            }
+        }
+
         function handleCvFileSelect(input) {
+            hideCvError();
+            
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 const fileName = file.name;
@@ -210,14 +245,14 @@
                 const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
                 
                 if (!validTypes.includes(file.type) && !validExtensions.includes(ext)) {
-                    alert('Please upload a PDF or DOCX file.');
+                    showCvError(/*[[#{validation.cv.invalidType}]]*/ 'Please upload a PDF or DOCX file');
                     input.value = '';
                     return;
                 }
                 
                 // Validate file size (2MB max)
                 if (file.size > 2 * 1024 * 1024) {
-                    alert('File size must be less than 2MB.');
+                    showCvError(/*[[#{validation.cv.tooLarge}]]*/ 'File size must be less than 2MB');
                     input.value = '';
                     return;
                 }
@@ -232,10 +267,8 @@
                 if (filenameEl) filenameEl.textContent = fileName;
                 
                 // Auto-submit the form to process the CV on the server
-                // This gives immediate feedback while still processing server-side
                 const form = input.closest('form');
                 if (form) {
-                    // Small delay to let the UI update
                     setTimeout(() => form.submit(), 100);
                 }
             }

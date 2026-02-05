@@ -596,3 +596,8 @@ function clearLiveTranscript() {
     liveTranscript = [];
 }
 
+// Check if AI is currently speaking (for UI state management)
+function isAISpeakingNow() {
+    return isAISpeaking || isPlaying;
+}
+

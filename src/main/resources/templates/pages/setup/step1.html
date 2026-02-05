@@ -41,14 +41,19 @@
                                id="candidate-name"
                                th:field="*{candidateName}"
                                th:placeholder="#{setup.step1.candidateName.placeholder}"
-                               th:classappend="${#fields.hasErrors('candidateName')} ? 'border-red-500' : ''"
+                               th:classappend="${#fields.hasErrors('candidateName')} ? 'border-red-500 focus:border-red-500' : ''"
                                class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-5 py-4 text-white text-lg focus:outline-none focus:border-blue-500 transition"
-                               required>
+                               maxlength="30"
+                               pattern="[\p{L}\s\-']+"
+                               title="Only letters, spaces, and hyphens allowed"
+                               autocomplete="name">
+                        <p class="mt-1 text-xs text-slate-500">Only letters, spaces, and hyphens (max 30 characters)</p>
 
                         <!-- Error message -->
                         <p th:if="${#fields.hasErrors('candidateName')}" 
                            th:errors="*{candidateName}"
-                           class="mt-2 text-sm text-red-400">
+                           class="mt-2 text-sm text-red-400 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-exclamation"></i>
                         </p>
                     </div>
 

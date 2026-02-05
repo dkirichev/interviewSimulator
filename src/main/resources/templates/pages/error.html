@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<div th:fragment="content">
+    <section class="view-section active flex-col justify-center items-center min-h-screen w-full relative overflow-auto">
+        <!-- Background Decor -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-red-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+            <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-orange-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        </div>
+
+        <div class="w-full max-w-2xl px-4 my-8">
+            <!-- Error Card -->
+            <div class="bg-slate-800/80 p-10 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md text-center">
+                
+                <!-- Error Icon -->
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-600/20 text-red-400 mb-6">
+                    <i class="fa-solid fa-triangle-exclamation text-4xl"></i>
+                </div>
+                
+                <!-- Error Code -->
+                <div class="text-6xl font-bold text-red-400 mb-4" th:text="${errorCode}">500</div>
+                
+                <!-- Error Title -->
+                <h1 class="text-2xl font-bold text-white mb-4" th:text="${errorTitle}">Internal Server Error</h1>
+                
+                <!-- Error Message -->
+                <p class="text-slate-400 mb-8" th:text="${errorMessage}">Something went wrong. Please try again later.</p>
+                
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a th:href="@{/setup/step1}" 
+                       class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-500/30">
+                        <i class="fa-solid fa-home mr-2"></i>
+                        Start New Interview
+                    </a>
+                    <button onclick="history.back()" 
+                            class="px-6 py-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-medium transition">
+                        <i class="fa-solid fa-arrow-left mr-2"></i>
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+</html>

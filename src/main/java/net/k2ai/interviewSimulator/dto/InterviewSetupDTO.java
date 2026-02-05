@@ -1,8 +1,8 @@
 package net.k2ai.interviewSimulator.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
+import net.k2ai.interviewSimulator.validation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
@@ -18,16 +18,18 @@ public class InterviewSetupDTO implements Serializable {
 
     // Step 1: Profile
     @NotBlank(message = "{validation.name.required}")
-    @Size(min = 2, max = 100, message = "{validation.name.size}")
+    @LettersOnly(min = 2, max = 30, message = "{validation.lettersOnly}")
     private String candidateName;
 
     // Step 2: Details
     @NotBlank(message = "{validation.position.required}")
     private String position;
 
+    @SafeText(min = 2, max = 50, message = "{validation.safeText}")
     private String customPosition;
 
     @NotBlank(message = "{validation.difficulty.required}")
+    @ValidDifficulty
     private String difficulty = "Easy";
 
     // CV - transient (not serializable), extracted text stored instead
@@ -37,9 +39,11 @@ public class InterviewSetupDTO implements Serializable {
 
     // Step 3: Voice & Language
     @NotBlank(message = "{validation.language.required}")
+    @ValidLanguage
     private String language = "bg";
 
     @NotBlank(message = "{validation.voice.required}")
+    @ValidVoice
     private String voiceId = "Algieba";
 
     private String interviewerNameEN = "George";

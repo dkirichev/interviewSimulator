@@ -1,17 +1,17 @@
 package net.k2ai.interviewSimulator.controller;
 
 import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.k2ai.interviewSimulator.dto.InterviewSetupDTO;
 import net.k2ai.interviewSimulator.service.CvProcessingService;
+import net.k2ai.interviewSimulator.service.InputSanitizerService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.Validator;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Controller for the multi-step interview setup wizard.
@@ -28,6 +28,8 @@ public class SetupController {
     private static final String LAYOUT = "layouts/main";
 
     private final CvProcessingService cvProcessingService;
+    private final InputSanitizerService sanitizerService;
+    private final Validator validator;
 
 
     @ModelAttribute("setupForm")
@@ -51,19 +53,32 @@ public class SetupController {
     public String processStep1(
             @ModelAttribute("setupForm") InterviewSetupDTO form,
             BindingResult bindingResult,
-            Model model,
-            RedirectAttributes redirectAttributes
+            Model model
     ) {
-        // Validate only step 1 fields
-        if (form.getCandidateName() == null || form.getCandidateName().isBlank()) {
-            bindingResult.rejectValue("candidateName", "validation.name.required");
+        // Trim and validate candidateName
+        if (form.getCandidateName() != null) {
+            form.setCandidateName(form.getCandidateName().trim());
         }
 
-        if (bindingResult.hasErrors()) {
+        // Trigger Bean Validation for candidateName field only
+        validator.validate(form, bindingResult);
+
+        // Filter to only show candidateName errors for step 1
+        if (bindingResult.hasFieldErrors("candidateName")) {
             model.addAttribute("content", "pages/setup/step1");
             model.addAttribute("currentStep", 1);
             return LAYOUT;
         }
+
+        // Double-check with sanitizer
+        String sanitizedName = sanitizerService.sanitizeName(form.getCandidateName());
+        if (sanitizedName == null) {
+            bindingResult.rejectValue("candidateName", "validation.lettersOnly");
+            model.addAttribute("content", "pages/setup/step1");
+            model.addAttribute("currentStep", 1);
+            return LAYOUT;
+        }
+        form.setCandidateName(sanitizedName);
 
         log.debug("Step 1 completed: candidateName={}", form.getCandidateName());
         return "redirect:/setup/step2";
@@ -102,23 +117,24 @@ public class SetupController {
             BindingResult bindingResult,
             @RequestParam(value = "cvFile", required = false) MultipartFile cvFile,
             @RequestParam(value = "cvUploadOnly", required = false) Boolean cvUploadOnly,
-            Model model,
-            RedirectAttributes redirectAttributes
+            Model model
     ) {
         // Process CV if uploaded (do this first, before validation)
         boolean cvWasUploaded = false;
         if (cvFile != null && !cvFile.isEmpty()) {
             try {
                 String extractedText = cvProcessingService.extractText(cvFile);
-                form.setCvText(extractedText);
+                // Sanitize extracted CV text
+                String sanitizedCvText = sanitizerService.sanitizeCvText(extractedText);
+                form.setCvText(sanitizedCvText);
                 form.setCvFileName(cvFile.getOriginalFilename());
-                log.info("CV processed: {} ({} chars)", cvFile.getOriginalFilename(), extractedText.length());
+                log.info("CV processed: {} ({} chars)", cvFile.getOriginalFilename(), sanitizedCvText.length());
                 cvWasUploaded = true;
             } catch (IllegalArgumentException e) {
-                bindingResult.rejectValue("cvFile", "validation.cv.invalid", e.getMessage());
+                bindingResult.rejectValue("cvFile", "validation.cv.invalid");
             } catch (Exception e) {
                 log.error("CV processing failed", e);
-                bindingResult.rejectValue("cvFile", "validation.cv.error", "Failed to process CV");
+                bindingResult.rejectValue("cvFile", "validation.cv.error");
             }
         }
 
@@ -127,14 +143,28 @@ public class SetupController {
             return "redirect:/setup/step2";
         }
 
-        // Validate position (only when moving to next step)
+        // Validate position
         if (form.getPosition() == null || form.getPosition().isBlank()) {
             bindingResult.rejectValue("position", "validation.position.required");
         } else if ("custom".equals(form.getPosition())) {
+            // Validate custom position
             if (form.getCustomPosition() == null || form.getCustomPosition().isBlank()) {
                 bindingResult.rejectValue("customPosition", "validation.customPosition.required");
+            } else {
+                // Trim and sanitize custom position
+                form.setCustomPosition(form.getCustomPosition().trim());
+                String sanitizedPosition = sanitizerService.sanitizePosition(form.getCustomPosition());
+                if (sanitizedPosition == null) {
+                    bindingResult.rejectValue("customPosition", "validation.safeText");
+                } else {
+                    form.setCustomPosition(sanitizedPosition);
+                }
             }
         }
+
+        // Validate difficulty
+        String[] validDifficulties = {"Easy", "Standard", "Hard"};
+        form.setDifficulty(sanitizerService.validateEnum(form.getDifficulty(), validDifficulties, "Easy"));
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("content", "pages/setup/step2");
@@ -174,12 +204,22 @@ public class SetupController {
             Model model,
             HttpSession session
     ) {
-        // Validate voice and language
-        if (form.getVoiceId() == null || form.getVoiceId().isBlank()) {
+        // Validate and sanitize voice
+        String[] validVoices = {"Algieba", "Kore", "Fenrir", "Despina"};
+        String sanitizedVoice = sanitizerService.validateEnum(form.getVoiceId(), validVoices, null);
+        if (sanitizedVoice == null) {
             bindingResult.rejectValue("voiceId", "validation.voice.required");
+        } else {
+            form.setVoiceId(sanitizedVoice);
         }
-        if (form.getLanguage() == null || form.getLanguage().isBlank()) {
+
+        // Validate and sanitize language
+        String[] validLanguages = {"en", "bg"};
+        String sanitizedLanguage = sanitizerService.validateEnum(form.getLanguage(), validLanguages, null);
+        if (sanitizedLanguage == null) {
             bindingResult.rejectValue("language", "validation.language.required");
+        } else {
+            form.setLanguage(sanitizedLanguage);
         }
 
         if (bindingResult.hasErrors()) {
