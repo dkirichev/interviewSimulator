@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<div th:fragment="content">
+    <div class="min-h-screen w-full bg-slate-900 overflow-y-auto p-4 md:p-8">
+        <!--/*  Background Decor  */-->
+        <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+            <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        </div>
+
+        <div class="w-full max-w-7xl mx-auto relative z-10">
+            <!--/*  Header  */-->
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-white mb-1" th:text="#{legal.privacy.title}">Privacy Policy</h1>
+                <p class="text-slate-400 text-xs" th:text="#{legal.privacy.lastUpdated}">Last Updated: February 2026</p>
+            </div>
+
+            <!--/*  Content - Multi-column layout  */-->
+            <div class="bg-slate-800/80 p-6 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-slate-300 text-sm">
+                    
+                    <!--/*  Left Column  */-->
+                    <div class="space-y-4">
+                        <section>
+                            <h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.privacy.dataCollected.title}">Data We Collect</h2>
+                            <ul class="list-disc list-inside space-y-1 text-xs">
+                                <li><strong class="text-white" th:text="#{legal.privacy.dataCollected.profile}">Profile:</strong> <span th:text="#{legal.privacy.dataCollected.profileDesc}">Name, position, preferences</span></li>
+                                <li><strong class="text-white" th:text="#{legal.privacy.dataCollected.cv}">CV:</strong> <span th:text="#{legal.privacy.dataCollected.cvDesc}">Text from uploaded files</span></li>
+                                <li><strong class="text-white" th:text="#{legal.privacy.dataCollected.interview}">Transcripts:</strong> <span th:text="#{legal.privacy.dataCollected.interviewDesc}">Interview conversations</span></li>
+                                <li><strong class="text-white" th:text="#{legal.privacy.dataCollected.performance}">Feedback:</strong> <span th:text="#{legal.privacy.dataCollected.performanceDesc}">Scores and analysis</span></li>
+                            </ul>
+                        </section>
+
+                        <section>
+                            <h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.privacy.dataNotCollected.title}">What We DON'T Collect</h2>
+                            <ul class="list-disc list-inside space-y-1 text-xs">
+                                <li><strong class="text-white" th:text="#{legal.privacy.dataNotCollected.audio}">Audio:</strong> <span th:text="#{legal.privacy.dataNotCollected.audioDesc}">Not permanently stored</span></li>
+                                <li><strong class="text-white" th:text="#{legal.privacy.dataNotCollected.apiKey}">API Keys:</strong> <span th:text="#{legal.privacy.dataNotCollected.apiKeyDesc}">Only in your browser</span></li>
+                                <li><strong class="text-white" th:text="#{legal.privacy.dataNotCollected.pii}">Personal Info:</strong> <span th:text="#{legal.privacy.dataNotCollected.piiDesc}">No email/phone required</span></li>
+                            </ul>
+                        </section>
+
+                        <section>
+                            <h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.privacy.apiKey.title}">Your API Key</h2>
+                            <div class="bg-blue-900/30 border border-blue-700 p-3 rounded-lg text-xs">
+                                <ul class="list-disc list-inside space-y-1 text-blue-100">
+                                    <li th:text="#{legal.privacy.apiKey.stored}">Stored ONLY in your browser localStorage</li>
+                                    <li th:text="#{legal.privacy.apiKey.notTransmitted}">Never sent to our servers</li>
+                                    <li th:text="#{legal.privacy.apiKey.responsibility}">You control your API costs</li>
+                                </ul>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!--/*  Right Column  */-->
+                    <div class="space-y-4">
+                        <section>
+                            <h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.privacy.thirdParty.title}">Third-Party Services</h2>
+                            <p class="text-xs" th:utext="#{legal.privacy.thirdParty.content}">
+                                Uses <strong>Google Gemini AI API</strong>. Your audio/transcripts are processed by Google. 
+                                See <a href="https://policies.google.com/privacy" target="_blank" class="text-blue-400 hover:underline">Google Privacy</a>.
+                            </p>
+                        </section>
+
+                        <section>
+                            <h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.privacy.rights.title}">Your Rights (GDPR)</h2>
+                            <ul class="list-disc list-inside space-y-1 text-xs">
+                                <li th:text="#{legal.privacy.rights.access}">Access your data</li>
+                                <li th:text="#{legal.privacy.rights.rectification}">Correct inaccurate data</li>
+                                <li th:text="#{legal.privacy.rights.erasure}">Request deletion</li>
+                                <li th:text="#{legal.privacy.rights.portability}">Export your data</li>
+                                <li th:text="#{legal.privacy.rights.selfHost}">Self-host for control</li>
+                            </ul>
+                            <p class="mt-2 text-xs text-slate-400" th:text="#{legal.privacy.rights.contact}">
+                                Contact administrator or open GitHub issue to exercise rights.
+                            </p>
+                        </section>
+
+                        <section>
+                            <h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.privacy.openSource.title}">Open Source</h2>
+                            <p class="text-xs" th:utext="#{legal.privacy.openSource.content}">
+                                GNU GPL v3.0. Review code on 
+                                <a href="https://github.com/dkirichev/interviewSimulator" target="_blank" class="text-blue-400 hover:underline">GitHub</a>.
+                            </p>
+                        </section>
+
+                        <section>
+                            <h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.privacy.storage.title}">Storage</h2>
+                            <ul class="list-disc list-inside space-y-1 text-xs">
+                                <li th:text="#{legal.privacy.storage.database}">PostgreSQL database</li>
+                                <li th:text="#{legal.privacy.storage.browser}">Browser localStorage</li>
+                                <li th:text="#{legal.privacy.storage.encryption}">Standard WebSocket</li>
+                            </ul>
+                        </section>
+                    </div>
+
+                </div>
+            </div>
+            
+            <!--/*  Back Button - Below content to encourage reading  */-->
+            <div class="mt-6">
+                <a th:href="@{/setup/step1}" class="inline-flex items-center gap-2 text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span th:text="#{legal.back}">Back to Setup</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html>

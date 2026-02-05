@@ -45,6 +45,7 @@ public class SetupController {
         ensureSetupFormExists(session);
         model.addAttribute("content", "pages/setup/step1");
         model.addAttribute("currentStep", 1);
+        model.addAttribute("showLegalLinks", true);
         return LAYOUT;
     }
 
@@ -67,6 +68,7 @@ public class SetupController {
         if (bindingResult.hasFieldErrors("candidateName")) {
             model.addAttribute("content", "pages/setup/step1");
             model.addAttribute("currentStep", 1);
+            model.addAttribute("showLegalLinks", true);
             return LAYOUT;
         }
 
@@ -76,6 +78,7 @@ public class SetupController {
             bindingResult.rejectValue("candidateName", "validation.lettersOnly");
             model.addAttribute("content", "pages/setup/step1");
             model.addAttribute("currentStep", 1);
+            model.addAttribute("showLegalLinks", true);
             return LAYOUT;
         }
         form.setCandidateName(sanitizedName);
@@ -107,6 +110,7 @@ public class SetupController {
 
         model.addAttribute("content", "pages/setup/step2");
         model.addAttribute("currentStep", 2);
+        model.addAttribute("showLegalLinks", true);
         return LAYOUT;
     }
 
@@ -169,6 +173,7 @@ public class SetupController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("content", "pages/setup/step2");
             model.addAttribute("currentStep", 2);
+            model.addAttribute("showLegalLinks", true);
             return LAYOUT;
         }
 
@@ -193,6 +198,7 @@ public class SetupController {
 
         model.addAttribute("content", "pages/setup/step3");
         model.addAttribute("currentStep", 3);
+        model.addAttribute("showLegalLinks", true);
         return LAYOUT;
     }
 
@@ -225,6 +231,7 @@ public class SetupController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("content", "pages/setup/step3");
             model.addAttribute("currentStep", 3);
+            model.addAttribute("showLegalLinks", true);
             return LAYOUT;
         }
 
