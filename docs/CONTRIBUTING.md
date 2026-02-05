@@ -372,7 +372,7 @@ class GradingServiceTest {
 
 When adding UI text:
 
-1. Add key to `messages.properties` (English)
+1. Add key to `messages_en.properties` (English)
 2. Add Bulgarian translation to `messages_bg.properties`
 3. Use `#{key.name}` in Thymeleaf templates
 
