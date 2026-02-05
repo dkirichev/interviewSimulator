@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<!-- API Key Modal - shown in PROD mode when user hasn't provided a valid API key -->
+<!--/*  API Key Modal - shown in PROD mode when user hasn't provided a valid API key  */-->
 <div th:fragment="apikeyModal" id="apikey-modal" class="fixed inset-0 z-[100] hidden">
     
-    <!-- Hidden i18n messages for JavaScript -->
+    <!--/*  Hidden i18n messages for JavaScript  */-->
     <div class="hidden">
         <span data-i18n="apikey.error.required" th:text="#{apikey.error.required}"></span>
         <span data-i18n="apikey.error.invalidFormat" th:text="#{apikey.error.invalidFormat}"></span>
@@ -14,14 +14,14 @@
         <span data-i18n="apikey.modal.validating" th:text="#{apikey.modal.validating}"></span>
     </div>
     
-    <!-- Backdrop -->
+    <!--/*  Backdrop  */-->
     <div class="absolute inset-0 bg-black/95 backdrop-blur-sm"></div>
     
-    <!-- Modal Content - Full screen friendly layout -->
+    <!--/*  Modal Content - Full screen friendly layout  */-->
     <div class="relative z-10 flex items-center justify-center min-h-screen p-4 md:p-8">
         <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-6xl">
             
-            <!-- Header with Language Switcher -->
+            <!--/*  Header with Language Switcher  */-->
             <div class="p-4 md:p-6 border-b border-slate-700 flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
@@ -33,7 +33,7 @@
                     </div>
                 </div>
                 
-                <!-- Language Switcher in Modal -->
+                <!--/*  Language Switcher in Modal  */-->
                 <div class="flex items-center gap-2">
                     <button onclick="changeLanguageInModal('bg')" id="modal-lang-bg"
                             class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors border-2 border-transparent hover:border-slate-600"
@@ -60,10 +60,10 @@
                 </div>
             </div>
             
-            <!-- Body - Two Column Layout on Desktop -->
+            <!--/*  Body - Two Column Layout on Desktop  */-->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-6">
                 
-                <!-- Left Column: Video Tutorial (shown directly) -->
+                <!--/*  Left Column: Video Tutorial (shown directly)  */-->
                 <div class="p-4 md:p-6 bg-slate-900/50 lg:rounded-bl-2xl">
                     <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
                         <i class="fa-solid fa-play-circle text-green-400"></i>
@@ -76,7 +76,7 @@
                         </video>
                     </div>
                     
-                    <!-- Quick Link Button under video -->
+                    <!--/*  Quick Link Button under video  */-->
                     <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
                        class="mt-4 w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25">
                         <i class="fa-solid fa-external-link-alt"></i>
@@ -84,10 +84,10 @@
                     </a>
                 </div>
                 
-                <!-- Right Column: Steps + Input -->
+                <!--/*  Right Column: Steps + Input  */-->
                 <div class="p-4 md:p-6 flex flex-col">
                     
-                    <!-- Compact Steps -->
+                    <!--/*  Compact Steps  */-->
                     <div class="mb-4">
                         <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-list-check text-blue-400"></i>
@@ -121,7 +121,7 @@
                         </div>
                     </div>
                     
-                    <!-- API Key Input Section - Prominent -->
+                    <!--/*  API Key Input Section - Prominent  */-->
                     <div class="flex-1 flex flex-col justify-end">
                         <div class="bg-slate-700/50 rounded-xl p-4 border-2 border-dashed border-slate-600">
                             <label class="block text-sm font-medium text-slate-300 mb-2" th:text="#{apikey.modal.inputLabel}">
@@ -141,7 +141,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Error message -->
+                            <!--/*  Error message  */-->
                             <div id="apikey-error" class="hidden mt-3 p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
                                 <p class="text-red-400 text-sm flex items-center gap-2">
                                     <i class="fa-solid fa-exclamation-circle"></i>
@@ -149,7 +149,7 @@
                                 </p>
                             </div>
                             
-                            <!-- Success message -->
+                            <!--/*  Success message  */-->
                             <div id="apikey-success" class="hidden mt-3 p-3 bg-green-500/20 border border-green-500/50 rounded-xl">
                                 <p class="text-green-400 text-sm flex items-center gap-2">
                                     <i class="fa-solid fa-check-circle"></i>
@@ -157,7 +157,7 @@
                                 </p>
                             </div>
                             
-                            <!-- Submit Button - Big and Prominent -->
+                            <!--/*  Submit Button - Big and Prominent  */-->
                             <button type="button" id="apikey-submit-btn" onclick="validateAndSaveApiKey()"
                                     class="mt-4 w-full px-6 py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-bold text-lg rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-green-500/25">
                                 <i id="apikey-submit-icon" class="fa-solid fa-check text-xl"></i>
@@ -165,7 +165,7 @@
                             </button>
                         </div>
                         
-                        <!-- Info note -->
+                        <!--/*  Info note  */-->
                         <p class="text-center text-slate-500 text-xs mt-3">
                             <i class="fa-solid fa-shield-halved mr-1"></i>
                             <span th:text="#{apikey.modal.securityNote}">Your API key is stored only in your browser</span>
@@ -177,7 +177,7 @@
     </div>
 </div>
 
-<!-- Rate Limit Modal -->
+<!--/*  Rate Limit Modal  */-->
 <div th:fragment="rateLimitModal" id="ratelimit-modal" class="fixed inset-0 z-[100] hidden">
     <div class="absolute inset-0 bg-black/90 backdrop-blur-sm"></div>
     <div class="relative z-10 flex items-center justify-center min-h-screen p-4">

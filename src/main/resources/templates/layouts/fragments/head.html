@@ -8,16 +8,16 @@
     <!--/*@thymesVar id="pageTitle" type="String"*/-->
     <title th:text="#{global.page.title} + (${pageTitle} != null ? ' | ' + ${pageTitle} : '')" />
     
-    <!-- Tailwind CSS -->
+    <!--/*  Tailwind CSS  */-->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- FontAwesome Icons -->
+    <!--/*  FontAwesome Icons  */-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Fonts -->
+    <!--/*  Google Fonts  */-->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     
-    <!-- Custom Styles -->
+    <!--/*  Custom Styles  */-->
     <th:block th:replace="~{layouts/fragments/styles :: styles}"/>
 </head>
 </html>

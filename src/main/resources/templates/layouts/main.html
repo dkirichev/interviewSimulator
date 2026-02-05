@@ -8,24 +8,24 @@
 <body
 		class="bg-slate-900 text-white min-h-full h-full overflow-hidden selection:bg-blue-500 selection:text-white flex flex-col">
 
-<!-- API Key Modal (for PROD mode) -->
+<!--/*  API Key Modal (for PROD mode)  */-->
 <th:block th:replace="~{layouts/fragments/apikey-modal :: apikeyModal}" />
 <th:block th:replace="~{layouts/fragments/apikey-modal :: rateLimitModal}" />
 
-<!-- Top Right Controls -->
+<!--/*  Top Right Controls  */-->
 <div class="fixed top-4 right-4 z-50 flex items-center gap-3">
-	<!-- GitHub Link -->
+	<!--/*  GitHub Link  */-->
 	<a href="https://github.com/dkirichev/interviewSimulator" target="_blank"
 			class="flex items-center justify-center w-10 h-10 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg text-slate-200 hover:text-white">
 		<i class="fa-brands fa-github text-xl"></i>
 	</a>
 
-	<!-- Language Switcher Dropdown -->
+	<!--/*  Language Switcher Dropdown  */-->
 	<div id="lang-dropdown" class="relative group">
 
 		<button id="lang-dropdown-btn" onclick="toggleLanguageDropdown()"
 				class="flex items-center gap-2 px-3 py-2 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg">
-			<!-- Current language flags - toggle visibility via JS -->
+			<!--/*  Current language flags - toggle visibility via JS  */-->
 			<svg id="current-flag-bg" th:classappend="${#locale.language != 'bg'} ? 'hidden' : ''"
 					class="w-6 h-4 rounded overflow-hidden" viewBox="0 0 60 40" fill="none"
 					xmlns="http://www.w3.org/2000/svg">
@@ -46,10 +46,10 @@
 					class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
 		</button>
 
-		<!-- Dropdown Menu -->
+		<!--/*  Dropdown Menu  */-->
 		<div id="lang-dropdown-menu"
 				class="hidden absolute right-0 mt-2 w-44 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
-			<!-- Bulgarian -->
+			<!--/*  Bulgarian  */-->
 			<button id="lang-option-bg" onclick="changeLanguage('bg')"
 					class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors"
 					th:classappend="${#locale.language == 'bg'} ? 'bg-slate-700/50' : ''">
@@ -64,7 +64,7 @@
 				<i id="lang-check-bg" th:classappend="${#locale.language != 'bg'} ? 'hidden' : ''"
 						class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
 			</button>
-			<!-- English -->
+			<!--/*  English  */-->
 			<button id="lang-option-en" onclick="changeLanguage('en')"
 					class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors"
 					th:classappend="${#locale.language == 'en'} ? 'bg-slate-700/50' : ''">
@@ -85,10 +85,10 @@
 	</div>
 </div>
 
-<!-- Main Content Area -->
+<!--/*  Main Content Area  */-->
 <th:block th:replace="~{${content} :: content}" />
 
-<!-- JavaScript Body Bottom -->
+<!--/*  JavaScript Body Bottom  */-->
 <th:block th:replace="~{layouts/fragments/bodyBottom :: bodyBottom}" />
 
 </body>

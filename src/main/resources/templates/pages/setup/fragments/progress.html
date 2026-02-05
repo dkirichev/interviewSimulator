@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<!-- Progress Indicator Fragment for Setup Wizard -->
+<!--/*  Progress Indicator Fragment for Setup Wizard  */-->
 <div th:fragment="progressIndicator(currentStep)" class="flex items-center justify-center mb-12 px-8">
     <div class="flex items-center w-full max-w-lg">
-        <!-- Step 1 -->
+        <!--/*  Step 1  */-->
         <div class="flex flex-col items-center flex-1">
             <div th:classappend="${currentStep == 1} ? 'bg-blue-600 text-white border-blue-400' : (${currentStep > 1} ? 'bg-green-600 text-white border-green-400' : 'bg-slate-700 text-slate-400')"
                  class="w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all duration-300">
@@ -15,11 +15,11 @@
                   class="text-xs mt-2" th:text="#{setup.step.profile}">Profile</span>
         </div>
 
-        <!-- Line 1-2 -->
+        <!--/*  Line 1-2  */-->
         <div th:classappend="${currentStep > 1} ? 'bg-green-600' : 'bg-slate-700'"
              class="flex-1 h-1 transition-all duration-300"></div>
 
-        <!-- Step 2 -->
+        <!--/*  Step 2  */-->
         <div class="flex flex-col items-center flex-1">
             <div th:classappend="${currentStep == 2} ? 'bg-blue-600 text-white border-blue-400' : (${currentStep > 2} ? 'bg-green-600 text-white border-green-400' : 'bg-slate-700 text-slate-400')"
                  class="w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all duration-300">
@@ -30,11 +30,11 @@
                   class="text-xs mt-2" th:text="#{setup.step.details}">Details</span>
         </div>
 
-        <!-- Line 2-3 -->
+        <!--/*  Line 2-3  */-->
         <div th:classappend="${currentStep > 2} ? 'bg-green-600' : 'bg-slate-700'"
              class="flex-1 h-1 transition-all duration-300"></div>
 
-        <!-- Step 3 -->
+        <!--/*  Step 3  */-->
         <div class="flex flex-col items-center flex-1">
             <div th:classappend="${currentStep == 3} ? 'bg-blue-600 text-white border-blue-400' : (${currentStep > 3} ? 'bg-green-600 text-white border-green-400' : 'bg-slate-700 text-slate-400')"
                  class="w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all duration-300">

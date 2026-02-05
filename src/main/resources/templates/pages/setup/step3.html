@@ -3,14 +3,14 @@
 
 <div th:fragment="content">
     <section class="view-section active flex-col justify-center items-center min-h-screen w-full relative overflow-auto">
-        <!-- Background Decor -->
+        <!--/*  Background Decor  */-->
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
             <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
             <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         </div>
 
         <div class="w-full max-w-4xl px-4 py-4">
-            <!-- Header -->
+            <!--/*  Header  */-->
             <div class="text-center mb-4">
                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-600/20 text-blue-400 mb-2">
                     <i class="fa-solid fa-robot text-2xl"></i>
@@ -19,20 +19,20 @@
                 <p class="text-slate-400 mt-1 text-sm" th:text="#{setup.subtitle}">Configure your interview session</p>
             </div>
 
-            <!-- Progress Steps -->
+            <!--/*  Progress Steps  */-->
             <th:block th:replace="~{pages/setup/fragments/progress :: progressIndicator(currentStep=${currentStep})}"/>
 
-            <!-- Form Container -->
+            <!--/*  Form Container  */-->
             <div class="bg-slate-800/80 p-6 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md">
                 <form th:action="@{/setup/step3}" th:object="${setupForm}" method="post" id="step3-form">
-                    <!-- Step Title -->
+                    <!--/*  Step Title  */-->
                     <div class="text-center mb-4">
                         <h2 class="text-xl font-bold text-white mb-1" th:text="#{setup.step3.title}">Voice & Language</h2>
                         <p class="text-slate-400 text-sm" th:text="#{setup.step3.subtitle}">Choose your interviewer</p>
                     </div>
 
                     <div class="space-y-4">
-                        <!-- Language Selection -->
+                        <!--/*  Language Selection  */-->
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-3">
                                 <span th:text="#{setup.step3.interviewLanguage}">Interview Language</span>
@@ -42,7 +42,7 @@
                                 <i class="fa-solid fa-circle-exclamation"></i>
                             </p>
                             <div class="grid grid-cols-2 gap-4" th:classappend="${#fields.hasErrors('language')} ? 'ring-2 ring-red-500 rounded-xl' : ''">
-                                <!-- Bulgarian -->
+                                <!--/*  Bulgarian  */-->
                                 <label class="cursor-pointer">
                                     <input type="radio" th:field="*{language}" value="bg" class="peer sr-only">
                                     <div class="flex items-center justify-center gap-3 py-4 rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-400 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-400 transition hover:bg-slate-800">
@@ -54,7 +54,7 @@
                                         <span class="font-medium" th:text="#{global.language.name.bulgarian}">Български</span>
                                     </div>
                                 </label>
-                                <!-- English -->
+                                <!--/*  English  */-->
                                 <label class="cursor-pointer">
                                     <input type="radio" th:field="*{language}" value="en" class="peer sr-only">
                                     <div class="flex items-center justify-center gap-3 py-4 rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-400 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-400 transition hover:bg-slate-800">
@@ -71,7 +71,7 @@
                             </div>
                         </div>
 
-                        <!-- Voice Selection -->
+                        <!--/*  Voice Selection  */-->
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-3">
                                 <span th:text="#{setup.step3.interviewerVoice}">Interviewer Voice</span>
@@ -82,7 +82,7 @@
                             </p>
                             <div class="grid grid-cols-2 gap-4" th:classappend="${#fields.hasErrors('voiceId')} ? 'ring-2 ring-red-500 rounded-xl' : ''">
 
-                                <!-- George (Algieba) -->
+                                <!--/*  George (Algieba)  */-->
                                 <label class="cursor-pointer group">
                                     <input type="radio" th:field="*{voiceId}" value="Algieba" class="peer sr-only">
                                     <div class="p-3 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
@@ -112,7 +112,7 @@
                                     </div>
                                 </label>
 
-                                <!-- Victoria (Kore) -->
+                                <!--/*  Victoria (Kore)  */-->
                                 <label class="cursor-pointer group">
                                     <input type="radio" th:field="*{voiceId}" value="Kore" class="peer sr-only">
                                     <div class="p-3 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
@@ -142,7 +142,7 @@
                                     </div>
                                 </label>
 
-                                <!-- Max (Fenrir) -->
+                                <!--/*  Max (Fenrir)  */-->
                                 <label class="cursor-pointer group">
                                     <input type="radio" th:field="*{voiceId}" value="Fenrir" class="peer sr-only">
                                     <div class="p-3 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
@@ -172,7 +172,7 @@
                                     </div>
                                 </label>
 
-                                <!-- Diana (Despina) -->
+                                <!--/*  Diana (Despina)  */-->
                                 <label class="cursor-pointer group">
                                     <input type="radio" th:field="*{voiceId}" value="Despina" class="peer sr-only">
                                     <div class="p-3 rounded-xl border-2 border-slate-700 bg-slate-900 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 transition hover:bg-slate-800">
@@ -206,7 +206,7 @@
                         </div>
                     </div>
 
-                    <!-- Navigation Buttons -->
+                    <!--/*  Navigation Buttons  */-->
                     <div class="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
                         <a th:href="@{/setup/step2}"
                            class="px-6 py-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-medium transition">
@@ -224,7 +224,7 @@
         </div>
     </section>
 
-    <!-- Voice Preview JavaScript (minimal, needed for audio playback) -->
+    <!--/*  Voice Preview JavaScript (minimal, needed for audio playback) */-->
     <script th:inline="javascript">
         // Wrap in IIFE to avoid variable conflicts
         (function() {

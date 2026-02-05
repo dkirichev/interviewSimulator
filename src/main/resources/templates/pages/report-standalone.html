@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 
-<!--
+<!--/* 
     Server-Rendered Report Page
     Displays interview feedback from the database.
--->
+ */-->
 <div th:fragment="content">
     <section class="view-section active flex-col items-center min-h-screen w-full relative overflow-auto">
-        <!-- Background Decor -->
+        <!--/*  Background Decor  */-->
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
             <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
             <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         </div>
 
         <div class="w-full max-w-5xl px-4 py-4 space-y-6">
-            <!-- Header -->
+            <!--/*  Header  */-->
             <div class="flex justify-between items-center border-b border-slate-800 pb-6">
                 <div>
                     <h2 class="text-3xl font-bold" th:text="#{report.title}">Interview Report</h2>
@@ -29,7 +29,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Score Card -->
+                <!--/*  Score Card  */-->
                 <div class="bg-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center border border-slate-700 shadow-xl relative overflow-hidden">
                     <div class="absolute inset-0 bg-blue-600/5"></div>
                     <h3 class="text-slate-400 font-medium mb-4 z-10" th:text="#{report.overallPerformance}">Overall Performance</h3>
@@ -48,7 +48,7 @@
                         </div>
                     </div>
                     <div class="mt-6 text-center z-10">
-                        <!-- Verdict Badge -->
+                        <!--/*  Verdict Badge  */-->
                         <span th:switch="${feedback.verdict}">
                             <span th:case="'STRONG_HIRE'" class="px-3 py-1 bg-green-500/10 text-green-500 border border-green-500/20 rounded-full text-xs font-bold" th:text="#{report.verdict.strongHire}">STRONG HIRE</span>
                             <span th:case="'HIRE'" class="px-3 py-1 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full text-xs font-bold" th:text="#{report.verdict.hire}">HIRE</span>
@@ -59,9 +59,9 @@
                     </div>
                 </div>
 
-                <!-- Feedback Categories -->
+                <!--/*  Feedback Categories  */-->
                 <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Strengths -->
+                    <!--/*  Strengths  */-->
                     <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 hover:border-green-500/50 transition">
                         <div class="flex items-center gap-3 mb-3">
                             <div class="w-10 h-10 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center">
@@ -78,7 +78,7 @@
                         </ul>
                     </div>
 
-                    <!-- Areas for Improvement -->
+                    <!--/*  Areas for Improvement  */-->
                     <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 hover:border-yellow-500/50 transition">
                         <div class="flex items-center gap-3 mb-3">
                             <div class="w-10 h-10 rounded-lg bg-yellow-500/20 text-yellow-400 flex items-center justify-center">
@@ -95,14 +95,14 @@
                         </ul>
                     </div>
 
-                    <!-- Score Breakdown -->
+                    <!--/*  Score Breakdown  */-->
                     <div class="sm:col-span-2 bg-slate-800/50 p-6 rounded-xl border border-slate-700">
                         <h4 class="font-bold mb-4 flex items-center gap-2">
                             <i class="fa-solid fa-chart-bar text-blue-400"></i>
                             <span th:text="#{report.scoreBreakdown}">Score Breakdown</span>
                         </h4>
                         <div class="space-y-3">
-                            <!-- Communication -->
+                            <!--/*  Communication  */-->
                             <div>
                                 <div class="flex justify-between text-sm mb-1">
                                     <span class="text-slate-400" th:text="#{report.communication}">Communication</span>
@@ -113,7 +113,7 @@
                                          th:style="'width: ' + ${feedback.communicationScore} + '%'"></div>
                                 </div>
                             </div>
-                            <!-- Technical -->
+                            <!--/*  Technical  */-->
                             <div>
                                 <div class="flex justify-between text-sm mb-1">
                                     <span class="text-slate-400" th:text="#{report.technical}">Technical Knowledge</span>
@@ -124,7 +124,7 @@
                                          th:style="'width: ' + ${feedback.technicalScore} + '%'"></div>
                                 </div>
                             </div>
-                            <!-- Confidence -->
+                            <!--/*  Confidence  */-->
                             <div>
                                 <div class="flex justify-between text-sm mb-1">
                                     <span class="text-slate-400" th:text="#{report.confidence}">Confidence</span>
@@ -140,7 +140,7 @@
                 </div>
             </div>
 
-            <!-- Detailed Analysis -->
+            <!--/*  Detailed Analysis  */-->
             <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
                 <div class="bg-slate-900/50 px-6 py-3 border-b border-slate-700">
                     <h3 class="font-bold flex items-center gap-2">
@@ -155,7 +155,7 @@
                 </div>
             </div>
 
-            <!-- Start New Interview Button -->
+            <!--/*  Start New Interview Button  */-->
             <div class="text-center py-4">
                 <a th:href="@{/setup/step1}"
                    class="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-500/30">
