@@ -2,21 +2,22 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 
 <div th:fragment="bodyBottom">
-	<!--/*  SockJS and STOMP for WebSocket communication  */-->
-	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+	<!--/*  API Key Management (PROD mode only)  */-->
+	<script th:if="${appMode == 'PROD'}" th:src="@{/js/apikey.js}"></script>
 
-	<!--/*  API Key Management (must load early for PROD mode)  */-->
-	<script th:src="@{/js/apikey.js}"></script>
+	<!--/*  Microphone Check (setup pages only)  */-->
+	<script th:if="${isSetupPage}" th:src="@{/js/microphone-check.js}"></script>
 
-	<!--/*  Language Switcher  */-->
+	<!--/*  Language Switcher (all pages)  */-->
 	<script th:src="@{/js/language-switcher.js}"></script>
 
-	<!--/*  Audio Processor  */-->
-	<script th:src="@{/js/audio-processor.js}"></script>
-
-	<!--/*  Interview Handler  */-->
-	<script th:src="@{/js/interview.js}"></script>
+	<!--/*  Interview Scripts (interview page only)  */-->
+	<th:block th:if="${isInterviewPage}">
+		<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+		<script th:src="@{/js/audio-processor.js}"></script>
+		<script th:src="@{/js/interview.js}"></script>
+	</th:block>
 </div>
 
 </html>

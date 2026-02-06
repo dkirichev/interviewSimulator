@@ -12,4 +12,4 @@ public interface InterviewFeedbackRepository extends JpaRepository<InterviewFeed
 
     Optional<InterviewFeedback> findBySessionId(UUID sessionId);
 
-}
+}// InterviewFeedbackRepository

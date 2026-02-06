@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RateLimitService {
 
 	private static final int MAX_ATTEMPTS_PER_WINDOW = 10;
+
 	private static final long WINDOW_MILLIS = 60_000; // 1 minute
 
 	private final Map<String, RateLimitEntry> rateLimitMap = new ConcurrentHashMap<>();
@@ -43,7 +44,7 @@ public class RateLimitService {
 		if (entry.count.get() > MAX_ATTEMPTS_PER_WINDOW) {
 			throw new RateLimitException("Too many requests. Please wait a minute before trying again.");
 		}
-	}
+	}// checkRateLimit
 
 
 	/**
@@ -52,7 +53,7 @@ public class RateLimitService {
 	public void cleanup() {
 		long now = System.currentTimeMillis();
 		rateLimitMap.entrySet().removeIf(e -> now - e.getValue().windowStart > WINDOW_MILLIS * 2);
-	}
+	}// cleanup
 
 
 	private static class RateLimitEntry {
@@ -63,6 +64,6 @@ public class RateLimitService {
 			this.windowStart = windowStart;
 			this.count = count;
 		}
-	}
+	}// RateLimitEntry
 
-}
+}// RateLimitService

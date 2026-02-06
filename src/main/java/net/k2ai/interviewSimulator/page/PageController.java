@@ -1,6 +1,8 @@
 package net.k2ai.interviewSimulator.page;
 
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import net.k2ai.interviewSimulator.config.GeminiConfig;
 import net.k2ai.interviewSimulator.dto.InterviewSetupDTO;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -8,11 +10,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.SessionStatus;
 
+@RequiredArgsConstructor
 @Controller
 @SessionAttributes("setupForm")
 public class PageController {
 
 	private static final String LAYOUT = "layouts/main";
+
+	private final GeminiConfig geminiConfig;
 
 
 	/**
@@ -21,7 +26,7 @@ public class PageController {
 	@GetMapping("/")
 	public String index() {
 		return "redirect:/setup/step1";
-	}
+	}// index
 
 
 	/**
@@ -40,6 +45,8 @@ public class PageController {
 
 		model.addAttribute("content", "pages/interview-standalone");
 		model.addAttribute("setupForm", setupForm);
+		model.addAttribute("appMode", geminiConfig.getAppMode());
+		model.addAttribute("isInterviewPage", true);
 
 		// Mark session attributes as complete - clears @SessionAttributes managed data
 		// This ensures setup data is one-time use and won't persist after interview starts
@@ -49,6 +56,6 @@ public class PageController {
 		session.removeAttribute("setupForm");
 
 		return LAYOUT;
-	}
+	}// interview
 
 }// PageController

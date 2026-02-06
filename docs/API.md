@@ -74,7 +74,7 @@ Uploads and extracts text from a CV/resume file.
 
 **Request:**
 - Content-Type: `multipart/form-data`
-- Field: `file` (PDF or DOCX, max 2MB)
+- Field: `file` (PDF or DOCX, max 10MB)
 
 **Success Response (200):**
 ```json
@@ -90,7 +90,7 @@ Uploads and extracts text from a CV/resume file.
 | Status | Response |
 |--------|----------|
 | 400 | `{"success": false, "error": "File is empty or null"}` |
-| 400 | `{"success": false, "error": "File size exceeds maximum allowed (2MB)"}` |
+| 400 | `{"success": false, "error": "File size exceeds maximum allowed (10MB)"}` |
 | 400 | `{"success": false, "error": "Invalid file type. Only PDF and DOCX are allowed."}` |
 | 400 | `{"success": false, "error": "Invalid PDF file - file content doesn't match"}` |
 

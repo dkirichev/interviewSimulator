@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface InterviewSessionRepository extends JpaRepository<InterviewSession, UUID> {
-}
+
+}// InterviewSessionRepository

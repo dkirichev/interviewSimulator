@@ -161,7 +161,7 @@ src/main/java/net/k2ai/interviewSimulator/
 ### CV Processing Flow
 
 ```
-1. User uploads → PDF/DOCX file (max 2MB)
+1. User uploads → PDF/DOCX file (max 10MB)
 2. Browser → Server → POST /api/cv/upload with multipart form
 3. Server extracts → Text via PDFBox (PDF) or Apache POI (DOCX)
 4. Text included → In system instruction for personalized interview
@@ -348,17 +348,19 @@ src/main/resources/
 ├── static/
 │   ├── audio/voices/          # Voice preview WAV files
 │   └── js/
-│       ├── apikey.js          # API key modal handling
-│       ├── audio-processor.js # WebSocket, mic, playback
-│       ├── interview.js       # Interview UI controls
-│       └── language-switcher.js
+│       ├── apikey.js          # API key modal handling (PROD only)
+│       ├── audio-processor.js # WebSocket, mic, playback (interview only)
+│       ├── interview.js       # Interview UI controls (interview only)
+│       ├── language-switcher.js # Language dropdown (all pages)
+│       └── microphone-check.js  # Mic availability check (setup only)
 └── templates/
     ├── layouts/
     │   ├── main.html          # Base layout
     │   └── fragments/
     │       ├── apikey-modal.html
-    │       ├── bodyBottom.html
+    │       ├── bodyBottom.html   # Conditional script loading
     │       ├── head.html
+    │       ├── microphone-modal.html
     │       └── styles.html
     └── pages/
         ├── setup/

@@ -21,17 +21,19 @@ public class I18nConfig implements WebMvcConfigurer {
 		resolver.setCookieMaxAge(Duration.ofDays(365)); // Cache for 1 year
 		resolver.setCookiePath("/");
 		return resolver;
-	}
+	}// localeResolver
+
 
 	@Bean
 	public LocaleChangeInterceptor localeChangeInterceptor() {
 		LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
 		interceptor.setParamName("lang");
 		return interceptor;
-	}
+	}// localeChangeInterceptor
+
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(localeChangeInterceptor());
-	}
-}
+	}// addInterceptors
+}// WebMvcConfigurer

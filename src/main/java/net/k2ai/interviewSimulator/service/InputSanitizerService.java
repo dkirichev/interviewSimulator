@@ -12,9 +12,11 @@ import java.util.regex.Pattern;
 public class InputSanitizerService {
 
 	private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]*>");
+
 	private static final Pattern SCRIPT_PATTERN = Pattern.compile(
 			"(?i)<script[^>]*>.*?</script>|javascript:|on\\w+\\s*=", Pattern.DOTALL
 	);
+
 	private static final Pattern SQL_INJECTION_PATTERN = Pattern.compile(
 			"(?i)(--|;|'|\"\\s*(or|and)\\s+|union\\s+select|insert\\s+into|delete\\s+from|drop\\s+table)",
 			Pattern.CASE_INSENSITIVE
@@ -34,7 +36,8 @@ public class InputSanitizerService {
 				.replace(">", "&gt;")
 				.replace("\"", "&quot;")
 				.replace("'", "&#x27;");
-	}
+	}// sanitizeForHtml
+
 
 	/**
 	 * Sanitizes text for use in prompts sent to AI services.
@@ -57,7 +60,8 @@ public class InputSanitizerService {
 		sanitized = sanitized.replaceAll("\\s+", " ").trim();
 
 		return sanitized;
-	}
+	}// sanitizeForPrompt
+
 
 	/**
 	 * Sanitizes a candidate name - only allows letters, spaces, hyphens, and apostrophes.
@@ -81,7 +85,8 @@ public class InputSanitizerService {
 		}
 
 		return trimmed;
-	}
+	}// sanitizeName
+
 
 	/**
 	 * Sanitizes a position/job title - allows letters, numbers, spaces, and basic punctuation.
@@ -113,7 +118,8 @@ public class InputSanitizerService {
 		}
 
 		return trimmed;
-	}
+	}// sanitizePosition
+
 
 	/**
 	 * Sanitizes CV text - removes dangerous content while preserving document structure.
@@ -137,7 +143,8 @@ public class InputSanitizerService {
 		}
 
 		return sanitized;
-	}
+	}// sanitizeCvText
+
 
 	/**
 	 * Validates that a value is one of the allowed values.
@@ -155,6 +162,6 @@ public class InputSanitizerService {
 		}
 
 		return defaultValue;
-	}
+	}// validateEnum
 
-}
+}// InputSanitizerService

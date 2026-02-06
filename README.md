@@ -180,7 +180,7 @@ export APP_MODE=DEV
 - Thymeleaf for server-side templating
 
 **Frontend:**
-- Vanilla JavaScript (minimal, ~1,400 lines)
+- Vanilla JavaScript (minimal, ~1,500 lines)
 - Thymeleaf templates with i18n support
 - Tailwind CSS (via CDN)
 - Web Audio API for audio capture/playback

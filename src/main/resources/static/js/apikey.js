@@ -1,36 +1,17 @@
 // API Key Management for PROD mode
-// Handles localStorage, validation, modal display, and onboarding flow
+// Only loaded when app.mode=PROD (conditionally included by Thymeleaf)
 
 const STORAGE_KEY = 'gemini_api_key';
 const STORAGE_TIMESTAMP_KEY = 'gemini_key_validated_at';
 
-let appMode = 'DEV'; // Will be set by checkAppMode()
 let currentOnboardingStep = 1;
 
 
-// Check application mode on page load
-async function checkAppMode() {
-	try {
-		const response = await fetch('/api/mode');
-		const data = await response.json();
-		appMode = data.mode;
-
-		if (data.requiresUserKey) {
-			// PROD mode - check for valid API key
-			const storedKey = getStoredApiKey();
-			if (!storedKey) {
-				showApiKeyModal();
-			} else {
-				// Optionally validate stored key on load
-
-			}
-		} else {
-			// DEV mode - hide modal if visible
-			hideApiKeyModal();
-		}
-	} catch (error) {
-		console.error('Failed to check app mode:', error);
-		// Default to allowing access on error
+// Check for stored API key on page load (no HTTP request needed — this file only loads in PROD)
+function checkApiKeyOnLoad() {
+	const storedKey = getStoredApiKey();
+	if (!storedKey) {
+		showApiKeyModal();
 	}
 }
 
@@ -155,7 +136,8 @@ function goToOnboardingStep(step) {
 	if (step === 3) {
 		const video = document.getElementById('tutorial-video');
 		if (video) {
-			video.play().catch(() => {});
+			video.play().catch(() => {
+			});
 		}
 	}
 }
@@ -382,27 +364,15 @@ function handleRateLimitError() {
 }
 
 
-// Check if we need to show API key modal (for PROD mode)
+// Check if we need to show API key modal (this file only loads in PROD)
 function requiresApiKey() {
-	return appMode === 'PROD' && !getStoredApiKey();
-}
-
-
-// Change language from within the modal
-function changeLanguageInModal(lang) {
-	// Use the existing language change function if available
-	if (typeof changeLanguage === 'function') {
-		changeLanguage(lang);
-	} else {
-		// Fallback: reload page with new language
-		window.location.href = '/?lang=' + lang;
-	}
+	return !getStoredApiKey();
 }
 
 
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => {
-	checkAppMode();
+	checkApiKeyOnLoad();
 
 	// Initialize onboarding progress dots
 	updateOnboardingProgress(1);
@@ -431,6 +401,6 @@ window.clearApiKeyAndShowModal = clearApiKeyAndShowModal;
 window.toggleTutorialVideo = toggleTutorialVideo;
 window.toggleApiKeyVisibility = toggleApiKeyVisibility;
 window.validateAndSaveApiKey = validateAndSaveApiKey;
-window.changeLanguageInModal = changeLanguageInModal;
 window.goToOnboardingStep = goToOnboardingStep;
 window.toggleOnboardingFaq = toggleOnboardingFaq;
+// Note: changeLanguageInModal is now provided by language-switcher.js (loaded globally)

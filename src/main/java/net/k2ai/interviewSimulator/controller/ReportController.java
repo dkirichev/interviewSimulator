@@ -3,11 +3,13 @@ package net.k2ai.interviewSimulator.controller;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.k2ai.interviewSimulator.config.GeminiConfig;
 import net.k2ai.interviewSimulator.entity.InterviewFeedback;
 import net.k2ai.interviewSimulator.repository.InterviewFeedbackRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -28,6 +30,12 @@ public class ReportController {
 	private static final String LAYOUT = "layouts/main";
 
 	private final InterviewFeedbackRepository feedbackRepository;
+	private final GeminiConfig geminiConfig;
+
+	@ModelAttribute("appMode")
+	public String appMode() {
+		return geminiConfig.getAppMode();
+	}// appMode
 
 
 	/**
@@ -75,7 +83,7 @@ public class ReportController {
 			model.addAttribute("content", "pages/report-error");
 			return LAYOUT;
 		}
-	}
+	}// showReport
 
 
 	/**
@@ -106,6 +114,6 @@ public class ReportController {
 			log.warn("Failed to parse JSON array: {}", jsonArray);
 			return List.of(jsonArray); // Return as single item if parsing fails
 		}
-	}
+	}// parseJsonArray
 
-}
+}// ReportController

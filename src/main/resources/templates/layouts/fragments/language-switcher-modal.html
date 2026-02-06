@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!--/*  Reusable Modal Language Switcher Fragment  */-->
+<div th:fragment="modalLanguageSwitcher" class="flex items-center gap-2">
+	<!--/*  Bulgarian  */-->
+	<button onclick="changeLanguageInModal('bg')" id="modal-lang-bg"
+			class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors border-2 border-transparent hover:border-slate-600"
+			th:classappend="${#locale.language == 'bg'} ? 'bg-slate-700 border-blue-500' : 'bg-slate-800'">
+		<svg class="w-5 h-4 rounded overflow-hidden" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<rect width="60" height="13.33" fill="white" />
+			<rect y="13.33" width="60" height="13.33" fill="#00966E" />
+			<rect y="26.66" width="60" height="13.34" fill="#D62612" />
+		</svg>
+		<span class="text-sm text-slate-300">BG</span>
+	</button>
+	<!--/*  English  */-->
+	<button onclick="changeLanguageInModal('en')" id="modal-lang-en"
+			class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors border-2 border-transparent hover:border-slate-600"
+			th:classappend="${#locale.language == 'en'} ? 'bg-slate-700 border-blue-500' : 'bg-slate-800'">
+		<svg class="w-5 h-4 rounded overflow-hidden" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<rect width="60" height="40" fill="#012169" />
+			<path d="M0 0L60 40M60 0L0 40" stroke="white" stroke-width="8" />
+			<path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4" />
+			<path d="M30 0V40M0 20H60" stroke="white" stroke-width="12" />
+			<path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6" />
+		</svg>
+		<span class="text-sm text-slate-300">EN</span>
+	</button>
+</div>
+
+</html>

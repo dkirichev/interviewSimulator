@@ -136,6 +136,6 @@ public class ApiKeyController {
 			return xForwardedFor.split(",")[0].trim();
 		}
 		return request.getRemoteAddr();
-	}
+	}// getClientIp
 
 }//ApiKeyController

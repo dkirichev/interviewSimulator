@@ -211,13 +211,16 @@ public class MyEntity {
 - Cleared after interview starts (one-time use)
 - Uses `SessionStatus.setComplete()` for proper cleanup
 
-### JavaScript (1,409 lines total - 41% reduced)
-- `audio-processor.js` (588 lines) - WebSocket + audio processing
-- `interview.js` (308 lines) - Interview UI controls
-- `apikey.js` (363 lines) - API key modal
-- `language-switcher.js` (150 lines) - Language switching
+### JavaScript (1,500 lines total — conditionally loaded per page)
+- `audio-processor.js` (603 lines) - WebSocket + audio processing *(interview page only)*
+- `apikey.js` (417 lines) - API key onboarding + validation *(PROD mode only)*
+- `interview.js` (315 lines) - Interview UI controls *(interview page only)*
+- `microphone-check.js` (92 lines) - Microphone availability check *(setup pages only)*
+- `language-switcher.js` (73 lines) - Language dropdown *(all pages)*
 
-All JavaScript is essential for browser APIs (WebSocket, Web Audio, getUserMedia).
+Scripts are conditionally loaded via Thymeleaf `th:if` in `bodyBottom.html` using model attributes
+(`appMode`, `isSetupPage`, `isInterviewPage`) set by controllers. SockJS/STOMP CDN libraries are
+also only loaded on the interview page.
 
 ---
 

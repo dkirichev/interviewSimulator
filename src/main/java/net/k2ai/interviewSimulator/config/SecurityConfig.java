@@ -61,6 +61,6 @@ public class SecurityConfig {
 				.anonymous(anonymous -> {
 				})
 				.build();
-	}
+	}// filterChain
 
-}
+}// SecurityConfig

@@ -3,6 +3,7 @@ package net.k2ai.interviewSimulator.controller;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.k2ai.interviewSimulator.config.GeminiConfig;
 import net.k2ai.interviewSimulator.dto.InterviewSetupDTO;
 import net.k2ai.interviewSimulator.service.CvProcessingService;
 import net.k2ai.interviewSimulator.service.InputSanitizerService;
@@ -27,6 +28,7 @@ public class SetupController {
 	private static final String SESSION_ATTR_SETUP = "setupForm";
 	private static final String LAYOUT = "layouts/main";
 
+	private final GeminiConfig geminiConfig;
 	private final CvProcessingService cvProcessingService;
 	private final InputSanitizerService sanitizerService;
 	private final Validator validator;
@@ -35,6 +37,16 @@ public class SetupController {
 	@ModelAttribute("setupForm")
 	public InterviewSetupDTO setupForm() {
 		return new InterviewSetupDTO();
+	}
+
+	@ModelAttribute("appMode")
+	public String appMode() {
+		return geminiConfig.getAppMode();
+	}
+
+	@ModelAttribute("isSetupPage")
+	public boolean isSetupPage() {
+		return true;
 	}
 
 
@@ -47,7 +59,7 @@ public class SetupController {
 		model.addAttribute("currentStep", 1);
 		model.addAttribute("showLegalLinks", true);
 		return LAYOUT;
-	}
+	}// showStep1
 
 
 	@PostMapping("/step1")
@@ -85,7 +97,7 @@ public class SetupController {
 
 		log.debug("Step 1 completed: candidateName={}", form.getCandidateName());
 		return "redirect:/setup/step2";
-	}
+	}// processStep1
 
 
 	// ========== STEP 2: Details ==========
@@ -112,7 +124,7 @@ public class SetupController {
 		model.addAttribute("currentStep", 2);
 		model.addAttribute("showLegalLinks", true);
 		return LAYOUT;
-	}
+	}// showStep2
 
 
 	@PostMapping("/step2")
@@ -180,7 +192,7 @@ public class SetupController {
 		log.debug("Step 2 completed: position={}, difficulty={}, hasCV={}",
 				form.getEffectivePosition(), form.getDifficulty(), form.getCvText() != null);
 		return "redirect:/setup/step3";
-	}
+	}// processStep2
 
 
 	// ========== STEP 3: Voice & Language ==========
@@ -200,7 +212,7 @@ public class SetupController {
 		model.addAttribute("currentStep", 3);
 		model.addAttribute("showLegalLinks", true);
 		return LAYOUT;
-	}
+	}// showStep3
 
 
 	@PostMapping("/step3")
@@ -244,7 +256,7 @@ public class SetupController {
 
 		// Redirect to interview page (handled by PageController)
 		return "redirect:/interview";
-	}
+	}// processStep3
 
 
 	// ========== Helper Methods ==========
@@ -253,7 +265,7 @@ public class SetupController {
 		if (session.getAttribute(SESSION_ATTR_SETUP) == null) {
 			session.setAttribute(SESSION_ATTR_SETUP, new InterviewSetupDTO());
 		}
-	}
+	}// ensureSetupFormExists
 
 
 	private void updateInterviewerNames(InterviewSetupDTO form) {
@@ -278,7 +290,7 @@ public class SetupController {
 				form.setInterviewerNameEN("George");
 				form.setInterviewerNameBG("Георги");
 		}
-	}
+	}// updateInterviewerNames
 
 
 	/**
@@ -288,6 +300,6 @@ public class SetupController {
 	public String clearSetup(HttpSession session) {
 		session.removeAttribute(SESSION_ATTR_SETUP);
 		return "redirect:/setup/step1";
-	}
+	}// clearSetup
 
-}
+}// SetupController

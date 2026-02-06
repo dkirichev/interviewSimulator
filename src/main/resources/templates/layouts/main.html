@@ -8,9 +8,14 @@
 <body
 		class="bg-slate-900 text-white min-h-full h-full overflow-hidden selection:bg-blue-500 selection:text-white flex flex-col">
 
-<!--/*  API Key Modal (for PROD mode)  */-->
-<th:block th:replace="~{layouts/fragments/apikey-modal :: apikeyModal}" />
-<th:block th:replace="~{layouts/fragments/apikey-modal :: rateLimitModal}" />
+<!--/*  API Key Modal (PROD mode only)  */-->
+<th:block th:if="${appMode == 'PROD'}">
+	<th:block th:replace="~{layouts/fragments/apikey-modal :: apikeyModal}" />
+	<th:block th:replace="~{layouts/fragments/apikey-modal :: rateLimitModal}" />
+</th:block>
+
+<!--/*  Microphone Check Modal (setup pages only)  */-->
+<th:block th:if="${isSetupPage}" th:replace="~{layouts/fragments/microphone-modal :: microphoneModal}" />
 
 <!--/*  Top Left Legal Links (only on setup pages)  */-->
 <div th:if="${showLegalLinks}" class="fixed top-4 left-4 z-50 flex items-center gap-3">

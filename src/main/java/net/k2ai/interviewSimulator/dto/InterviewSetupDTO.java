@@ -57,7 +57,7 @@ public class InterviewSetupDTO implements Serializable {
 			return customPosition.trim();
 		}
 		return position;
-	}
+	}// getEffectivePosition
 
 	/**
 	 * Clears CV data.
@@ -66,6 +66,6 @@ public class InterviewSetupDTO implements Serializable {
 		this.cvFile = null;
 		this.cvText = null;
 		this.cvFileName = null;
-	}
+	}// clearCv
 
-}
+}// InterviewSetupDTO

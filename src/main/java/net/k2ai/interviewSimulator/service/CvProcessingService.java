@@ -51,7 +51,7 @@ public class CvProcessingService {
 		}
 
 		return extractedText;
-	}
+	}// extractText
 
 
 	private void validateFile(MultipartFile file) throws IOException {
@@ -70,7 +70,7 @@ public class CvProcessingService {
 
 		// Verify magic bytes to prevent content-type spoofing
 		verifyMagicBytes(file, contentType);
-	}
+	}// validateFile
 
 
 	private void verifyMagicBytes(MultipartFile file, String contentType) throws IOException {
@@ -95,7 +95,7 @@ public class CvProcessingService {
 				throw new IllegalArgumentException("Invalid DOCX file - file content doesn't match");
 			}
 		}
-	}
+	}// verifyMagicBytes
 
 
 	private String extractFromPdf(MultipartFile file) throws IOException {
@@ -108,7 +108,7 @@ public class CvProcessingService {
 			log.info("Extracted {} characters from PDF", text.length());
 			return cleanText(text);
 		}
-	}
+	}// extractFromPdf
 
 
 	private String extractFromDocx(MultipartFile file) throws IOException {
@@ -125,7 +125,7 @@ public class CvProcessingService {
 			log.info("Extracted {} characters from DOCX", result.length());
 			return cleanText(result);
 		}
-	}
+	}// extractFromDocx
 
 
 	private String cleanText(String text) {
@@ -140,7 +140,7 @@ public class CvProcessingService {
 				.replaceAll("[ \\t]+", " ")
 				.replaceAll("\\n{3,}", "\n\n")
 				.trim();
-	}
+	}// cleanText
 
 
 	private String sanitizeFilename(String filename) {
@@ -149,7 +149,7 @@ public class CvProcessingService {
 		}
 		// Remove path traversal attempts and dangerous characters
 		return filename.replaceAll("[^a-zA-Z0-9._-]", "_");
-	}
+	}// sanitizeFilename
 
 
 	private String bytesToHex(byte[] bytes) {
@@ -158,6 +158,6 @@ public class CvProcessingService {
 			sb.append(String.format("%02X ", b));
 		}
 		return sb.toString().trim();
-	}
+	}// bytesToHex
 
-}
+}// CvProcessingService

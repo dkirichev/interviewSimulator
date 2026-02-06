@@ -3,6 +3,7 @@ package net.k2ai.interviewSimulator.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.k2ai.interviewSimulator.config.GeminiConfig;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
 	private final MessageSource messageSource;
+	private final GeminiConfig geminiConfig;
 
 
 	/**
@@ -55,7 +57,7 @@ public class GlobalExceptionHandler {
 				"error", "Validation failed",
 				"fieldErrors", fieldErrors
 		));
-	}
+	}// handleValidationException
 
 
 	/**
@@ -90,7 +92,7 @@ public class GlobalExceptionHandler {
 		// This exception shouldn't reach here for properly configured controllers
 		return renderErrorPage(model, "400", "Bad Request",
 				"The form data was invalid. Please check your input.");
-	}
+	}// handleBindException
 
 
 	/**
@@ -116,7 +118,7 @@ public class GlobalExceptionHandler {
 		}
 
 		return renderErrorPage(model, "413", "File Too Large", message);
-	}
+	}// handleMaxUploadSizeExceeded
 
 
 	/**
@@ -131,7 +133,7 @@ public class GlobalExceptionHandler {
 				"error", ex.getMessage(),
 				"rateLimited", true
 		));
-	}
+	}// handleRateLimitException
 
 
 	/**
@@ -142,7 +144,7 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
 		// Don't log common browser requests
 		return ResponseEntity.notFound().build();
-	}
+	}// handleNoResourceFound
 
 
 	/**
@@ -164,7 +166,7 @@ public class GlobalExceptionHandler {
 		}
 
 		return renderErrorPage(model, "400", "Bad Request", ex.getMessage());
-	}
+	}// handleIllegalArgumentException
 
 
 	/**
@@ -188,7 +190,7 @@ public class GlobalExceptionHandler {
 
 		return renderErrorPage(model, "500", "Internal Server Error",
 				"Something went wrong. Please try again later.");
-	}
+	}// handleGenericException
 
 
 	private boolean isApiRequest(HttpServletRequest request) {
@@ -196,7 +198,7 @@ public class GlobalExceptionHandler {
 		String accept = request.getHeader("Accept");
 		return uri.contains("/api/") ||
 				(accept != null && accept.contains("application/json"));
-	}
+	}// isApiRequest
 
 
 	private String renderErrorPage(Model model, String code, String title, String message) {
@@ -204,7 +206,8 @@ public class GlobalExceptionHandler {
 		model.addAttribute("errorTitle", title);
 		model.addAttribute("errorMessage", message);
 		model.addAttribute("content", "pages/error");
+		model.addAttribute("appMode", geminiConfig.getAppMode());
 		return "layouts/main";
-	}
+	}// renderErrorPage
 
-}
+}// GlobalExceptionHandler
