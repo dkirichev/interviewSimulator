@@ -1,10 +1,11 @@
 // API Key Management for PROD mode
-// Handles localStorage, validation, and modal display
+// Handles localStorage, validation, modal display, and onboarding flow
 
 const STORAGE_KEY = 'gemini_api_key';
 const STORAGE_TIMESTAMP_KEY = 'gemini_key_validated_at';
 
 let appMode = 'DEV'; // Will be set by checkAppMode()
+let currentOnboardingStep = 1;
 
 
 // Check application mode on page load
@@ -114,6 +115,8 @@ function clearApiKeyAndShowModal() {
 	clearStoredApiKey();
 	hideRateLimitModal();
 	showApiKeyModal();
+	// Jump directly to step 3 (the key input step)
+	goToOnboardingStep(3);
 
 	// Clear the input field
 	const input = document.getElementById('apikey-input');
@@ -122,6 +125,70 @@ function clearApiKeyAndShowModal() {
 	// Hide any previous messages
 	hideApiKeyError();
 	hideApiKeySuccess();
+}
+
+
+// Navigate to a specific onboarding step
+function goToOnboardingStep(step) {
+	if (step < 1 || step > 3) return;
+	currentOnboardingStep = step;
+
+	// Hide all steps
+	document.querySelectorAll('.onboarding-step').forEach(el => {
+		el.classList.add('hidden');
+		el.style.opacity = '0';
+	});
+
+	// Show target step with fade-in
+	const targetStep = document.getElementById('onboarding-step-' + step);
+	if (targetStep) {
+		targetStep.classList.remove('hidden');
+		// Trigger reflow for animation
+		void targetStep.offsetWidth;
+		targetStep.style.opacity = '1';
+	}
+
+	// Update progress dots
+	updateOnboardingProgress(step);
+
+	// Auto-play video when reaching step 3
+	if (step === 3) {
+		const video = document.getElementById('tutorial-video');
+		if (video) {
+			video.play().catch(() => {});
+		}
+	}
+}
+
+
+// Update progress indicator dots
+function updateOnboardingProgress(activeStep) {
+	document.querySelectorAll('.onboarding-dot').forEach(dot => {
+		const dotStep = parseInt(dot.dataset.step);
+		dot.classList.remove('text-blue-400', 'bg-blue-500/20', 'text-green-400', 'bg-green-500/20', 'text-slate-500', 'bg-transparent');
+
+		if (dotStep < activeStep) {
+			// Completed steps
+			dot.classList.add('text-green-400', 'bg-green-500/20');
+		} else if (dotStep === activeStep) {
+			// Current step
+			dot.classList.add('text-blue-400', 'bg-blue-500/20');
+		} else {
+			// Future steps
+			dot.classList.add('text-slate-500', 'bg-transparent');
+		}
+	});
+}
+
+
+// Toggle the "Why do I need this?" FAQ on step 2
+function toggleOnboardingFaq() {
+	const content = document.getElementById('onboarding-faq-content');
+	const icon = document.getElementById('onboarding-faq-icon');
+	if (content && icon) {
+		content.classList.toggle('hidden');
+		icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
+	}
 }
 
 
@@ -337,6 +404,9 @@ function changeLanguageInModal(lang) {
 document.addEventListener('DOMContentLoaded', () => {
 	checkAppMode();
 
+	// Initialize onboarding progress dots
+	updateOnboardingProgress(1);
+
 	// Allow Enter key to submit
 	const input = document.getElementById('apikey-input');
 	if (input) {
@@ -362,3 +432,5 @@ window.toggleTutorialVideo = toggleTutorialVideo;
 window.toggleApiKeyVisibility = toggleApiKeyVisibility;
 window.validateAndSaveApiKey = validateAndSaveApiKey;
 window.changeLanguageInModal = changeLanguageInModal;
+window.goToOnboardingStep = goToOnboardingStep;
+window.toggleOnboardingFaq = toggleOnboardingFaq;
