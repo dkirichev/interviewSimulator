@@ -261,6 +261,21 @@
 			// Initialize voice names on page load
 			document.addEventListener('DOMContentLoaded', updateVoiceNames);
 
+			// Auto-play voice preview when selecting a voice
+			document.querySelectorAll('input[name="voiceId"]').forEach(radio => {
+				radio.addEventListener('change', () => {
+					const voiceId = radio.value;
+					// Simulate a click on the play button for this voice
+					const card = radio.closest('label');
+					if (card) {
+						const playBtn = card.querySelector('button[onclick*="playVoicePreview"]');
+						if (playBtn) {
+							playBtn.click();
+						}
+					}
+				});
+			});
+
 			// Make playVoicePreview available globally
 			window.playVoicePreview = async function (event, voiceId) {
 				event.preventDefault();
