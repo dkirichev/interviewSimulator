@@ -2,19 +2,34 @@
 // Runs early to ensure user has a working microphone before starting interview
 
 let micCheckInProgress = false;
+let permissionDenied = false; // Track if user explicitly denied permission
 
 
 // Check if microphone is available
 async function checkMicrophoneAvailability() {
 	if (micCheckInProgress) return;
 	micCheckInProgress = true;
+	permissionDenied = false;
 
 	try {
 		// Check if getUserMedia is supported
 		if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-			showMicrophoneModal();
+			showMicrophoneModal(false);
 			micCheckInProgress = false;
 			return;
+		}
+
+		// Check permission state if supported
+		try {
+			const permissionStatus = await navigator.permissions.query({name: 'microphone'});
+			if (permissionStatus.state === 'denied') {
+				permissionDenied = true;
+				showMicrophoneModal(true);
+				micCheckInProgress = false;
+				return;
+			}
+		} catch (e) {
+			// Permissions API not supported, continue with normal check
 		}
 
 		// Try to enumerate devices first (less intrusive)
@@ -22,7 +37,7 @@ async function checkMicrophoneAvailability() {
 		const audioInputs = devices.filter(device => device.kind === 'audioinput');
 
 		if (audioInputs.length === 0) {
-			showMicrophoneModal();
+			showMicrophoneModal(false);
 			micCheckInProgress = false;
 			return;
 		}
@@ -37,23 +52,40 @@ async function checkMicrophoneAvailability() {
 		} catch (error) {
 			// Permission denied or no microphone
 			console.warn('Microphone access denied or unavailable:', error);
-			showMicrophoneModal();
+			// Check if it's a permission error
+			if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+				permissionDenied = true;
+				showMicrophoneModal(true);
+			} else {
+				showMicrophoneModal(false);
+			}
 			micCheckInProgress = false;
 		}
 	} catch (error) {
 		console.error('Microphone check failed:', error);
-		showMicrophoneModal();
+		showMicrophoneModal(false);
 		micCheckInProgress = false;
 	}
 }
 
 
 // Show the microphone error modal
-function showMicrophoneModal() {
+function showMicrophoneModal(isDenied) {
 	const modal = document.getElementById('microphone-modal');
+	const permissionNote = document.getElementById('mic-permission-note');
+	
 	if (modal) {
 		modal.classList.remove('hidden');
 		document.body.style.overflow = 'hidden';
+		
+		// Show/hide permission note based on denial
+		if (permissionNote) {
+			if (isDenied) {
+				permissionNote.classList.remove('hidden');
+			} else {
+				permissionNote.classList.add('hidden');
+			}
+		}
 	}
 }
 
@@ -71,7 +103,7 @@ function hideMicrophoneModal() {
 // Retry microphone check (called from "Try Again" button)
 async function retryMicrophoneCheck() {
 	hideMicrophoneModal();
-	// Wait a moment for user to potentially plug in device
+	// Wait a moment for user to potentially plug in device or reset permissions
 	await new Promise(resolve => setTimeout(resolve, 500));
 	await checkMicrophoneAvailability();
 }
