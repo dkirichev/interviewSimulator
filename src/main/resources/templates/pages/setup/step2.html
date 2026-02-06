@@ -169,7 +169,7 @@
 								<div>
 									<i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-500 mb-3"></i>
 									<p class="text-slate-400 font-medium" th:text="#{setup.cv.dropText}">Drop your CV here or click to browse</p>
-									<p class="text-slate-600 text-xs mt-2" th:text="#{setup.cv.fileTypes}">PDF or DOCX, max 2MB</p>
+									<p class="text-slate-600 text-xs mt-2" th:text="#{setup.cv.fileTypes}">PDF or DOCX, max 10MB</p>
 								</div>
 							</div>
 
@@ -250,9 +250,9 @@
 					return;
 				}
 
-				// Validate file size (2MB max)
-				if (file.size > 2 * 1024 * 1024) {
-					showCvError(/*[[#{validation.cv.tooLarge}]]*/ 'File size must be less than 2MB');
+				// Validate file size (10MB max)
+				if (file.size > 10 * 1024 * 1024) {
+					showCvError(/*[[#{validation.cv.tooLarge}]]*/ 'File size must be less than 10MB');
 					input.value = '';
 					return;
 				}

@@ -17,7 +17,7 @@ import java.util.Arrays;
 @Service
 public class CvProcessingService {
 
-	private static final long MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+	private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 	private static final int MAX_EXTRACTED_LENGTH = 100_000; // 100KB max text
 
 	private static final String CONTENT_TYPE_PDF = "application/pdf";
@@ -60,7 +60,7 @@ public class CvProcessingService {
 		}
 
 		if (file.getSize() > MAX_FILE_SIZE) {
-			throw new IllegalArgumentException("File size exceeds maximum allowed (2MB)");
+			throw new IllegalArgumentException("File size exceeds maximum allowed (10MB)");
 		}
 
 		String contentType = file.getContentType();

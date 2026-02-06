@@ -106,7 +106,7 @@ public class GlobalExceptionHandler {
 		log.warn("File size exceeded for request to {}", request.getRequestURI());
 
 		String message = messageSource.getMessage("validation.cv.tooLarge", null,
-				"File size must be less than 2MB", locale);
+				"File size must be less than 10MB", locale);
 
 		if (isApiRequest(request)) {
 			return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(Map.of(
