@@ -36,7 +36,7 @@ public class ApiKeyController {
 
 
 	/**
-	 * Returns the current application mode (DEV or PROD)
+	 * Returns the current application mode (DEV, PROD, or REVIEWER)
 	 */
 	@GetMapping("/mode")
 	public ResponseEntity<Map<String, Object>> getMode() {

@@ -230,14 +230,7 @@ function endInterview() {
 	}
 
 	// Show grading screen
-	if (connectionOverlay) {
-		connectionOverlay.style.display = 'flex';
-		connectionOverlay.style.opacity = '1';
-		const overlayText = connectionOverlay.querySelector('p');
-		if (overlayText) {
-			overlayText.innerText = 'Analyzing your performance...';
-		}
-	}
+	showGradingScreen();
 
 	// Tell server to end interview and start grading
 	endInterviewConnection();

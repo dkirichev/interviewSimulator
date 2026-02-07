@@ -30,6 +30,9 @@ public class InterviewSession {
 	@Column(nullable = false)
 	private String difficulty;
 
+	@Column(length = 10)
+	private String language;
+
 	@Column(nullable = false)
 	private LocalDateTime startedAt;
 

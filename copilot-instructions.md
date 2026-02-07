@@ -13,7 +13,7 @@ AI assistant guidance for the Interview Simulator project.
 - Multi-language support (English/Bulgarian)
 - CV/Resume upload and parsing (PDF/DOCX)
 - Voice selection (4 interviewer voices)
-- DEV/PROD modes (backend vs user-provided API keys)
+- DEV/PROD/REVIEWER modes (backend vs user-provided vs multi-key rotation API keys)
 - Position-specific and difficulty-aware interviews
 - Automatic grading and detailed feedback
 
@@ -244,6 +244,9 @@ export DB_NAME=interview_db
 export DB_USERNAME=postgres
 export DB_PASSWORD=secret
 export GEMINI_API_KEY=AIza...
+# REVIEWER mode only:
+# export GEMINI_REVIEWER_KEYS=AIza...key1,AIza...key2,AIza...key3
+# export GEMINI_GRADING_MODELS=gemini-3-flash-preview,gemini-2.5-flash,gemini-2.5-flash-lite,gemma-3-12b-it
 ```
 
 ---
@@ -254,8 +257,9 @@ export GEMINI_API_KEY=AIza...
 |---------|----------------|
 | `GeminiIntegrationService` | Session lifecycle, WebSocket routing, reconnection |
 | `GeminiLiveClient` | Low-level WebSocket to Gemini API |
+| `GeminiModelRotationService` | Model/key rotation with error-based rate limit tracking |
 | `InterviewService` | Database CRUD for sessions |
-| `GradingService` | AI-powered evaluation after interview |
+| `GradingService` | AI-powered evaluation after interview (with model fallback) |
 | `InterviewPromptService` | Language/difficulty/position-aware prompts |
 | `CvProcessingService` | PDF/DOCX text extraction |
 

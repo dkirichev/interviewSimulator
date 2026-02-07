@@ -29,8 +29,8 @@ Returns the current application mode.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `mode` | string | `"DEV"` or `"PROD"` |
-| `requiresUserKey` | boolean | Whether users must provide their own API key |
+| `mode` | string | `"DEV"`, `"PROD"`, or `"REVIEWER"` |
+| `requiresUserKey` | boolean | Whether users must provide their own API key (`true` only for PROD) |
 
 ---
 

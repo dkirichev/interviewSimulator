@@ -114,6 +114,7 @@ src/main/java/net/k2ai/interviewSimulator/
 ├── service/
 │   ├── GeminiIntegrationService.java   # Session lifecycle, message routing
 │   ├── GeminiLiveClient.java           # Low-level WebSocket to Gemini API
+│   ├── GeminiModelRotationService.java # Model/key rotation with rate limit tracking
 │   ├── InterviewService.java           # Database CRUD for sessions
 │   ├── GradingService.java             # AI-powered post-interview evaluation
 │   ├── InterviewPromptService.java     # Language/difficulty-aware prompts
@@ -231,6 +232,7 @@ CREATE INDEX idx_feedback_session ON interview_feedback(session_id);
 |------|----------------|----------|
 | **DEV** | `GEMINI_API_KEY` env var on server | Local development |
 | **PROD** | User provides via modal | Production deployment |
+| **REVIEWER** | Multi-key rotation via `GEMINI_REVIEWER_KEYS` | Competition judges, demos |
 
 ### PROD Mode Flow
 
@@ -239,6 +241,15 @@ CREATE INDEX idx_feedback_session ON interview_feedback(session_id);
 3. User enters key → Validated via `/api/validate-key`
 4. Key stored → In browser localStorage (never sent to our server again)
 5. Key sent → Only to Gemini API via WebSocket
+
+### REVIEWER Mode Flow
+
+1. User loads page → No API key modal shown
+2. Server uses pre-configured API keys with automatic rotation
+3. Grading uses model fallback chain: gemini-3-flash-preview → gemini-2.5-flash → gemini-2.5-flash-lite → gemma-3-12b-it
+4. Each model is paired with its own API key
+5. On rate limit or access error → automatically tries next model/key combo
+6. Rate limit tracking is error-based (no hardcoded limits)
 
 ---
 
@@ -330,11 +341,15 @@ src/main/java/net/k2ai/interviewSimulator/
 │   ├── CvProcessingService.java
 │   ├── GeminiIntegrationService.java
 │   ├── GeminiLiveClient.java
+│   ├── GeminiModelRotationService.java
 │   ├── GradingService.java
 │   ├── InputSanitizerService.java
 │   ├── InterviewPromptService.java
 │   ├── InterviewService.java
 │   └── RateLimitService.java
+├── exception/
+│   ├── RateLimitException.java
+│   └── ModelAccessException.java
 └── validation/
     └── (custom validators)
 

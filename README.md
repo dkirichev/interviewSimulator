@@ -197,8 +197,11 @@ export APP_MODE=DEV
 |------|---------|----------|
 | **DEV** | Backend provides key | Local development, testing |
 | **PROD** | User provides own key | Production deployment |
+| **REVIEWER** | Multi-key rotation (server) | Competition judges, demos |
 
 In **PROD mode**, users are prompted to enter their free Gemini API key. This keeps hosting costs at zero while giving each user their own rate limits.
+
+In **REVIEWER mode**, the API key modal is hidden and the server uses multiple pre-configured keys with automatic model fallback rotation. This is designed for competition judges who shouldn't have to set up API keys.
 
 ---
 

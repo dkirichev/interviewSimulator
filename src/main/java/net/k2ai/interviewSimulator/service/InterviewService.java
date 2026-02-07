@@ -19,11 +19,12 @@ public class InterviewService {
 
 
 	@Transactional
-	public UUID startSession(String name, String position, String difficulty) {
+	public UUID startSession(String name, String position, String difficulty, String language) {
 		InterviewSession session = InterviewSession.builder()
 				.candidateName(name)
 				.jobPosition(position)
 				.difficulty(difficulty)
+				.language(language != null ? language : "en")
 				.startedAt(LocalDateTime.now())
 				.transcript("")
 				.build();

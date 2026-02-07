@@ -72,10 +72,15 @@ DB_USERNAME=postgres
 DB_PASSWORD=your_secure_password_here
 
 # Application Mode (PROD = users provide their own API key)
+# REVIEWER = hide API modal, use multi-key rotation (for competition judges)
 APP_MODE=PROD
 
 # Optional: Only needed in DEV mode
 # GEMINI_API_KEY=AIza...
+
+# Optional: Only needed in REVIEWER mode
+# GEMINI_REVIEWER_KEYS=AIza...key1,AIza...key2,AIza...key3
+# GEMINI_GRADING_MODELS=gemini-3-flash-preview,gemini-2.5-flash,gemini-2.5-flash-lite,gemma-3-12b-it
 EOF
 ```
 
@@ -207,13 +212,15 @@ services:
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `APP_MODE` | Yes | - | `DEV` or `PROD` |
+| `APP_MODE` | Yes | - | `DEV`, `PROD`, or `REVIEWER` |
 | `DB_HOST` | Yes | - | Database hostname |
 | `DB_PORT` | Yes | `5432` | Database port |
 | `DB_NAME` | Yes | - | Database name |
 | `DB_USERNAME` | Yes | - | Database user |
 | `DB_PASSWORD` | Yes | - | Database password |
-| `GEMINI_API_KEY` | DEV only | - | Backend API key (ignored in PROD) |
+| `GEMINI_API_KEY` | DEV only | - | Backend API key (ignored in PROD/REVIEWER) |
+| `GEMINI_REVIEWER_KEYS` | REVIEWER only | - | Comma-separated API keys for model rotation |
+| `GEMINI_GRADING_MODELS` | No | `gemini-2.5-pro,...` | Grading model fallback chain |
 
 ---
 

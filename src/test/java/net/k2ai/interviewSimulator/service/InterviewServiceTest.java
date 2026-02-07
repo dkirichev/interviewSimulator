@@ -30,7 +30,7 @@ class InterviewServiceTest extends AbstractIntegrationTest {
 
     @Test
     void testStartSession_CreatesNewSession() {
-        UUID sessionId = interviewService.startSession("John Doe", "Java Developer", "Standard");
+        UUID sessionId = interviewService.startSession("John Doe", "Java Developer", "Standard", "bg");
 
         assertThat(sessionId).isNotNull();
 
@@ -45,7 +45,7 @@ class InterviewServiceTest extends AbstractIntegrationTest {
 
     @Test
     void testAppendTranscript_UpdatesExistingSession() {
-        UUID sessionId = interviewService.startSession("Jane Smith", "QA Engineer", "Easy");
+        UUID sessionId = interviewService.startSession("Jane Smith", "QA Engineer", "Easy", "bg");
 
         interviewService.appendTranscript(sessionId, "Hello, nice to meet you. ");
         interviewService.appendTranscript(sessionId, "Tell me about yourself.");
@@ -68,7 +68,7 @@ class InterviewServiceTest extends AbstractIntegrationTest {
 
     @Test
     void testFinalizeSession_SetsEndTime() {
-        UUID sessionId = interviewService.startSession("Bob Wilson", "DevOps", "Hard");
+        UUID sessionId = interviewService.startSession("Bob Wilson", "DevOps", "Hard", "bg");
 
         interviewService.finalizeSession(sessionId);
 

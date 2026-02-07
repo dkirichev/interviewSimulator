@@ -29,6 +29,7 @@ services:
       - "8080:8080"
     environment:
       # Application mode: PROD requires users to provide their own API key
+      # REVIEWER uses multi-key rotation for competition judges
       APP_MODE: ${APP_MODE:-PROD}
       # Database connection
       DB_HOST: postgres
@@ -38,6 +39,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-secret}
       # Optional: Only needed in DEV mode
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # REVIEWER mode: comma-separated API keys
+      GEMINI_REVIEWER_KEYS: ${GEMINI_REVIEWER_KEYS:-}
+      # Grading model fallback chain (PROD + REVIEWER)
+      GEMINI_GRADING_MODELS: ${GEMINI_GRADING_MODELS:-gemini-3-flash-preview,gemini-2.5-flash,gemini-2.5-flash-lite,gemma-3-12b-it}
       # JVM options
       JAVA_OPTS: ${JAVA_OPTS:-"-Xmx512m -Xms256m"}
     depends_on:

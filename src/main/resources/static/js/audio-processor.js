@@ -20,6 +20,10 @@ let hasIntroductionCompleted = false;
 // Track if AI is currently speaking (to prevent interruption)
 let isAISpeaking = false;
 
+// Track if grading is in progress (to keep overlay visible)
+let isGradingInProgress = false;
+let hideOverlayTimeout = null;
+
 // Session data
 let currentSession = {
 	candidateName: '',
@@ -277,6 +281,10 @@ function handleTranscriptMessage(message) {
 }
 
 function handleReportMessage(message) {
+	isGradingInProgress = false;
+	if (window._gradingInterval) {
+		clearInterval(window._gradingInterval);
+	}
 	const data = JSON.parse(message.body);
 
 	// Redirect to server-rendered report page
@@ -294,6 +302,10 @@ function handleReportMessage(message) {
 }
 
 function handleErrorMessage(message) {
+	isGradingInProgress = false;
+	if (window._gradingInterval) {
+		clearInterval(window._gradingInterval);
+	}
 	const data = JSON.parse(message.body);
 	console.error('Error from server:', data.message);
 
@@ -562,23 +574,77 @@ function disconnectWebSocket() {
 	}
 }
 
-// Helper to hide connection overlay
+// Helper to hide connection overlay (but not during grading)
 function hideConnectionOverlay() {
+	if (isGradingInProgress) return;
 	const overlay = document.getElementById('connection-overlay');
 	if (overlay) {
 		overlay.style.opacity = '0';
-		setTimeout(() => overlay.style.display = 'none', 500);
+		hideOverlayTimeout = setTimeout(() => {
+			if (!isGradingInProgress) {
+				overlay.style.display = 'none';
+			}
+		}, 500);
 	}
 }
 
-// Show grading screen
+// Show grading screen with animated progress steps
 function showGradingScreen() {
-	const overlay = document.getElementById('connection-overlay');
-	if (overlay) {
-		overlay.style.display = 'flex';
-		overlay.style.opacity = '1';
-		overlay.querySelector('p').innerText = 'Analyzing your performance...';
+	isGradingInProgress = true;
+	// Cancel any pending hide
+	if (hideOverlayTimeout) {
+		clearTimeout(hideOverlayTimeout);
+		hideOverlayTimeout = null;
 	}
+	const overlay = document.getElementById('connection-overlay');
+	if (!overlay) return;
+
+	const msgs = window.gradingMessages || {
+		title: 'Analyzing Your Interview',
+		step1: 'Processing interview transcript...',
+		step2: 'Evaluating your responses...',
+		step3: 'Generating detailed feedback...',
+		pleaseWait: 'This usually takes a few seconds'
+	};
+
+	overlay.innerHTML = `
+		<div class="flex flex-col items-center gap-6 max-w-sm text-center">
+			<div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+			<h2 class="text-xl font-semibold text-white">${msgs.title}</h2>
+			<p id="grading-step" class="text-blue-400 font-mono text-base transition-opacity duration-500">${msgs.step1}</p>
+			<div class="flex gap-2 mt-2">
+				<div id="grading-dot-1" class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+				<div id="grading-dot-2" class="w-2.5 h-2.5 rounded-full bg-slate-600"></div>
+				<div id="grading-dot-3" class="w-2.5 h-2.5 rounded-full bg-slate-600"></div>
+			</div>
+			<p class="text-slate-500 text-sm mt-2">${msgs.pleaseWait}</p>
+		</div>
+	`;
+	overlay.style.display = 'flex';
+	overlay.style.opacity = '1';
+
+	const steps = [msgs.step1, msgs.step2, msgs.step3];
+	let currentStep = 0;
+
+	window._gradingInterval = setInterval(() => {
+		currentStep = (currentStep + 1) % steps.length;
+		const stepEl = document.getElementById('grading-step');
+		if (stepEl) {
+			stepEl.style.opacity = '0';
+			setTimeout(() => {
+				stepEl.textContent = steps[currentStep];
+				stepEl.style.opacity = '1';
+			}, 300);
+		}
+		for (let i = 0; i < 3; i++) {
+			const dot = document.getElementById('grading-dot-' + (i + 1));
+			if (dot) {
+				dot.className = i <= currentStep
+					? 'w-2.5 h-2.5 rounded-full bg-blue-500'
+					: 'w-2.5 h-2.5 rounded-full bg-slate-600';
+			}
+		}
+	}, 3000);
 }
 
 // Live transcript (for debugging/display)

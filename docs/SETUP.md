@@ -139,9 +139,14 @@ DB_PASSWORD=your_secure_password
 GEMINI_API_KEY=AIza...your_key_here
 
 # Application Mode
-# DEV = Backend provides API key (for development)
-# PROD = Users must provide their own API key
+# DEV      = Backend provides API key (for development)
+# PROD     = Users must provide their own API key
+# REVIEWER = Hide API modal, use multi-key rotation (for competition judges)
 APP_MODE=DEV
+
+# REVIEWER mode only (comma-separated, one key per grading model):
+# GEMINI_REVIEWER_KEYS=AIza...key1,AIza...key2,AIza...key3
+# GEMINI_GRADING_MODELS=gemini-3-flash-preview,gemini-2.5-flash,gemini-2.5-flash-lite,gemma-3-12b-it
 EOF
 ```
 

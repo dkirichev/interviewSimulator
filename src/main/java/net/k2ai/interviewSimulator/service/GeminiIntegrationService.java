@@ -55,7 +55,7 @@ public class GeminiIntegrationService {
 							   String language, String cvText, String voiceId, String interviewerNameEN,
 							   String interviewerNameBG, String userApiKey) {
 		// Create database session
-		UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty);
+		UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty, language);
 
 		// Determine which API key to use
 		String effectiveApiKey = determineApiKey(userApiKey);
@@ -110,6 +110,10 @@ public class GeminiIntegrationService {
 		if (geminiConfig.isProdMode()) {
 			// PROD mode - must use user-provided key
 			return userApiKey;
+		} else if (geminiConfig.isReviewerMode()) {
+			// REVIEWER mode - use first available reviewer key
+			var keys = geminiConfig.getReviewerKeyList();
+			return keys.isEmpty() ? null : keys.get(0);
 		} else {
 			// DEV mode - use backend key
 			return geminiConfig.getApiKey();
@@ -174,12 +178,16 @@ public class GeminiIntegrationService {
 
 		// Output transcription (AI's speech) - accumulate for turn-end checking
 		client.setOnOutputTranscript(transcript -> {
-			state.appendAiTranscript(transcript);
+			// Keep original for conclusion detection, but strip end signal from saved transcript
 			state.appendCurrentTurnTranscript(transcript);
-			sendToClient(wsSessionId, "/queue/transcript", Map.of(
-					"speaker", "ai",
-					"text", transcript
-			));
+			String cleanTranscript = transcript.replace("[END_INTERVIEW]", "").trim();
+			if (!cleanTranscript.isEmpty()) {
+				state.appendAiTranscript(cleanTranscript);
+				sendToClient(wsSessionId, "/queue/transcript", Map.of(
+						"speaker", "ai",
+						"text", cleanTranscript
+				));
+			}
 		});
 
 		// When AI turn is complete - check accumulated transcript for conclusion
@@ -378,7 +386,7 @@ public class GeminiIntegrationService {
 	private void triggerGrading(String wsSessionId, InterviewState state) {
 		new Thread(() -> {
 			try {
-				InterviewFeedback feedback = gradingService.gradeInterview(state.getInterviewSessionId(), state.getUserApiKey());
+				InterviewFeedback feedback = gradingService.gradeInterview(state.getInterviewSessionId(), state.getUserApiKey(), state.getLanguage());
 
 				Map<String, Object> reportData = new HashMap<>();
 				reportData.put("sessionId", state.getInterviewSessionId().toString());
@@ -462,6 +470,9 @@ public class GeminiIntegrationService {
 
 		private final StringBuilder currentTurnTranscript = new StringBuilder();
 
+		// Tracks last speaker to avoid duplicate prefixes on streaming tokens
+		private String lastSpeaker = "";
+
 		private boolean ended = false;
 
 		// For session resumption
@@ -511,13 +522,21 @@ public class GeminiIntegrationService {
 
 		public synchronized void appendUserTranscript(String text) {
 			userTranscript.append(text);
-			fullTranscript.append("\n[Candidate]: ").append(text);
+			if (!"Candidate".equals(lastSpeaker)) {
+				fullTranscript.append("\n[Candidate]: ");
+				lastSpeaker = "Candidate";
+			}
+			fullTranscript.append(text);
 		}//appendUserTranscript
 
 
 		public synchronized void appendAiTranscript(String text) {
 			aiTranscript.append(text);
-			fullTranscript.append("\n[Interviewer]: ").append(text);
+			if (!"Interviewer".equals(lastSpeaker)) {
+				fullTranscript.append("\n[Interviewer]: ");
+				lastSpeaker = "Interviewer";
+			}
+			fullTranscript.append(text);
 		}//appendAiTranscript
 
 

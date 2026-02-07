@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Slf4j
 @Getter
 @Setter
@@ -26,14 +29,27 @@ public class GeminiConfig {
 
 	private String voiceName = "Aoede";
 
+	// Comma-separated list of grading models for fallback rotation (PROD + REVIEWER)
+	private String gradingModels;
+
+	// Comma-separated list of reviewer API keys (REVIEWER mode only)
+	private String reviewerKeys;
+
 
 	@PostConstruct
 	public void validate() {
 		boolean isProdMode = "PROD".equalsIgnoreCase(appMode);
+		boolean isReviewerMode = "REVIEWER".equalsIgnoreCase(appMode);
 
 		if (isProdMode) {
 			log.info("Running in PROD mode - users must provide their own API key");
-			// API key is optional in PROD mode
+		} else if (isReviewerMode) {
+			if (reviewerKeys == null || reviewerKeys.isBlank()) {
+				log.error("REVIEWER mode requires GEMINI_REVIEWER_KEYS to be configured!");
+				throw new IllegalStateException("GEMINI_REVIEWER_KEYS environment variable required in REVIEWER mode");
+			}
+			log.info("Running in REVIEWER mode - using multi-key rotation with {} keys",
+					getReviewerKeyList().size());
 		} else {
 			// DEV mode - require backend API key
 			if (apiKey == null || apiKey.isBlank()) {
@@ -51,5 +67,39 @@ public class GeminiConfig {
 	public boolean isProdMode() {
 		return "PROD".equalsIgnoreCase(appMode);
 	}//isProdMode
+
+
+	public boolean isReviewerMode() {
+		return "REVIEWER".equalsIgnoreCase(appMode);
+	}//isReviewerMode
+
+
+	/**
+	 * Returns the list of grading models for fallback rotation.
+	 * Falls back to the single gradingModel if not configured.
+	 */
+	public List<String> getGradingModelList() {
+		if (gradingModels != null && !gradingModels.isBlank()) {
+			return Arrays.stream(gradingModels.split(","))
+					.map(String::trim)
+					.filter(s -> !s.isEmpty())
+					.toList();
+		}
+		return List.of(gradingModel);
+	}//getGradingModelList
+
+
+	/**
+	 * Returns the list of reviewer API keys.
+	 */
+	public List<String> getReviewerKeyList() {
+		if (reviewerKeys != null && !reviewerKeys.isBlank()) {
+			return Arrays.stream(reviewerKeys.split(","))
+					.map(String::trim)
+					.filter(s -> !s.isEmpty())
+					.toList();
+		}
+		return List.of();
+	}//getReviewerKeyList
 
 }//GeminiConfig

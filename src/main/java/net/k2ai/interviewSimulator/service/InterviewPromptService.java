@@ -10,6 +10,9 @@ import java.util.regex.Pattern;
 @Service
 public class InterviewPromptService {
 
+	// Deterministic end signal token - placed by AI in concluding message
+	private static final String END_SIGNAL = "[END_INTERVIEW]";
+
 	// Patterns to detect when AI is concluding the interview (English)
 	private static final List<Pattern> CONCLUSION_PATTERNS_EN = List.of(
 			Pattern.compile("thank you for your time", Pattern.CASE_INSENSITIVE),
@@ -86,6 +89,7 @@ public class InterviewPromptService {
 						- Thanking the candidate for their time
 						- Mentioning that "we have all the information we need"
 						- Saying something like "we'll be in touch with next steps"
+						- CRITICAL: You MUST end your final concluding message with the exact token [END_INTERVIEW] — this signals the system to end the session. Do not say this token aloud; just include it at the very end of your last response text.
 						
 						## Important Notes
 						- Do NOT mention that you are an AI - you are %s, the interviewer
@@ -134,6 +138,7 @@ public class InterviewPromptService {
 						- Благодариш на кандидата за отделеното време
 						- Споменеш, че "имаме цялата информация, която ни трябва"
 						- Кажеш нещо като "ще се свържем с вас за следващите стъпки"
+						- КРИТИЧНО: ТРЯБВА да завършиш последното си съобщение с точния токен [END_INTERVIEW] — това сигнализира на системата да приключи сесията. Не го казвай на глас; просто го добави в самия край на последния си текстов отговор.
 						
 						## Важни Бележки
 						- НЕ споменавай, че си AI - ти си %s, интервюиращият
@@ -454,6 +459,12 @@ public class InterviewPromptService {
 	public boolean isInterviewConcluding(String transcript) {
 		if (transcript == null || transcript.isBlank()) {
 			return false;
+		}
+
+		// Priority check: deterministic end signal token
+		if (transcript.contains(END_SIGNAL)) {
+			log.info("MATCHED end signal token [END_INTERVIEW] in AI output");
+			return true;
 		}
 
 		String lowerTranscript = transcript.toLowerCase();

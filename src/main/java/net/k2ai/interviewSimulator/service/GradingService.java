@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.k2ai.interviewSimulator.config.GeminiConfig;
 import net.k2ai.interviewSimulator.entity.InterviewFeedback;
 import net.k2ai.interviewSimulator.entity.InterviewSession;
+import net.k2ai.interviewSimulator.exception.ModelAccessException;
 import net.k2ai.interviewSimulator.exception.RateLimitException;
 import net.k2ai.interviewSimulator.repository.InterviewFeedbackRepository;
 import net.k2ai.interviewSimulator.repository.InterviewSessionRepository;
@@ -26,6 +27,8 @@ public class GradingService {
 
 	private final GeminiConfig geminiConfig;
 
+	private final GeminiModelRotationService rotationService;
+
 	private final InterviewSessionRepository sessionRepository;
 
 	private final InterviewFeedbackRepository feedbackRepository;
@@ -42,7 +45,7 @@ public class GradingService {
 	 * Grade interview using backend API key (for DEV mode or backward compatibility)
 	 */
 	public InterviewFeedback gradeInterview(UUID sessionId) {
-		return gradeInterview(sessionId, null);
+		return gradeInterview(sessionId, null, null);
 	}//gradeInterview
 
 
@@ -50,13 +53,16 @@ public class GradingService {
 	 * Grade interview with optional user-provided API key
 	 */
 	public InterviewFeedback gradeInterview(UUID sessionId, String userApiKey) {
-		log.info("Starting grading for session: {}", sessionId);
+		return gradeInterview(sessionId, userApiKey, null);
+	}//gradeInterview
 
-		// Determine which API key to use
-		String effectiveApiKey = determineApiKey(userApiKey);
-		if (effectiveApiKey == null || effectiveApiKey.isBlank()) {
-			throw new IllegalStateException("No API key available for grading");
-		}
+
+	/**
+	 * Grade interview with optional user-provided API key and language.
+	 * In REVIEWER/PROD mode, retries with model/key rotation on rate limit or access errors.
+	 */
+	public InterviewFeedback gradeInterview(UUID sessionId, String userApiKey, String language) {
+		log.info("Starting grading for session: {}", sessionId);
 
 		InterviewSession session = sessionRepository.findById(sessionId)
 				.orElseThrow(() -> new RuntimeException("Session not found: " + sessionId));
@@ -67,48 +73,119 @@ public class GradingService {
 			return createDefaultFeedback(session);
 		}
 
-		try {
-			String prompt = buildGradingPrompt(session);
-			String response = callGeminiApi(prompt, effectiveApiKey);
-			InterviewFeedback feedback = parseGradingResponse(response, session);
-
-			// Save to database
-			InterviewFeedback saved = feedbackRepository.save(feedback);
-
-			// Update session with score
-			session.setScore(saved.getOverallScore());
-			sessionRepository.save(session);
-
-			log.info("Grading complete for session: {}. Score: {}", sessionId, saved.getOverallScore());
-			return saved;
-		} catch (RateLimitException e) {
-			// Re-throw rate limit exceptions for caller to handle
-			throw e;
-		} catch (Exception e) {
-			log.error("Failed to grade interview for session: {}", sessionId, e);
-			return createDefaultFeedback(session);
+		// Determine effective language
+		String effectiveLanguage = language;
+		if (effectiveLanguage == null || effectiveLanguage.isBlank()) {
+			effectiveLanguage = session.getLanguage() != null ? session.getLanguage() : "en";
 		}
+
+		String prompt = buildGradingPrompt(session, effectiveLanguage);
+
+		// Use rotation for REVIEWER and PROD modes
+		if (geminiConfig.isReviewerMode() || geminiConfig.isProdMode()) {
+			return gradeWithRotation(session, prompt, userApiKey);
+		}
+
+		// DEV mode: simple single call
+		return gradeSimple(session, prompt, userApiKey);
 	}//gradeInterview
 
 
 	/**
-	 * Determines which API key to use based on mode and availability
+	 * Grading with model/key rotation (REVIEWER + PROD modes).
+	 * Tries each available model/key combo until one succeeds.
 	 */
-	private String determineApiKey(String userApiKey) {
-		if (geminiConfig.isProdMode()) {
-			// PROD mode - must use user-provided key
-			return userApiKey;
-		} else {
-			// DEV mode - use backend key
-			return geminiConfig.getApiKey();
+	private InterviewFeedback gradeWithRotation(InterviewSession session, String prompt, String userApiKey) {
+		int maxAttempts = geminiConfig.getGradingModelList().size();
+		if (geminiConfig.isReviewerMode()) {
+			maxAttempts = geminiConfig.getGradingModelList().size() * geminiConfig.getReviewerKeyList().size();
 		}
-	}//determineApiKey
+		// Cap at reasonable number
+		maxAttempts = Math.min(maxAttempts, 9);
+
+		for (int attempt = 0; attempt < maxAttempts; attempt++) {
+			GeminiModelRotationService.GradingConfig config = rotationService.getNextAvailable(userApiKey);
+			if (config == null) {
+				log.error("All model/key combinations exhausted for session: {}", session.getId());
+				break;
+			}
+
+			log.info("Grading attempt {} with model: {}", attempt + 1, config.model());
+
+			try {
+				String response = callGeminiApi(prompt, config.apiKey(), config.model());
+				InterviewFeedback feedback = parseGradingResponse(response, session);
+
+				// Save to database
+				InterviewFeedback saved = feedbackRepository.save(feedback);
+				session.setScore(saved.getOverallScore());
+				sessionRepository.save(session);
+
+				log.info("Grading complete for session: {}. Score: {} (model: {})",
+						session.getId(), saved.getOverallScore(), config.model());
+				return saved;
+			} catch (RateLimitException e) {
+				boolean isDaily = e.getMessage() != null && e.getMessage().toLowerCase().contains("daily");
+				rotationService.flagExhausted(config.apiKey(), config.model(), isDaily);
+				log.warn("Rate limit hit on model {}, trying next...", config.model());
+			} catch (ModelAccessException e) {
+				rotationService.flagInaccessible(config.apiKey(), config.model());
+				log.warn("Model {} inaccessible, trying next...", config.model());
+			} catch (Exception e) {
+				log.warn("Grading failed with model {} (will retry): {}", config.model(), e.getMessage());
+			}
+		}
+
+		log.error("All grading attempts failed for session: {}", session.getId());
+		return createDefaultFeedback(session);
+	}//gradeWithRotation
 
 
-	private String buildGradingPrompt(InterviewSession session) {
+	/**
+	 * Simple grading for DEV mode (single key, single model, no rotation).
+	 */
+	private InterviewFeedback gradeSimple(InterviewSession session, String prompt, String userApiKey) {
+		String effectiveApiKey = userApiKey != null ? userApiKey : geminiConfig.getApiKey();
+		if (effectiveApiKey == null || effectiveApiKey.isBlank()) {
+			throw new IllegalStateException("No API key available for grading");
+		}
+
+		try {
+			String response = callGeminiApi(prompt, effectiveApiKey, geminiConfig.getGradingModel());
+			InterviewFeedback feedback = parseGradingResponse(response, session);
+
+			InterviewFeedback saved = feedbackRepository.save(feedback);
+			session.setScore(saved.getOverallScore());
+			sessionRepository.save(session);
+
+			log.info("Grading complete for session: {}. Score: {}", session.getId(), saved.getOverallScore());
+			return saved;
+		} catch (RateLimitException e) {
+			throw e;
+		} catch (Exception e) {
+			log.error("Failed to grade interview for session: {}: {}", session.getId(), e.getMessage());
+			InterviewFeedback fallback = createDefaultFeedback(session);
+			return feedbackRepository.save(fallback);
+		}
+	}//gradeSimple
+
+
+	private String buildGradingPrompt(InterviewSession session, String language) {
+		String languageInstruction = "bg".equals(language)
+				? """
+						
+						ВАЖНО: Напиши ЦЕЛИЯ отговор на БЪЛГАРСКИ език.
+						Всички стойности в JSON трябва да бъдат на български:
+						- "strengths" масивът трябва да е на български
+						- "improvements" масивът трябва да е на български
+						- "detailedAnalysis" трябва да е на български
+						- "verdict" трябва да остане на английски (STRONG_HIRE, HIRE, MAYBE или NO_HIRE)
+						"""
+				: "";
+
 		return String.format("""
 						You are an expert interview evaluator. Analyze the following job interview transcript and provide a detailed evaluation.
-						
+						%s
 						## Interview Details
 						- Position: %s
 						- Difficulty Level: %s
@@ -121,8 +198,7 @@ public class GradingService {
 						Evaluate the candidate's performance and provide scores from 0-100 for each category.
 						Be fair but honest in your assessment. Consider the difficulty level in your evaluation.
 						
-						Provide your evaluation in the following JSON format ONLY (no other text):
-						```json
+						Respond with ONLY a JSON object in exactly this format:
 						{
 						    "overallScore": <0-100>,
 						    "communicationScore": <0-100>,
@@ -133,7 +209,6 @@ public class GradingService {
 						    "detailedAnalysis": "A paragraph providing detailed feedback about the candidate's performance, what they did well, and specific areas for improvement.",
 						    "verdict": "<STRONG_HIRE|HIRE|MAYBE|NO_HIRE>"
 						}
-						```
 						
 						Important:
 						- overallScore should reflect the overall interview performance
@@ -145,6 +220,7 @@ public class GradingService {
 						- detailedAnalysis should be 2-4 sentences with constructive feedback
 						- verdict should match the overall assessment
 						""",
+				languageInstruction,
 				session.getJobPosition(),
 				session.getDifficulty(),
 				session.getCandidateName(),
@@ -153,8 +229,8 @@ public class GradingService {
 	}//buildGradingPrompt
 
 
-	private String callGeminiApi(String prompt, String apiKey) throws IOException {
-		String url = String.format(GEMINI_API_URL, geminiConfig.getGradingModel(), apiKey);
+	private String callGeminiApi(String prompt, String apiKey, String model) throws IOException {
+		String url = String.format(GEMINI_API_URL, model, apiKey);
 
 		String requestBody = String.format("""
 				{
@@ -165,7 +241,8 @@ public class GradingService {
 				    }],
 				    "generationConfig": {
 				        "temperature": 0.7,
-				        "maxOutputTokens": 2048
+				        "maxOutputTokens": 8192,
+				        "responseMimeType": "application/json"
 				    }
 				}
 				""", objectMapper.writeValueAsString(prompt));
@@ -183,6 +260,11 @@ public class GradingService {
 				// Check for rate limit (429 RESOURCE_EXHAUSTED)
 				if (response.code() == 429) {
 					throw new RateLimitException("API rate limit exceeded: " + errorBody);
+				}
+
+				// Check for model access errors (403, 404)
+				if (response.code() == 403 || response.code() == 404) {
+					throw new ModelAccessException("Model not accessible: " + model + " - " + response.code());
 				}
 
 				throw new IOException("Gemini API error: " + response.code());
@@ -205,7 +287,16 @@ public class GradingService {
 				throw new RuntimeException("No candidates in response");
 			}
 
-			String text = candidates.get(0)
+			JsonNode candidate = candidates.get(0);
+
+			// Check for MAX_TOKENS truncation
+			String finishReason = candidate.path("finishReason").asText("");
+			if ("MAX_TOKENS".equals(finishReason)) {
+				log.warn("Grading response was truncated (MAX_TOKENS) for session: {}", session.getId());
+				throw new RuntimeException("AI response was truncated - output token limit reached");
+			}
+
+			String text = candidate
 					.path("content")
 					.path("parts")
 					.get(0)
@@ -228,8 +319,8 @@ public class GradingService {
 					.verdict(evaluation.path("verdict").asText("MAYBE"))
 					.build();
 		} catch (Exception e) {
-			log.error("Failed to parse grading response", e);
-			return createDefaultFeedback(session);
+			log.error("Failed to parse grading response for session: {}: {}", session.getId(), e.getMessage());
+			throw new RuntimeException("Failed to parse grading response: " + e.getMessage(), e);
 		}
 	}//parseGradingResponse
 
