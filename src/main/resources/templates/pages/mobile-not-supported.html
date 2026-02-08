@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<div th:fragment="content">
+	<section class="view-section active flex-col justify-center items-center min-h-screen w-full relative overflow-auto">
+		<!--/*  Background Decor  */-->
+		<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+			<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-red-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+			<div class="absolute top-1/3 right-1/4 w-96 h-96 bg-orange-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+		</div>
+
+		<div class="w-full max-w-2xl px-4 my-8">
+			<!--/*  Mobile Block Card  */-->
+			<div class="bg-slate-800/80 p-10 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md">
+
+				<!--/*  Desktop Icon  */-->
+				<div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-600/20 text-red-400 mb-6 mx-auto block">
+					<i class="fa-solid fa-desktop text-4xl"></i>
+				</div>
+
+				<!--/*  Title  */-->
+				<h1 class="text-3xl font-bold text-white mb-4 text-center" th:text="#{error.mobile.title}">Desktop Required</h1>
+
+				<!--/*  Main Message  */-->
+				<p class="text-lg text-slate-300 mb-4 text-center" th:text="#{error.mobile.mainMessage}">
+					Professional interviews require a desktop environment.
+				</p>
+				<p class="text-sm text-slate-400 mb-8 text-center" th:text="#{error.mobile.description}">
+					Taking technical interviews on mobile devices is unprofessional and provides a suboptimal experience. 
+					Please access this application from a desktop or laptop computer.
+				</p>
+
+				<!--/*  Reasons  */-->
+				<div class="space-y-4 mb-8">
+					<div class="flex items-start gap-4 text-slate-300">
+						<div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+							<i class="fa-solid fa-microphone text-red-400"></i>
+						</div>
+						<div>
+							<h3 class="font-semibold text-white mb-1" th:text="#{error.mobile.reason.audio.title}">Audio Quality Critical</h3>
+							<p class="text-sm text-slate-400" th:text="#{error.mobile.reason.audio.description}">Microphone performance and audio clarity are essential for realistic interview simulations</p>
+						</div>
+					</div>
+
+					<div class="flex items-start gap-4 text-slate-300">
+						<div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+							<i class="fa-solid fa-display text-red-400"></i>
+						</div>
+						<div>
+							<h3 class="font-semibold text-white mb-1" th:text="#{error.mobile.reason.screen.title}">Full Screen Required</h3>
+							<p class="text-sm text-slate-400" th:text="#{error.mobile.reason.screen.description}">Real-time interaction and feedback display require a full-sized screen</p>
+						</div>
+					</div>
+
+					<div class="flex items-start gap-4 text-slate-300">
+						<div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+							<i class="fa-solid fa-graduation-cap text-red-400"></i>
+						</div>
+						<div>
+							<h3 class="font-semibold text-white mb-1" th:text="#{error.mobile.reason.professional.title}">Professional Standards</h3>
+							<p class="text-sm text-slate-400" th:text="#{error.mobile.reason.professional.description}">Professional interview simulations demand professional tools and environments</p>
+						</div>
+					</div>
+				</div>
+
+				<!--/*  Footer  */-->
+				<div class="pt-6 border-t border-slate-700 text-center">
+					<p class="text-sm text-slate-500">
+						<i class="fa-solid fa-laptop mr-2"></i>
+						<span th:text="#{error.mobile.footer}">Please switch to a desktop or laptop computer to continue</span>
+					</p>
+				</div>
+			</div>
+		</div>
+	</section>
+</div>
+
+</html>
