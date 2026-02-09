@@ -161,6 +161,39 @@
 
 	<build>
 		<plugins>
+			<!--/*  Frontend: npm install + Tailwind CSS build  */-->
+			<plugin>
+				<groupId>com.github.eirslett</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+				<version>1.15.1</version>
+				<configuration>
+					<nodeVersion>v24.8.0</nodeVersion>
+					<workingDirectory>${project.basedir}</workingDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<id>install-node-and-npm</id>
+						<goals><goal>install-node-and-npm</goal></goals>
+						<phase>initialize</phase>
+					</execution>
+					<execution>
+						<id>npm-install</id>
+						<goals><goal>npm</goal></goals>
+						<phase>initialize</phase>
+						<configuration>
+							<arguments>ci --ignore-scripts</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>build-tailwind</id>
+						<goals><goal>npm</goal></goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<arguments>run build:css</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

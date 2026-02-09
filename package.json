@@ -1,0 +1,28 @@
+{
+  "name": "interviewsimulator",
+  "version": "1.0.0",
+  "description": "<p align=\"center\">   <img src=\"/docs/assets/logo.png\" alt=\"Interview Simulator Logo\" width=\"120\" /> </p>",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build:css": "npx tailwindcss -i ./src/tailwind-input.css -o ./src/main/resources/static/css/tailwind.min.css --minify",
+    "watch:css": "npx tailwindcss -i ./src/tailwind-input.css -o ./src/main/resources/static/css/tailwind.min.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dkirichev/interviewSimulator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dkirichev/interviewSimulator/issues"
+  },
+  "homepage": "https://github.com/dkirichev/interviewSimulator#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}

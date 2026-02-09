@@ -11,19 +11,8 @@
 	<!--/*  Favicon  */-->
 	<link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
 
-	<!--/*  Tailwind CSS  */-->
-	<script src="https://cdn.tailwindcss.com"></script>
-	<script>
-		tailwind.config = {
-			theme: {
-				extend: {
-					screens: {
-						'tall': { 'raw': '(min-height: 820px)' }
-					}
-				}
-			}
-		}
-	</script>
+	<!--/*  Tailwind CSS (purged + minified)  */-->
+	<link rel="stylesheet" th:href="@{/css/tailwind.min.css}">
 
 	<!--/*  FontAwesome Icons  */-->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
