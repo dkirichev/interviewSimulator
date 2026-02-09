@@ -17,20 +17,6 @@
 <!--/*  Microphone Check Modal (setup pages only)  */-->
 <th:block th:if="${isSetupPage}" th:replace="~{layouts/fragments/microphone-modal :: microphoneModal}" />
 
-<!--/*  Top Left Legal Links (only on setup pages)  */-->
-<div th:if="${showLegalLinks}" class="fixed top-4 left-4 z-50 flex items-center gap-3">
-	<a th:href="@{/legal/privacy}"
-			class="px-3 py-2 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg text-slate-200 hover:text-white text-sm">
-		<i class="fa-solid fa-shield-halved mr-1"></i>
-		<span th:text="#{legal.privacy.title}">Privacy Policy</span>
-	</a>
-	<a th:href="@{/legal/terms}"
-			class="px-3 py-2 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg text-slate-200 hover:text-white text-sm">
-		<i class="fa-solid fa-file-contract mr-1"></i>
-		<span th:text="#{legal.terms.title}">Terms & Conditions</span>
-	</a>
-</div>
-
 <!--/*  Top Right Controls  */-->
 <div class="fixed top-4 right-4 z-50 flex items-center gap-3">
 	<!--/*  GitHub Link  */-->
@@ -107,37 +93,8 @@
 <!--/*  Main Content Area  */-->
 <th:block th:replace="~{${content} :: content}" />
 
-<!--/*  Scroll Indicator (hidden on interview page)  */-->
-<div th:unless="${isInterviewPage}" id="scroll-indicator"
-		class="fixed bottom-6 right-6 z-40 opacity-0 transition-opacity duration-300 pointer-events-none">
-	<div class="w-10 h-10 rounded-full bg-slate-700/90 border border-slate-600 flex items-center justify-center shadow-lg animate-bounce">
-		<i class="fa-solid fa-chevron-down text-slate-300 text-sm"></i>
-	</div>
-</div>
-
-<script th:unless="${isInterviewPage}">
-	(function () {
-		const indicator = document.getElementById('scroll-indicator');
-		if (!indicator) return;
-
-		function checkScroll() {
-			const scrollable = document.documentElement.scrollHeight > window.innerHeight + 10;
-			const atBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 20);
-
-			if (scrollable && !atBottom) {
-				indicator.style.opacity = '1';
-			} else {
-				indicator.style.opacity = '0';
-			}
-		}
-
-		window.addEventListener('scroll', checkScroll, {passive: true});
-		window.addEventListener('resize', checkScroll, {passive: true});
-		// Check after page fully renders
-		setTimeout(checkScroll, 100);
-		setTimeout(checkScroll, 500);
-	})();
-</script>
+<!--/*  Footer (excluded on interview page)  */-->
+<th:block th:unless="${isInterviewPage}" th:replace="~{layouts/fragments/footer :: footer}" />
 
 <!--/*  JavaScript Body Bottom  */-->
 <th:block th:replace="~{layouts/fragments/bodyBottom :: bodyBottom}" />

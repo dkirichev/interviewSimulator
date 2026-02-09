@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<footer th:fragment="footer" class="w-full bg-slate-800/50 border-t border-slate-700 backdrop-blur-sm py-4 mt-auto">
+	<div class="max-w-6xl mx-auto px-4 flex items-center justify-center gap-6 text-sm">
+		<a th:href="@{/legal/privacy}"
+				class="text-slate-400 hover:text-blue-400 transition-colors flex items-center gap-1.5">
+			<i class="fa-solid fa-shield-halved text-xs"></i>
+			<span th:text="#{legal.privacy.title}">Privacy Policy</span>
+		</a>
+		<span class="text-slate-600">•</span>
+		<a th:href="@{/legal/terms}"
+				class="text-slate-400 hover:text-blue-400 transition-colors flex items-center gap-1.5">
+			<i class="fa-solid fa-file-contract text-xs"></i>
+			<span th:text="#{legal.terms.title}">Terms & Conditions</span>
+		</a>
+	</div>
+</footer>
+
+</html>
