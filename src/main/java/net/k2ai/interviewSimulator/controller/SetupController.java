@@ -162,19 +162,14 @@ public class SetupController {
 		// Validate position
 		if (form.getPosition() == null || form.getPosition().isBlank()) {
 			bindingResult.rejectValue("position", "validation.position.required");
-		} else if ("custom".equals(form.getPosition())) {
-			// Validate custom position
-			if (form.getCustomPosition() == null || form.getCustomPosition().isBlank()) {
-				bindingResult.rejectValue("customPosition", "validation.customPosition.required");
+		} else {
+			// Trim and sanitize position (works for both preset and custom values)
+			form.setPosition(form.getPosition().trim());
+			String sanitizedPosition = sanitizerService.sanitizePosition(form.getPosition());
+			if (sanitizedPosition == null) {
+				bindingResult.rejectValue("position", "validation.safeText");
 			} else {
-				// Trim and sanitize custom position
-				form.setCustomPosition(form.getCustomPosition().trim());
-				String sanitizedPosition = sanitizerService.sanitizePosition(form.getCustomPosition());
-				if (sanitizedPosition == null) {
-					bindingResult.rejectValue("customPosition", "validation.safeText");
-				} else {
-					form.setCustomPosition(sanitizedPosition);
-				}
+				form.setPosition(sanitizedPosition);
 			}
 		}
 

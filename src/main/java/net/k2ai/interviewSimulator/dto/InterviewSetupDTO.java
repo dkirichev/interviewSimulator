@@ -56,7 +56,7 @@ public class InterviewSetupDTO implements Serializable {
 		if ("custom".equals(position) && customPosition != null && !customPosition.isBlank()) {
 			return customPosition.trim();
 		}
-		return position;
+		return position != null ? position.trim() : position;
 	}// getEffectivePosition
 
 	/**

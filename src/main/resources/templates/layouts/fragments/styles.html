@@ -165,11 +165,11 @@
     @keyframes btnGlow {
         0%, 100% {
             box-shadow: 0 0 20px 5px rgba(59, 130, 246, 0.4),
-                        0 0 40px 10px rgba(59, 130, 246, 0.2);
+            0 0 40px 10px rgba(59, 130, 246, 0.2);
         }
         50% {
             box-shadow: 0 0 30px 10px rgba(59, 130, 246, 0.6),
-                        0 0 60px 20px rgba(59, 130, 246, 0.3);
+            0 0 60px 20px rgba(59, 130, 246, 0.3);
         }
     }
 
@@ -181,11 +181,25 @@
     @keyframes btnGlowGreen {
         0%, 100% {
             box-shadow: 0 0 20px 5px rgba(34, 197, 94, 0.4),
-                        0 0 40px 10px rgba(34, 197, 94, 0.2);
+            0 0 40px 10px rgba(34, 197, 94, 0.2);
         }
         50% {
             box-shadow: 0 0 30px 10px rgba(34, 197, 94, 0.6),
-                        0 0 60px 20px rgba(34, 197, 94, 0.3);
+            0 0 60px 20px rgba(34, 197, 94, 0.3);
+        }
+    }
+
+    /* Subtle glow for custom position button */
+    .animate-subtle-glow {
+        animation: subtleGlow 2.5s ease-in-out infinite;
+    }
+
+    @keyframes subtleGlow {
+        0%, 100% {
+            box-shadow: 0 0 6px 1px rgba(59, 130, 246, 0.15);
+        }
+        50% {
+            box-shadow: 0 0 14px 4px rgba(59, 130, 246, 0.35);
         }
     }
 </style>

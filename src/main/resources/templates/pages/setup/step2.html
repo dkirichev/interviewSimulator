@@ -9,11 +9,11 @@
 			<div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
 		</div>
 
-		<div class="w-full max-w-4xl px-4 py-4">
+		<div class="w-full max-w-4xl px-4 py-2 tall:py-4">
 			<!--/*  Header  */-->
-			<div class="text-center mb-3">
+			<div class="text-center mb-2 tall:mb-3">
 				<div class="inline-flex items-center justify-center mb-1">
-					<img th:src="@{/media/logo.png}" alt="Logo" class="h-14 w-auto">
+					<img th:src="@{/media/logo.png}" alt="Logo" class="h-10 tall:h-14 w-auto">
 				</div>
 				<h1 class="text-2xl font-bold tracking-tight text-white" th:text="#{setup.title}">Interview Setup</h1>
 				<p class="text-slate-400 mt-1 text-sm" th:text="#{setup.subtitle}">Configure your interview session</p>
@@ -34,52 +34,48 @@
 					<div class="space-y-3">
 						<!--/*  Target Position  */-->
 						<div>
-							<label class="block text-sm font-medium text-slate-300 mb-3" for="job-position">
+							<label class="block text-sm font-medium text-slate-300 mb-2">
 								<span th:text="#{setup.step2.targetPosition}">Target Position</span>
 								<span class="text-red-500">*</span>
 							</label>
-							<div class="relative">
-								<select id="job-position"
-										name="position"
-										th:classappend="${#fields.hasErrors('position')} ? 'border-red-500' : ''"
-										class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-5 py-3 text-white appearance-none focus:outline-none focus:border-blue-500 transition"
-										onchange="toggleCustomPosition(this)"
-										required>
-									<option value="" th:selected="${setupForm.position == null or setupForm.position == ''}" th:text="#{setup.step2.targetPosition.placeholder}">Select a position...</option>
-									<option value="Junior Java Developer" th:selected="${setupForm.position == 'Junior Java Developer'}" th:text="#{setup.position.juniorJava}">Junior Java Developer</option>
-									<option value="Senior Java Developer" th:selected="${setupForm.position == 'Senior Java Developer'}" th:text="#{setup.position.seniorJava}">Senior Java Developer</option>
-									<option value="Frontend Developer" th:selected="${setupForm.position == 'Frontend Developer'}" th:text="#{setup.position.frontend}">Frontend Developer</option>
-									<option value="Full Stack Developer" th:selected="${setupForm.position == 'Full Stack Developer'}" th:text="#{setup.position.fullstack}">Full Stack Developer</option>
-									<option value="QA Engineer" th:selected="${setupForm.position == 'QA Engineer'}" th:text="#{setup.position.qa}">QA Engineer</option>
-									<option value="DevOps Engineer" th:selected="${setupForm.position == 'DevOps Engineer'}" th:text="#{setup.position.devops}">DevOps Engineer</option>
-									<option value="Project Manager" th:selected="${setupForm.position == 'Project Manager'}" th:text="#{setup.position.projectManager}">Project Manager</option>
-									<option value="Product Manager" th:selected="${setupForm.position == 'Product Manager'}" th:text="#{setup.position.productManager}">Product Manager</option>
-									<option value="Data Scientist" th:selected="${setupForm.position == 'Data Scientist'}" th:text="#{setup.position.dataScientist}">Data Scientist</option>
-									<option disabled>──────────────────</option>
-									<option value="custom" th:selected="${setupForm.position == 'custom'}" th:text="#{setup.position.custom}">Other (Custom)</option>
-								</select>
-								<i class="fa-solid fa-chevron-down absolute right-5 top-4 text-slate-500 pointer-events-none"></i>
-							</div>
-							<p th:if="${#fields.hasErrors('position')}" th:errors="*{position}" class="mt-2 text-sm text-red-400"></p>
+							<!--/*  Hidden input that holds the selected position value  */-->
+							<input type="hidden" id="position-value" name="position" th:value="${setupForm.position}">
 
-							<!--/*  Custom Position Input  */-->
-							<div id="custom-position-container"
-									th:classappend="${setupForm.position != 'custom'} ? 'hidden' : ''"
-									class="mt-3">
-								<label for="custom-position" class="sr-only">Custom Position</label>
-								<input type="text"
-										id="custom-position"
-										th:field="*{customPosition}"
-										th:placeholder="#{setup.step2.customPosition.placeholder}"
-										th:classappend="${#fields.hasErrors('customPosition')} ? 'border-red-500 focus:border-red-500' : ''"
-										class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-blue-500 transition"
-										maxlength="50"
-										autocomplete="off">
-								<p class="mt-1 text-xs text-slate-500">Letters, numbers, and basic punctuation (max 50 characters)</p>
-								<p th:if="${#fields.hasErrors('customPosition')}" th:errors="*{customPosition}" class="mt-2 text-sm text-red-400 flex items-center gap-1">
-									<i class="fa-solid fa-circle-exclamation"></i>
-								</p>
+							<!--/*  Preset position chips  */-->
+							<div class="flex flex-wrap gap-2 mb-2" id="position-chips">
+								<button type="button" onclick="selectPosition(this, 'Junior Java Developer')"
+										th:classappend="${setupForm.position == 'Junior Java Developer'} ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'"
+										class="px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition"
+										th:text="#{setup.position.juniorJava}">Junior Java Developer
+								</button>
+								<button type="button" onclick="selectPosition(this, 'DevOps Engineer')"
+										th:classappend="${setupForm.position == 'DevOps Engineer'} ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'"
+										class="px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition"
+										th:text="#{setup.position.devops}">DevOps Engineer
+								</button>
+								<button type="button" onclick="selectPosition(this, 'Frontend Developer')"
+										th:classappend="${setupForm.position == 'Frontend Developer'} ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'"
+										class="px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition"
+										th:text="#{setup.position.frontend}">Frontend Developer
+								</button>
+								<button type="button" onclick="selectPosition(this, 'Full Stack Developer')"
+										th:classappend="${setupForm.position == 'Full Stack Developer'} ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'"
+										class="px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition"
+										th:text="#{setup.position.fullstack}">Full Stack Developer
+								</button>
 							</div>
+
+							<!--/*  Custom position button  */-->
+							<button type="button" onclick="openCustomPositionModal()"
+									id="custom-position-btn"
+									th:classappend="${setupForm.position != null and setupForm.position != '' and setupForm.position != 'Junior Java Developer' and setupForm.position != 'Frontend Developer' and setupForm.position != 'Full Stack Developer' and setupForm.position != 'DevOps Engineer' and setupForm.position != 'custom'} ? 'border-blue-500 bg-blue-500/10 text-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.5)]' : 'border-dashed border-slate-600 text-slate-400 hover:border-blue-500 hover:text-blue-400 animate-subtle-glow'"
+									class="w-full py-2 rounded-lg border-2 text-sm font-medium transition flex items-center justify-center gap-2">
+								<i class="fa-solid fa-pencil"></i>
+								<span id="custom-position-label"
+										th:text="${setupForm.position != null and setupForm.position != '' and setupForm.position != 'Junior Java Developer' and setupForm.position != 'Frontend Developer' and setupForm.position != 'Full Stack Developer' and setupForm.position != 'DevOps Engineer' and setupForm.position != 'custom'} ? ${setupForm.position} : #{setup.step2.customPosition.button}">Can't find your position? Type your own</span>
+							</button>
+
+							<p th:if="${#fields.hasErrors('position')}" th:errors="*{position}" class="mt-2 text-sm text-red-400"></p>
 						</div>
 
 						<!--/*  Difficulty Level  */-->
@@ -159,7 +155,7 @@
 							</div>
 
 							<!--/*  Upload area (show only if no file uploaded)  */-->
-							<div th:if="${setupForm.cvFileName == null}" id="cv-upload-area" class="relative border-2 border-dashed border-slate-700 rounded-xl p-5 text-center hover:border-blue-500 transition cursor-pointer bg-slate-900/50">
+							<div th:if="${setupForm.cvFileName == null}" id="cv-upload-area" class="relative border-2 border-dashed border-slate-700 rounded-xl p-3 text-center hover:border-blue-500 transition cursor-pointer bg-slate-900/50">
 								<label for="cv-file-input" class="sr-only">Upload CV File</label>
 								<input type="file"
 										id="cv-file-input"
@@ -168,9 +164,9 @@
 										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 										onchange="handleCvFileSelect(this)">
 								<div>
-									<i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-500 mb-3"></i>
-									<p class="text-slate-400 font-medium" th:text="#{setup.cv.dropText}">Drop your CV here or click to browse</p>
-									<p class="text-slate-600 text-xs mt-2" th:text="#{setup.cv.fileTypes}">PDF or DOCX, max 10MB</p>
+									<i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-500 mb-1"></i>
+									<p class="text-slate-400 font-medium text-sm" th:text="#{setup.cv.dropText}">Drop your CV here or click to browse</p>
+									<p class="text-slate-600 text-xs mt-1" th:text="#{setup.cv.fileTypes}">PDF or DOCX, max 10MB</p>
 								</div>
 							</div>
 
@@ -207,14 +203,130 @@
 		</div>
 	</section>
 
+	<!--/*  Custom Position Modal  */-->
+	<div id="custom-position-modal" class="fixed inset-0 z-50 hidden">
+		<div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeCustomPositionModal()"></div>
+		<div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+			<div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md p-8">
+				<h3 class="text-xl font-bold text-white text-center mb-6" th:text="#{setup.step2.customPosition.modalTitle}">Enter Your Position</h3>
+				<input type="text"
+						id="custom-position-input"
+						th:placeholder="#{setup.step2.customPosition.placeholder}"
+						class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-5 py-4 text-white text-lg focus:outline-none focus:border-blue-500 transition"
+						maxlength="50"
+						autocomplete="off">
+				<p class="mt-2 text-xs text-slate-500 text-center" th:text="#{setup.step2.customPosition.modalHint}">e.g. "UI/UX Designer", "Data Analyst"</p>
+				<div class="flex gap-3 mt-6">
+					<button type="button" onclick="closeCustomPositionModal()"
+							class="flex-1 px-4 py-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-medium transition">
+						<span th:text="#{setup.step2.customPosition.cancel}">Cancel</span>
+					</button>
+					<button type="button" onclick="confirmCustomPosition()"
+							class="flex-1 px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-500/30">
+						<span th:text="#{setup.step2.customPosition.confirm}">Confirm</span>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<script th:inline="javascript">
-		function toggleCustomPosition(select) {
-			const container = document.getElementById('custom-position-container');
-			if (select.value === 'custom') {
-				container.classList.remove('hidden');
-			} else {
-				container.classList.add('hidden');
+		const PRESET_POSITIONS = [
+			'Junior Java Developer', 'DevOps Engineer', 'Frontend Developer', 'Full Stack Developer'
+		];
+		const DEFAULT_CUSTOM_LABEL = /*[[#{setup.step2.customPosition.button}]]*/ "Can't find your position? Type your own";
+
+		function selectPosition(chipEl, value) {
+			// Update hidden field
+			document.getElementById('position-value').value = value;
+
+			// Reset all chips to unselected
+			document.querySelectorAll('#position-chips button').forEach(btn => {
+				btn.className = btn.className
+					.replace(/bg-blue-500\/20/g, 'bg-slate-900')
+					.replace(/border-blue-500/g, 'border-slate-700')
+					.replace(/text-blue-400/g, 'text-slate-400');
+				if (!btn.classList.contains('hover:bg-slate-800')) {
+					btn.classList.add('hover:bg-slate-800');
+				}
+			});
+
+			// Highlight selected chip
+			chipEl.className = chipEl.className
+				.replace(/bg-slate-900/g, 'bg-blue-500/20')
+				.replace(/border-slate-700/g, 'border-blue-500')
+				.replace(/text-slate-400/g, 'text-blue-400');
+			chipEl.classList.remove('hover:bg-slate-800');
+
+			// Reset custom button to default state
+			const customBtn = document.getElementById('custom-position-btn');
+			customBtn.className = customBtn.className
+				.replace(/border-blue-500/g, 'border-dashed border-slate-600')
+				.replace(/bg-blue-500\/10/g, '')
+				.replace(/text-blue-400/g, 'text-slate-400');
+			if (!customBtn.classList.contains('hover:border-blue-500')) {
+				customBtn.classList.add('hover:border-blue-500', 'hover:text-blue-400');
 			}
+			document.getElementById('custom-position-label').textContent = DEFAULT_CUSTOM_LABEL;
+		}
+
+		function openCustomPositionModal() {
+			const modal = document.getElementById('custom-position-modal');
+			const input = document.getElementById('custom-position-input');
+			modal.classList.remove('hidden');
+
+			// Pre-fill if a custom value was already set
+			const currentValue = document.getElementById('position-value').value;
+			if (currentValue && !PRESET_POSITIONS.includes(currentValue)) {
+				input.value = currentValue;
+			} else {
+				input.value = '';
+			}
+			setTimeout(() => input.focus(), 100);
+
+			// Allow Enter key to confirm
+			input.onkeydown = function (e) {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					confirmCustomPosition();
+				}
+			};
+		}
+
+		function closeCustomPositionModal() {
+			document.getElementById('custom-position-modal').classList.add('hidden');
+		}
+
+		function confirmCustomPosition() {
+			const input = document.getElementById('custom-position-input');
+			const value = input.value.trim();
+			if (!value) return;
+
+			// Set the hidden position field
+			document.getElementById('position-value').value = value;
+
+			// Deselect all preset chips
+			document.querySelectorAll('#position-chips button').forEach(btn => {
+				btn.className = btn.className
+					.replace(/bg-blue-500\/20/g, 'bg-slate-900')
+					.replace(/border-blue-500/g, 'border-slate-700')
+					.replace(/text-blue-400/g, 'text-slate-400');
+				if (!btn.classList.contains('hover:bg-slate-800')) {
+					btn.classList.add('hover:bg-slate-800');
+				}
+			});
+
+			// Highlight the custom button and show the value
+			const customBtn = document.getElementById('custom-position-btn');
+			customBtn.className = customBtn.className
+				.replace(/border-dashed/g, '')
+				.replace(/border-slate-600/g, 'border-blue-500')
+				.replace(/text-slate-400/g, 'text-blue-400');
+			customBtn.classList.add('bg-blue-500/10');
+			customBtn.classList.remove('hover:border-blue-500', 'hover:text-blue-400');
+			document.getElementById('custom-position-label').textContent = value;
+
+			closeCustomPositionModal();
 		}
 
 		function showCvError(message) {

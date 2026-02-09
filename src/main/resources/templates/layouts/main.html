@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" class="h-full">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 
 <head th:replace="~{layouts/fragments/head :: head}">
 	<title></title>
 </head>
 
 <body
-		class="bg-slate-900 text-white min-h-full h-full overflow-hidden selection:bg-blue-500 selection:text-white flex flex-col">
+		class="bg-slate-900 text-white min-h-screen selection:bg-blue-500 selection:text-white flex flex-col">
 
 <!--/*  API Key Modal (PROD mode only)  */-->
 <th:block th:if="${appMode == 'PROD'}">
@@ -106,6 +106,38 @@
 
 <!--/*  Main Content Area  */-->
 <th:block th:replace="~{${content} :: content}" />
+
+<!--/*  Scroll Indicator (hidden on interview page)  */-->
+<div th:unless="${isInterviewPage}" id="scroll-indicator"
+		class="fixed bottom-6 right-6 z-40 opacity-0 transition-opacity duration-300 pointer-events-none">
+	<div class="w-10 h-10 rounded-full bg-slate-700/90 border border-slate-600 flex items-center justify-center shadow-lg animate-bounce">
+		<i class="fa-solid fa-chevron-down text-slate-300 text-sm"></i>
+	</div>
+</div>
+
+<script th:unless="${isInterviewPage}">
+	(function () {
+		const indicator = document.getElementById('scroll-indicator');
+		if (!indicator) return;
+
+		function checkScroll() {
+			const scrollable = document.documentElement.scrollHeight > window.innerHeight + 10;
+			const atBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 20);
+
+			if (scrollable && !atBottom) {
+				indicator.style.opacity = '1';
+			} else {
+				indicator.style.opacity = '0';
+			}
+		}
+
+		window.addEventListener('scroll', checkScroll, {passive: true});
+		window.addEventListener('resize', checkScroll, {passive: true});
+		// Check after page fully renders
+		setTimeout(checkScroll, 100);
+		setTimeout(checkScroll, 500);
+	})();
+</script>
 
 <!--/*  JavaScript Body Bottom  */-->
 <th:block th:replace="~{layouts/fragments/bodyBottom :: bodyBottom}" />

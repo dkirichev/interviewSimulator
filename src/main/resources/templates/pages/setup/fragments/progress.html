@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <!--/*  Progress Indicator Fragment for Setup Wizard  */-->
-<div th:fragment="progressIndicator(currentStep)" class="flex items-center justify-center mb-12 px-8">
+<div th:fragment="progressIndicator(currentStep)" class="flex items-center justify-center mb-4 tall:mb-12 px-8">
 	<div class="flex items-center w-full max-w-lg">
 		<!--/*  Step 1  */-->
 		<div class="flex flex-col items-center flex-1">
@@ -12,7 +12,7 @@
 				<span th:if="${currentStep <= 1}">1</span>
 			</div>
 			<span th:classappend="${currentStep == 1} ? 'text-blue-400 font-medium' : (${currentStep > 1} ? 'text-green-400 font-medium' : 'text-slate-500')"
-					class="text-xs mt-2" th:text="#{setup.step.profile}">Profile</span>
+					class="text-xs mt-2" th:text="#{setup.step.name}" />
 		</div>
 
 		<!--/*  Line 1-2  */-->
@@ -27,7 +27,7 @@
 				<span th:if="${currentStep <= 2}">2</span>
 			</div>
 			<span th:classappend="${currentStep == 2} ? 'text-blue-400 font-medium' : (${currentStep > 2} ? 'text-green-400 font-medium' : 'text-slate-500')"
-					class="text-xs mt-2" th:text="#{setup.step.details}">Details</span>
+					class="text-xs mt-2" th:text="#{setup.step.position}" />
 		</div>
 
 		<!--/*  Line 2-3  */-->
@@ -42,7 +42,7 @@
 				<span th:if="${currentStep <= 3}">3</span>
 			</div>
 			<span th:classappend="${currentStep == 3} ? 'text-blue-400 font-medium' : (${currentStep > 3} ? 'text-green-400 font-medium' : 'text-slate-500')"
-					class="text-xs mt-2" th:text="#{setup.step.voice}">Voice</span>
+					class="text-xs mt-2" th:text="#{setup.step.interviewer}" />
 		</div>
 	</div>
 </div>
