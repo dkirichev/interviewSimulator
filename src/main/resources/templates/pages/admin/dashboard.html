@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<div th:fragment="content">
+	<section class="view-section active flex-col items-center min-h-screen w-full relative overflow-auto">
+		<!--/*  Background Decor  */-->
+		<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+			<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
+			<div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
+		</div>
+
+		<div class="w-full max-w-7xl px-4 py-6 space-y-6">
+			<!--/*  Header  */-->
+			<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
+				<div>
+					<h1 class="text-3xl font-bold flex items-center gap-3">
+						<i class="fa-solid fa-shield-halved text-blue-400"></i>
+						<span th:text="#{admin.dashboard.title}">Admin Dashboard</span>
+					</h1>
+					<p class="text-slate-400 text-sm mt-1" th:text="#{admin.dashboard.subtitle}">Sessions from the last 2 weeks</p>
+				</div>
+				<div class="flex items-center gap-3">
+					<!--/*  Language Switcher  */-->
+					<div id="admin-lang-dropdown" class="relative">
+						<button onclick="toggleAdminLangDropdown()"
+								class="px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg transition flex items-center gap-2">
+							<svg th:if="${#locale.language == 'bg'}" class="w-5 h-3.5 rounded overflow-hidden" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<rect width="60" height="13.33" fill="white" /><rect y="13.33" width="60" height="13.33" fill="#00966E" /><rect y="26.66" width="60" height="13.34" fill="#D62612" />
+							</svg>
+							<svg th:if="${#locale.language != 'bg'}" class="w-5 h-3.5 rounded overflow-hidden" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<rect width="60" height="40" fill="#012169" /><path d="M0 0L60 40M60 0L0 40" stroke="white" stroke-width="8" /><path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4" /><path d="M30 0V40M0 20H60" stroke="white" stroke-width="12" /><path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6" />
+							</svg>
+							<i id="admin-lang-arrow" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
+						</button>
+						<div id="admin-lang-menu" class="hidden absolute right-0 mt-2 w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
+							<button onclick="changeAdminLanguage('bg')" class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-slate-700 transition-colors text-sm text-slate-200" th:classappend="${#locale.language == 'bg'} ? 'bg-slate-700/50' : ''">
+								<svg class="w-5 h-3.5 rounded overflow-hidden flex-shrink-0" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="13.33" fill="white" /><rect y="13.33" width="60" height="13.33" fill="#00966E" /><rect y="26.66" width="60" height="13.34" fill="#D62612" /></svg>
+								<span th:text="#{global.language.name.bulgarian}">Bulgarian</span>
+							</button>
+							<button onclick="changeAdminLanguage('en')" class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-slate-700 transition-colors text-sm text-slate-200" th:classappend="${#locale.language == 'en'} ? 'bg-slate-700/50' : ''">
+								<svg class="w-5 h-3.5 rounded overflow-hidden flex-shrink-0" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#012169" /><path d="M0 0L60 40M60 0L0 40" stroke="white" stroke-width="8" /><path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4" /><path d="M30 0V40M0 20H60" stroke="white" stroke-width="12" /><path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6" /></svg>
+								<span th:text="#{global.language.name.english}">English</span>
+							</button>
+						</div>
+					</div>
+					<!--/*  Change Password Toggle  */-->
+					<button onclick="openPasswordModal()"
+							class="px-4 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-sm text-slate-300 transition flex items-center gap-2">
+						<i class="fa-solid fa-key"></i>
+						<span th:text="#{admin.dashboard.changePassword}">Change Password</span>
+					</button>
+					<!--/*  Logout  */-->
+					<form th:action="@{/admin/logout}" method="post" class="inline">
+						<button type="submit"
+								class="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-lg text-sm text-red-400 transition flex items-center gap-2">
+							<i class="fa-solid fa-right-from-bracket"></i>
+							<span th:text="#{admin.dashboard.logout}">Logout</span>
+						</button>
+					</form>
+				</div>
+			</div>
+
+			<!--/*  Flash Messages  */-->
+			<div th:if="${passwordSuccess}" class="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm flex items-center gap-2">
+				<i class="fa-solid fa-check-circle"></i>
+				<span th:text="#{admin.password.success}">Password changed successfully</span>
+			</div>
+			<div th:if="${passwordError}" class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2">
+				<i class="fa-solid fa-circle-exclamation"></i>
+				<span th:text="#{${passwordError}}">Password change failed</span>
+			</div>
+
+			<!--/*  Stats Cards  */-->
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+				<!--/*  Total Sessions  */-->
+				<div class="bg-slate-800/70 p-5 rounded-xl border border-slate-700">
+					<div class="flex items-center gap-3 mb-2">
+						<div class="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+							<i class="fa-solid fa-clipboard-list"></i>
+						</div>
+						<span class="text-slate-400 text-sm" th:text="#{admin.stats.totalSessions}">Total Sessions</span>
+					</div>
+					<div class="text-3xl font-bold text-white" th:text="${stats.totalSessions}">0</div>
+				</div>
+				<!--/*  Sessions Today  */-->
+				<div class="bg-slate-800/70 p-5 rounded-xl border border-slate-700">
+					<div class="flex items-center gap-3 mb-2">
+						<div class="w-10 h-10 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center">
+							<i class="fa-solid fa-calendar-day"></i>
+						</div>
+						<span class="text-slate-400 text-sm" th:text="#{admin.stats.sessionsToday}">Today</span>
+					</div>
+					<div class="text-3xl font-bold text-white" th:text="${stats.sessionsToday}">0</div>
+				</div>
+				<!--/*  Average Score  */-->
+				<div class="bg-slate-800/70 p-5 rounded-xl border border-slate-700">
+					<div class="flex items-center gap-3 mb-2">
+						<div class="w-10 h-10 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
+							<i class="fa-solid fa-chart-line"></i>
+						</div>
+						<span class="text-slate-400 text-sm" th:text="#{admin.stats.avgScore}">Avg Score</span>
+					</div>
+					<div class="text-3xl font-bold text-white"><span th:text="${stats.averageScore}">0</span><span class="text-lg text-slate-500">/100</span></div>
+				</div>
+				<!--/*  Top Position  */-->
+				<div class="bg-slate-800/70 p-5 rounded-xl border border-slate-700">
+					<div class="flex items-center gap-3 mb-2">
+						<div class="w-10 h-10 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center">
+							<i class="fa-solid fa-trophy"></i>
+						</div>
+						<span class="text-slate-400 text-sm" th:text="#{admin.stats.topPosition}">Top Position</span>
+					</div>
+					<div class="text-lg font-bold text-white truncate" th:text="${stats.topPosition}" th:title="${stats.topPosition}">—</div>
+				</div>
+			</div>
+
+			<!--/*  Filters  */-->
+			<form method="get" th:action="@{/admin/dashboard}" class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-wrap items-end gap-4">
+				<!--/*  Position  */-->
+				<div class="flex-1 min-w-[150px]">
+					<label class="block text-xs text-slate-400 mb-1" th:text="#{admin.filter.position}">Position</label>
+					<select name="position"
+							class="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition">
+						<option value="" th:text="#{admin.filter.all}">All</option>
+						<option th:each="pos : ${positions}" th:value="${pos}" th:text="${pos}" th:selected="${pos == filterPosition}"></option>
+					</select>
+				</div>
+				<!--/*  Difficulty  */-->
+				<div class="flex-1 min-w-[130px]">
+					<label class="block text-xs text-slate-400 mb-1" th:text="#{admin.filter.difficulty}">Difficulty</label>
+					<select name="difficulty"
+							class="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition">
+						<option value="" th:text="#{admin.filter.all}">All</option>
+						<option value="Easy" th:selected="${'Easy' == filterDifficulty}" th:text="#{setup.difficulty.easy}">Chill</option>
+						<option value="Standard" th:selected="${'Standard' == filterDifficulty}" th:text="#{setup.difficulty.standard}">Standard</option>
+						<option value="Hard" th:selected="${'Hard' == filterDifficulty}" th:text="#{setup.difficulty.hard}">Stress</option>
+					</select>
+				</div>
+				<!--/*  Language  */-->
+				<div class="flex-1 min-w-[130px]">
+					<label class="block text-xs text-slate-400 mb-1" th:text="#{admin.filter.language}">Language</label>
+					<select name="language"
+							class="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition">
+						<option value="" th:text="#{admin.filter.all}">All</option>
+						<option value="en" th:selected="${'en' == filterLanguage}">English</option>
+						<option value="bg" th:selected="${'bg' == filterLanguage}">Bulgarian</option>
+					</select>
+				</div>
+				<!--/*  Apply  */-->
+				<button type="submit"
+						class="px-5 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-medium transition flex items-center gap-2">
+					<i class="fa-solid fa-filter"></i>
+					<span th:text="#{admin.filter.apply}">Filter</span>
+				</button>
+				<!--/*  Clear  */-->
+				<a th:href="@{/admin/dashboard}" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 text-sm transition flex items-center gap-2">
+					<i class="fa-solid fa-xmark"></i>
+					<span th:text="#{admin.filter.clear}">Clear Filters</span>
+				</a>
+			</form>
+
+			<!--/*  Sessions Table  */-->
+			<div class="bg-slate-800/70 rounded-xl border border-slate-700 overflow-hidden">
+				<div class="overflow-x-auto">
+					<table class="w-full text-sm">
+						<thead>
+							<tr class="bg-slate-900/50 border-b border-slate-700">
+								<th class="text-left px-4 py-3 text-slate-400 font-medium" th:text="#{admin.table.candidate}">Candidate</th>
+								<th class="text-left px-4 py-3 text-slate-400 font-medium" th:text="#{admin.table.position}">Position</th>
+								<th class="text-left px-4 py-3 text-slate-400 font-medium" th:text="#{admin.table.difficulty}">Difficulty</th>
+								<th class="text-left px-4 py-3 text-slate-400 font-medium" th:text="#{admin.table.language}">Lang</th>
+								<th class="text-left px-4 py-3 text-slate-400 font-medium" th:text="#{admin.table.date}">Date</th>
+								<th class="text-left px-4 py-3 text-slate-400 font-medium" th:text="#{admin.table.duration}">Duration</th>
+								<th class="text-left px-4 py-3 text-slate-400 font-medium" th:text="#{admin.table.score}">Score</th>
+								<th class="text-left px-4 py-3 text-slate-400 font-medium" th:text="#{admin.table.verdict}">Verdict</th>
+								<th class="text-center px-4 py-3 text-slate-400 font-medium" th:text="#{admin.table.actions}">Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="sess, iter : ${sessions}"
+									th:class="${iter.odd} ? 'bg-slate-800/30' : ''"
+									class="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
+								<td class="px-4 py-3 text-white font-medium" th:text="${sess.candidateName}">—</td>
+								<td class="px-4 py-3 text-slate-300" th:text="${sess.jobPosition}">—</td>
+								<td class="px-4 py-3">
+									<span th:switch="${sess.difficulty}">
+										<span th:case="'Easy'" class="px-2 py-0.5 rounded-full text-xs bg-green-500/10 text-green-400 border border-green-500/20">😌 <span th:text="#{setup.difficulty.easy}">Chill</span></span>
+										<span th:case="'Standard'" class="px-2 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">⚖️ <span th:text="#{setup.difficulty.standard}">Standard</span></span>
+										<span th:case="'Hard'" class="px-2 py-0.5 rounded-full text-xs bg-red-500/10 text-red-400 border border-red-500/20">🔥 <span th:text="#{setup.difficulty.hard}">Stress</span></span>
+										<span th:case="*" class="text-slate-500" th:text="${sess.difficulty}">—</span>
+									</span>
+								</td>
+								<td class="px-4 py-3">
+									<span th:if="${sess.language == 'en'}" class="text-slate-300">🇬🇧</span>
+									<span th:if="${sess.language == 'bg'}" class="text-slate-300">🇧🇬</span>
+									<span th:if="${sess.language == null}" class="text-slate-500">—</span>
+								</td>
+								<td class="px-4 py-3 text-slate-300 whitespace-nowrap" th:text="${#temporals.format(sess.startedAt, 'dd MMM yyyy HH:mm')}">—</td>
+								<td class="px-4 py-3 text-slate-400" th:text="${durationMap.containsKey(sess.id)} ? ${durationMap.get(sess.id)} : '—'">—</td>
+								<td class="px-4 py-3">
+									<span th:if="${feedbackMap.containsKey(sess.id)}"
+											th:text="${feedbackMap.get(sess.id).overallScore} + '/100'"
+											th:classappend="${feedbackMap.get(sess.id).overallScore >= 80} ? 'text-green-400' : (${feedbackMap.get(sess.id).overallScore >= 60} ? 'text-blue-400' : (${feedbackMap.get(sess.id).overallScore >= 40} ? 'text-yellow-400' : 'text-red-400'))"
+											class="font-medium">—</span>
+									<span th:unless="${feedbackMap.containsKey(sess.id)}" class="text-slate-500 text-xs italic" th:text="#{admin.table.noScore}">N/A</span>
+								</td>
+								<td class="px-4 py-3">
+									<th:block th:if="${feedbackMap.containsKey(sess.id)}">
+										<span th:with="verdict=${feedbackMap.get(sess.id).verdict}" th:switch="${verdict}">
+											<span th:case="'STRONG_HIRE'" class="px-2 py-0.5 rounded-full text-xs bg-green-500/10 text-green-400 border border-green-500/20 font-bold" th:text="#{report.verdict.strongHire}">STRONG HIRE</span>
+											<span th:case="'HIRE'" class="px-2 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold" th:text="#{report.verdict.hire}">HIRE</span>
+											<span th:case="'MAYBE'" class="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 font-bold" th:text="#{report.verdict.maybe}">MAYBE</span>
+											<span th:case="'NO_HIRE'" class="px-2 py-0.5 rounded-full text-xs bg-red-500/10 text-red-400 border border-red-500/20 font-bold" th:text="#{report.verdict.noHire}">NO HIRE</span>
+											<span th:case="*" class="text-slate-500 text-xs" th:text="${verdict}">—</span>
+										</span>
+									</th:block>
+									<span th:unless="${feedbackMap.containsKey(sess.id)}" class="text-slate-500 text-xs italic">—</span>
+								</td>
+								<td class="px-4 py-3 text-center">
+									<a th:if="${feedbackMap.containsKey(sess.id)}"
+											th:href="@{/report/{id}(id=${sess.id})}"
+											class="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 rounded-lg text-blue-400 text-xs font-medium transition inline-flex items-center gap-1">
+										<i class="fa-solid fa-chart-bar"></i>
+										<span th:text="#{admin.table.details}">Details</span>
+									</a>
+									<span th:unless="${feedbackMap.containsKey(sess.id)}" class="text-slate-600 text-xs italic" th:text="#{admin.table.incomplete}">Incomplete</span>
+								</td>
+							</tr>
+							<!--/*  Empty State  */-->
+							<tr th:if="${#lists.isEmpty(sessions)}">
+								<td colspan="9" class="px-4 py-12 text-center">
+									<div class="text-slate-500">
+										<i class="fa-solid fa-inbox text-4xl mb-3 block"></i>
+										<p th:text="#{admin.table.empty}">No sessions found</p>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<!--/*  Pagination Controls  */-->
+				<div th:if="${totalPages > 1}" class="bg-slate-900/30 border-t border-slate-700 px-4 py-4">
+					<div class="flex justify-center items-center gap-2">
+						<!--/*  Previous Button  */-->
+						<a th:if="${hasPrevious}"
+								th:href="@{/admin/dashboard(page=${currentPage - 1}, position=${filterPosition}, difficulty=${filterDifficulty}, language=${filterLanguage})}"
+								class="px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white text-sm transition flex items-center gap-1">
+							<i class="fa-solid fa-chevron-left text-xs"></i>
+							<span th:text="#{admin.pagination.previous}">Previous</span>
+						</a>
+						<span th:unless="${hasPrevious}" class="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-600 text-sm cursor-not-allowed flex items-center gap-1">
+							<i class="fa-solid fa-chevron-left text-xs"></i>
+							<span th:text="#{admin.pagination.previous}">Previous</span>
+						</span>
+
+						<!--/*  Page Numbers  */-->
+						<div class="flex items-center gap-1">
+							<th:block th:each="pageNum : ${#numbers.sequence(1, totalPages)}">
+								<a th:if="${pageNum != currentPage}"
+										th:href="@{/admin/dashboard(page=${pageNum}, position=${filterPosition}, difficulty=${filterDifficulty}, language=${filterLanguage})}"
+										th:text="${pageNum}"
+										class="px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white text-sm transition min-w-[2.5rem] text-center">1</a>
+								<span th:if="${pageNum == currentPage}"
+										th:text="${pageNum}"
+										class="px-3 py-2 bg-blue-600 border border-blue-500 rounded-lg text-white text-sm font-bold min-w-[2.5rem] text-center">1</span>
+							</th:block>
+						</div>
+
+						<!--/*  Next Button  */-->
+						<a th:if="${hasNext}"
+								th:href="@{/admin/dashboard(page=${currentPage + 1}, position=${filterPosition}, difficulty=${filterDifficulty}, language=${filterLanguage})}"
+								class="px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white text-sm transition flex items-center gap-1">
+							<span th:text="#{admin.pagination.next}">Next</span>
+							<i class="fa-solid fa-chevron-right text-xs"></i>
+						</a>
+						<span th:unless="${hasNext}" class="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-600 text-sm cursor-not-allowed flex items-center gap-1">
+							<span th:text="#{admin.pagination.next}">Next</span>
+							<i class="fa-solid fa-chevron-right text-xs"></i>
+						</span>
+					</div>
+					
+					<!--/*  Page Info  */-->
+					<div class="text-center mt-3 text-xs text-slate-500">
+						<span th:text="#{admin.pagination.page}">Page</span>
+						<span th:text="${currentPage}">1</span>
+						<span th:text="#{admin.pagination.of}">of</span>
+						<span th:text="${totalPages}">1</span>
+					</div>
+				</div>
+
+				<!--/*  Table Footer  */-->
+				<div class="bg-slate-900/30 border-t border-slate-700 px-4 py-3 flex justify-between items-center text-xs text-slate-500">
+					<span>
+						<span th:text="${#lists.size(sessions)}">0</span>
+						<span th:text="#{admin.table.sessionsShown}">sessions shown</span>
+					</span>
+					<span>
+						<span th:text="#{admin.table.completed}">Completed:</span>
+						<span th:text="${stats.completedSessions}">0</span>
+					</span>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!--/*  Change Password Modal (outside section to avoid z-index issues)  */-->
+	<div id="password-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+			<div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl p-8 w-full max-w-md mx-4">
+				<div class="flex items-center justify-between mb-6">
+					<h3 class="text-lg font-bold text-white flex items-center gap-2">
+						<i class="fa-solid fa-key text-blue-400"></i>
+						<span th:text="#{admin.password.title}">Change Password</span>
+					</h3>
+					<button onclick="closePasswordModal()"
+							class="text-slate-400 hover:text-white transition">
+						<i class="fa-solid fa-xmark text-lg"></i>
+					</button>
+				</div>
+
+				<form th:action="@{/admin/change-password}" method="post" class="space-y-4">
+					<div>
+						<label class="block text-sm text-slate-300 mb-1" th:text="#{admin.password.current}">Current Password</label>
+						<input type="password" name="currentPassword" required
+								class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500 transition">
+					</div>
+					<div>
+						<label class="block text-sm text-slate-300 mb-1" th:text="#{admin.password.new}">New Password</label>
+						<input type="password" name="newPassword" required minlength="8"
+								class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500 transition">
+					</div>
+					<div>
+						<label class="block text-sm text-slate-300 mb-1" th:text="#{admin.password.confirm}">Confirm New Password</label>
+						<input type="password" name="confirmPassword" required minlength="8"
+								class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500 transition">
+					</div>
+					<div class="text-xs text-slate-500" th:text="#{admin.password.hint}">Minimum 8 characters</div>
+					<button type="submit"
+							class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium transition flex items-center justify-center gap-2">
+						<i class="fa-solid fa-check"></i>
+						<span th:text="#{admin.password.submit}">Update Password</span>
+					</button>
+				</form>
+			</div>
+		</div>
+
+	<!--/*  Inline script for admin page (avoids dependency on external JS load order)  */-->
+	<script>
+		function openPasswordModal() {
+			var modal = document.getElementById('password-modal');
+			if (modal) modal.classList.remove('hidden');
+		}
+		function closePasswordModal() {
+			var modal = document.getElementById('password-modal');
+			if (modal) modal.classList.add('hidden');
+		}
+		function toggleAdminLangDropdown() {
+			var menu = document.getElementById('admin-lang-menu');
+			var arrow = document.getElementById('admin-lang-arrow');
+			if (menu) menu.classList.toggle('hidden');
+			if (arrow) arrow.classList.toggle('rotate-180');
+		}
+		function changeAdminLanguage(lang) {
+			var url = new URL(window.location.href);
+			url.searchParams.set('lang', lang);
+			window.location.href = url.toString();
+		}
+		// Close dropdown on outside click
+		document.addEventListener('click', function(e) {
+			var dropdown = document.getElementById('admin-lang-dropdown');
+			if (dropdown && !dropdown.contains(e.target)) {
+				var menu = document.getElementById('admin-lang-menu');
+				var arrow = document.getElementById('admin-lang-arrow');
+				if (menu) menu.classList.add('hidden');
+				if (arrow) arrow.classList.remove('rotate-180');
+			}
+		});
+	</script>
+</div>
+
+</html>

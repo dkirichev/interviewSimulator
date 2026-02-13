@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<div th:fragment="content">
+	<section class="view-section active flex-col justify-center items-center min-h-screen w-full relative overflow-auto">
+		<!--/*  Background Decor  */-->
+		<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+			<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+			<div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+		</div>
+
+		<!--/*  Language Switcher (top right)  */-->
+		<div class="absolute top-4 right-4">
+			<div id="login-lang-dropdown" class="relative">
+				<button onclick="toggleLoginLang()"
+						class="px-3 py-2 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg transition flex items-center gap-2">
+					<svg th:if="${#locale.language == 'bg'}" class="w-5 h-3.5 rounded" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<rect width="60" height="13.33" fill="white" /><rect y="13.33" width="60" height="13.33" fill="#00966E" /><rect y="26.66" width="60" height="13.34" fill="#D62612" />
+					</svg>
+					<svg th:if="${#locale.language != 'bg'}" class="w-5 h-3.5 rounded" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<rect width="60" height="40" fill="#012169" /><path d="M0 0L60 40M60 0L0 40" stroke="white" stroke-width="8" /><path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4" /><path d="M30 0V40M0 20H60" stroke="white" stroke-width="12" /><path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6" />
+					</svg>
+					<i id="login-lang-arrow" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
+				</button>
+				<div id="login-lang-menu" class="hidden absolute right-0 mt-2 w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
+					<button onclick="changeLoginLang('bg')" class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-slate-700 transition-colors text-sm text-slate-200" th:classappend="${#locale.language == 'bg'} ? 'bg-slate-700/50' : ''">
+						<svg class="w-5 h-3.5 rounded flex-shrink-0" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="13.33" fill="white" /><rect y="13.33" width="60" height="13.33" fill="#00966E" /><rect y="26.66" width="60" height="13.34" fill="#D62612" /></svg>
+						<span th:text="#{global.language.name.bulgarian}">Bulgarian</span>
+					</button>
+					<button onclick="changeLoginLang('en')" class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-slate-700 transition-colors text-sm text-slate-200" th:classappend="${#locale.language == 'en'} ? 'bg-slate-700/50' : ''">
+						<svg class="w-5 h-3.5 rounded flex-shrink-0" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#012169" /><path d="M0 0L60 40M60 0L0 40" stroke="white" stroke-width="8" /><path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="4" /><path d="M30 0V40M0 20H60" stroke="white" stroke-width="12" /><path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6" /></svg>
+						<span th:text="#{global.language.name.english}">English</span>
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="w-full max-w-md px-4 my-8">
+			<!--/*  Login Card  */-->
+			<div class="bg-slate-800/80 p-10 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md">
+				<!--/*  Header  */-->
+				<div class="text-center mb-8">
+					<div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600/20 text-blue-400 mb-4">
+						<i class="fa-solid fa-shield-halved text-3xl"></i>
+					</div>
+					<h1 class="text-2xl font-bold text-white" th:text="#{admin.login.title}">Admin Panel</h1>
+					<p class="text-slate-400 text-sm mt-1" th:text="#{admin.login.subtitle}">Sign in to continue</p>
+				</div>
+
+				<!--/*  Error Message  */-->
+				<div th:if="${loginError}" class="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2">
+					<i class="fa-solid fa-circle-exclamation"></i>
+					<span th:text="#{admin.login.error}">Invalid username or password</span>
+				</div>
+
+				<!--/*  Logout Message  */-->
+				<div th:if="${logoutSuccess}" class="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm flex items-center gap-2">
+					<i class="fa-solid fa-check-circle"></i>
+					<span th:text="#{admin.login.loggedOut}">You have been logged out</span>
+				</div>
+
+				<!--/*  Login Form  */-->
+				<form th:action="@{/admin/login}" method="post" class="space-y-5">
+					<!--/*  Username  */-->
+					<div>
+						<label for="username" class="block text-sm font-medium text-slate-300 mb-1.5" th:text="#{admin.login.username}">Username</label>
+						<div class="relative">
+							<i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+							<input type="text" id="username" name="username" required autofocus
+									class="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+									th:placeholder="#{admin.login.username.placeholder}">
+						</div>
+					</div>
+
+					<!--/*  Password  */-->
+					<div>
+						<label for="password" class="block text-sm font-medium text-slate-300 mb-1.5" th:text="#{admin.login.password}">Password</label>
+						<div class="relative">
+							<i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+							<input type="password" id="password" name="password" required
+									class="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+									th:placeholder="#{admin.login.password.placeholder}">
+						</div>
+					</div>
+
+					<!--/*  Submit  */-->
+					<button type="submit"
+							class="w-full py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
+						<i class="fa-solid fa-right-to-bracket"></i>
+						<span th:text="#{admin.login.submit}">Sign In</span>
+					</button>
+				</form>
+
+				<!--/*  Back Link  */-->
+				<div class="text-center mt-6">
+					<a th:href="@{/}" class="text-slate-500 hover:text-slate-300 text-sm transition flex items-center justify-center gap-1">
+						<i class="fa-solid fa-arrow-left text-xs"></i>
+						<span th:text="#{admin.login.backToApp}">Back to Interview Simulator</span>
+					</a>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!--/*  Inline script for login page  */-->
+	<script>
+		function toggleLoginLang() {
+			var menu = document.getElementById('login-lang-menu');
+			var arrow = document.getElementById('login-lang-arrow');
+			if (menu) menu.classList.toggle('hidden');
+			if (arrow) arrow.classList.toggle('rotate-180');
+		}
+		function changeLoginLang(lang) {
+			var url = new URL(window.location.href);
+			url.searchParams.set('lang', lang);
+			window.location.href = url.toString();
+		}
+		document.addEventListener('click', function(e) {
+			var dropdown = document.getElementById('login-lang-dropdown');
+			if (dropdown && !dropdown.contains(e.target)) {
+				var menu = document.getElementById('login-lang-menu');
+				var arrow = document.getElementById('login-lang-arrow');
+				if (menu) menu.classList.add('hidden');
+				if (arrow) arrow.classList.remove('rotate-180');
+			}
+		});
+	</script>
+</div>
+
+</html>

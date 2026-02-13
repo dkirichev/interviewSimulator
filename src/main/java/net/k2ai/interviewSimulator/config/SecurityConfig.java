@@ -5,25 +5,34 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 
 /**
  * Security configuration for the Interview Simulator.
- * No authentication required (public demo tool), but enables:
- * - CSRF protection for forms
- * - Security headers (XSS, clickjacking, content-type sniffing protection)
- * - Content Security Policy
+ * Admin panel requires authentication at /admin/**.
+ * All other routes remain public (interview tool).
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder(12);
+	}//passwordEncoder
+
+
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		return http
 				.authorizeHttpRequests(auth -> auth
+						.requestMatchers("/admin/login").permitAll()
+						.requestMatchers("/admin/**").hasRole("ADMIN")
 						.anyRequest().permitAll()
 				)
 				.csrf(csrf -> csrf
@@ -56,11 +65,21 @@ public class SecurityConfig {
 								)
 						)
 				)
-				.formLogin(form -> form.disable())
-				.httpBasic(basic -> basic.disable())
+				.formLogin(form -> form
+						.loginPage("/admin/login")
+						.loginProcessingUrl("/admin/login")
+						.defaultSuccessUrl("/admin/dashboard", true)
+						.failureUrl("/admin/login?error=true")
+						.permitAll()
+				)
+				.logout(logout -> logout
+						.logoutUrl("/admin/logout")
+						.logoutSuccessUrl("/admin/login?logout=true")
+						.permitAll()
+				)
 				.anonymous(anonymous -> {
 				})
 				.build();
-	}// filterChain
+	}//filterChain
 
-}// SecurityConfig
+}//SecurityConfig

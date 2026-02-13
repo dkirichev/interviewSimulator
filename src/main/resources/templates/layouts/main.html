@@ -17,8 +17,8 @@
 <!--/*  Microphone Check Modal (setup pages only)  */-->
 <th:block th:if="${isSetupPage}" th:replace="~{layouts/fragments/microphone-modal :: microphoneModal}" />
 
-<!--/*  Top Right Controls  */-->
-<div class="fixed top-4 right-4 z-50 flex items-center gap-3">
+<!--/*  Top Right Controls (hidden on admin pages)  */-->
+<div th:unless="${isAdminPage}" class="fixed top-4 right-4 z-50 flex items-center gap-3">
 	<!--/*  GitHub Link  */-->
 	<a href="https://github.com/dkirichev/interviewSimulator" target="_blank"
 			class="flex items-center justify-center w-10 h-10 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg text-slate-200 hover:text-white">
