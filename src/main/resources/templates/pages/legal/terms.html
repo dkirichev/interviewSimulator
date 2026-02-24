@@ -35,13 +35,13 @@
 							<ul class="list-disc list-inside space-y-1 text-xs">
 								<li th:text="#{legal.terms.usage.lawful}">Lawful interview practice only</li>
 								<li th:text="#{legal.terms.usage.accurate}">Provide accurate information</li>
-								<li th:text="#{legal.terms.usage.apiKey}">Responsible for API key & costs</li>
+								<li th:text="#{legal.terms.usage.apiKey}" th:if="${appMode == 'PROD'}">Responsible for API key & costs</li>
 								<li th:text="#{legal.terms.usage.noAbuse}">No exploitation or abuse</li>
 								<li th:text="#{legal.terms.usage.noHarm}">No harmful content generation</li>
 							</ul>
 						</section>
 
-						<section>
+						<section th:if="${appMode == 'PROD'}">
 							<h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.terms.apiKeyResp.title}">API Key Responsibility</h2>
 							<div class="bg-yellow-900/30 border border-yellow-700 p-3 rounded-lg text-xs">
 								<ul class="list-disc list-inside space-y-1 text-yellow-100">

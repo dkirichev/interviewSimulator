@@ -37,12 +37,12 @@
 							<h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.privacy.dataNotCollected.title}">What We DON'T Collect</h2>
 							<ul class="list-disc list-inside space-y-1 text-xs">
 								<li><strong class="text-white" th:text="#{legal.privacy.dataNotCollected.audio}">Audio:</strong> <span th:text="#{legal.privacy.dataNotCollected.audioDesc}">Not permanently stored</span></li>
-								<li><strong class="text-white" th:text="#{legal.privacy.dataNotCollected.apiKey}">API Keys:</strong> <span th:text="#{legal.privacy.dataNotCollected.apiKeyDesc}">Only in your browser</span></li>
+								<li th:if="${appMode == 'PROD'}"><strong class="text-white" th:text="#{legal.privacy.dataNotCollected.apiKey}">API Keys:</strong> <span th:text="#{legal.privacy.dataNotCollected.apiKeyDesc}">Only in your browser</span></li>
 								<li><strong class="text-white" th:text="#{legal.privacy.dataNotCollected.pii}">Personal Info:</strong> <span th:text="#{legal.privacy.dataNotCollected.piiDesc}">No email/phone required</span></li>
 							</ul>
 						</section>
 
-						<section>
+						<section th:if="${appMode == 'PROD'}">
 							<h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.privacy.apiKey.title}">Your API Key</h2>
 							<div class="bg-blue-900/30 border border-blue-700 p-3 rounded-lg text-xs">
 								<ul class="list-disc list-inside space-y-1 text-blue-100">
@@ -90,7 +90,7 @@
 							<h2 class="text-lg font-semibold text-white mb-2" th:text="#{legal.privacy.storage.title}">Storage</h2>
 							<ul class="list-disc list-inside space-y-1 text-xs">
 								<li th:text="#{legal.privacy.storage.database}">PostgreSQL database</li>
-								<li th:text="#{legal.privacy.storage.browser}">Browser localStorage</li>
+								<li th:text="#{legal.privacy.storage.browser}" th:if="${appMode == 'PROD'}">Browser localStorage</li>
 								<li th:text="#{legal.privacy.storage.encryption}">Standard WebSocket</li>
 							</ul>
 						</section>

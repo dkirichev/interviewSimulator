@@ -189,10 +189,16 @@ public class MyEntity {
 | `GET` | `/interview` | Interview page (requires completed setup in session) |
 | `GET` | `/report/{sessionId}` | Server-rendered report page |
 | `POST` | `/api/cv/upload` | Upload CV (PDF/DOCX), returns extracted text |
-| `GET` | `/api/mode` | Get app mode (DEV/PROD) |
+| `GET` | `/api/mode` | Get app mode (DEV/PROD/REVIEWER) |
 | `POST` | `/api/validate-key` | Validate Gemini API key |
 | `GET` | `/api/voices` | Get available voice options |
 | `GET` | `/api/voices/preview/{voiceId}/{language}` | Get voice preview WAV |
+| `GET` | `/admin/login` | Admin login page |
+| `GET` | `/admin/dashboard` | Admin dashboard (requires ROLE_ADMIN) |
+| `POST` | `/admin/change-password` | Change admin password |
+| `GET` | `/legal/privacy` | Mode-aware Privacy Policy page |
+| `GET` | `/legal/terms` | Mode-aware Terms & Conditions page |
+| `GET` | `/error/mobile-not-supported` | Mobile device redirect page |
 
 ---
 
@@ -261,7 +267,11 @@ export GEMINI_API_KEY=AIza...
 | `InterviewService` | Database CRUD for sessions |
 | `GradingService` | AI-powered evaluation after interview (with model fallback) |
 | `InterviewPromptService` | Language/difficulty/position-aware prompts |
-| `CvProcessingService` | PDF/DOCX text extraction |
+| `CvProcessingService` | PDF/DOCX text extraction (in-memory only, files are never stored) |
+| `AdminService` | Dashboard stats, session browsing, password management |
+| `AdminUserDetailsService` | Spring Security user details for admin authentication |
+| `InputSanitizerService` | Input validation & sanitization |
+| `RateLimitService` | API key validation rate limiting |
 
 ---
 

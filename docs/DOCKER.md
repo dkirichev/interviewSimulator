@@ -94,6 +94,14 @@ docker compose up -d
 
 Open your browser at: **http://localhost:8080**
 
+### 5. Access Admin Panel (Optional)
+
+Navigate to: **http://localhost:8080/admin**
+
+**Default credentials:** `admin` / `noit2026P4$$`
+
+> ⚠️ **Change the default password immediately** via the admin dashboard.
+
 ---
 
 ## Configuration

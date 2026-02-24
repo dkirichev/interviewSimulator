@@ -134,7 +134,7 @@ export APP_MODE=DEV
 |----------|-------------|
 | [📋 Local Setup Guide](docs/SETUP.md) | Complete local development setup |
 | [🐳 Docker Guide](docs/DOCKER.md) | Production deployment with Docker |
-| [🏗️ Architecture](docs/ARCHITECTURE.md) | System design and data flow |
+| [🏗️ Architecture](docs/ARCHITECTURE.md) | System design, privacy model, and admin panel |
 | [🔌 API Reference](docs/API.md) | REST and WebSocket endpoints |
 | [🤝 Contributing](docs/CONTRIBUTING.md) | How to contribute to the project |
 
@@ -202,6 +202,41 @@ export APP_MODE=DEV
 In **PROD mode**, users are prompted to enter their free Gemini API key. This keeps hosting costs at zero while giving each user their own rate limits.
 
 In **REVIEWER mode**, the API key modal is hidden and the server uses multiple pre-configured keys with automatic model fallback rotation. This is designed for competition judges who shouldn't have to set up API keys.
+
+---
+
+## 🔒 Privacy & Security
+
+This project is built with a **privacy-by-design** philosophy:
+
+| Principle | Implementation |
+|-----------|----------------|
+| **No user accounts** | Users are never required to register or create accounts — minimizing collected personal data |
+| **No CV/resume storage** | Uploaded CV files are parsed for text in-memory and immediately discarded. The file is never saved to disk or database |
+| **No audio storage** | Voice recordings are streamed in real-time and never persisted |
+| **No transcript retention** | Interview transcripts are not permanently stored — they exist only during the session for grading purposes |
+| **Automatic data cleanup** | A scheduled task runs every 6 hours and deletes all interview session reports older than **2 weeks** |
+| **Mobile device blocking** | Mobile phones and tablets are redirected away from the app via a server-side interceptor — a professional interview requires a desktop environment with a proper microphone |
+| **Mode-aware legal pages** | Privacy Policy and Terms & Conditions adapt their content based on the app mode (DEV/PROD/REVIEWER), so users only see information relevant to their context |
+
+---
+
+## 🛡️ Admin Panel
+
+The application includes a password-protected admin panel at `/admin`:
+
+- **Dashboard** with interview session statistics (total sessions, today's sessions, average score, top position)
+- **Session browser** with filtering by position, difficulty, and language
+- **Pagination** for navigating through sessions
+- **Password management** — change the admin password from the dashboard
+
+> ⚠️ **Default admin credentials:**  
+> Username: `admin`  
+> Password: `noit2026P4$$`  
+>  
+> **Change this immediately** after first login via the admin dashboard password change form.
+
+The admin panel is secured via Spring Security with form-based authentication at `/admin/login`.
 
 ---
 

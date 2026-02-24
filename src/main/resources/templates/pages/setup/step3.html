@@ -281,6 +281,12 @@
 				event.preventDefault();
 				event.stopPropagation();
 
+				// Select the voice radio button when preview is clicked
+				const radio = document.querySelector(`input[name="voiceId"][value="${voiceId}"]`);
+				if (radio && !radio.checked) {
+					radio.checked = true;
+				}
+
 				const button = event.currentTarget;
 				const icon = button.querySelector('.voice-play-icon');
 

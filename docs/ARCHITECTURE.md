@@ -120,6 +120,7 @@ src/main/java/net/k2ai/interviewSimulator/
 │   ├── InterviewPromptService.java     # Language/difficulty-aware prompts
 │   ├── CvProcessingService.java        # PDF/DOCX text extraction
 │   ├── InputSanitizerService.java      # Input validation & sanitization
+│   ├── AdminService.java               # Admin dashboard stats, password management
 │   └── RateLimitService.java           # API key validation rate limiting
 ```
 
@@ -130,9 +131,12 @@ src/main/java/net/k2ai/interviewSimulator/
 | `SetupController` | `/setup/*` | Multi-step interview setup wizard |
 | `InterviewWebSocketController` | `/app/interview/*` | STOMP message handlers |
 | `ReportController` | `/report/{id}` | Server-rendered interview reports |
+| `AdminController` | `/admin/*` | Admin dashboard, login, password change |
+| `LegalController` | `/legal/*` | Mode-aware Privacy Policy & Terms pages |
 | `ApiKeyController` | `/api/mode`, `/api/validate-key` | API key validation |
 | `CvController` | `/api/cv/upload` | CV file upload |
 | `VoiceController` | `/api/voices/*` | Voice list and preview audio |
+| `ErrorController` | `/error/*` | Mobile-not-supported and error pages |
 
 ### Configuration Classes
 
@@ -308,6 +312,59 @@ The AI naturally concludes interviews after 5-7 questions. Conclusion phrases (E
 
 ---
 
+## Privacy by Design
+
+The application is designed to collect as little data as possible:
+
+| Aspect | Approach |
+|--------|----------|
+| **No user accounts** | Users are never asked to register — no emails, phone numbers, or passwords collected |
+| **No CV file storage** | Uploaded CVs are parsed in-memory and immediately discarded — only extracted text is used during the session |
+| **No audio storage** | Voice is streamed in real-time via WebSocket and never saved to disk or database |
+| **No transcript retention** | The interview transcript exists only in-memory during the session for grading, then is discarded |
+| **Automatic cleanup** | `SessionCleanupScheduler` runs every 6 hours and deletes all sessions + feedback older than 2 weeks |
+| **Mode-aware legal pages** | Privacy Policy and Terms & Conditions hide API key sections when not in PROD mode |
+
+### What IS Stored (temporarily)
+
+The only data persisted to the database is the **grading report** (scores, strengths, improvements, verdict) and basic session metadata (candidate name, position, difficulty). This is automatically deleted after 2 weeks.
+
+---
+
+## Mobile Device Blocking
+
+The `MobileDeviceInterceptor` detects mobile User-Agent strings (Android, iPhone, iPad, etc.) and redirects them to a `/error/mobile-not-supported` page. This is intentional — a professional interview simulation requires a desktop environment with a proper microphone and screen.
+
+---
+
+## Admin Panel
+
+### Features
+
+- **Login page** at `/admin/login` with Spring Security form-based authentication
+- **Dashboard** at `/admin/dashboard` showing:
+  - Total sessions (last 2 weeks), sessions today, average score, top position
+  - Paginated session table with filtering by position, difficulty, language
+  - Session duration calculation
+  - Feedback/verdict per session
+- **Password change** via POST to `/admin/change-password`
+
+### Default Credentials
+
+- Username: `admin`
+- Password: `noit2026P4$$` (BCrypt-hashed in Flyway migration `V3__create_admin_and_cleanup.sql`)
+
+> ⚠️ Change immediately after first deployment via the admin dashboard.
+
+### Security
+
+- `/admin/**` routes require `ROLE_ADMIN` authentication
+- `/admin/login` is publicly accessible
+- CSRF protection is enabled for admin forms
+- Passwords are hashed with BCrypt (strength 12)
+
+---
+
 ## Project Structure
 
 ```
@@ -320,8 +377,10 @@ src/main/java/net/k2ai/interviewSimulator/
 │   ├── WebSocketConfig.java
 │   └── WebSocketEventListener.java
 ├── controller/
+│   ├── AdminController.java
 │   ├── ApiKeyController.java
 │   ├── CvController.java
+│   ├── ErrorController.java
 │   ├── InterviewWebSocketController.java
 │   ├── LegalController.java
 │   ├── ReportController.java
@@ -330,14 +389,26 @@ src/main/java/net/k2ai/interviewSimulator/
 ├── dto/
 │   └── InterviewSetupDTO.java
 ├── entity/
+│   ├── AdminUser.java
 │   ├── InterviewFeedback.java
 │   └── InterviewSession.java
 ├── exception/
-│   └── RateLimitException.java
+│   ├── RateLimitException.java
+│   └── ModelAccessException.java
+├── interceptor/
+│   └── MobileDeviceInterceptor.java
+├── page/
+│   └── PageController.java
 ├── repository/
+│   ├── AdminUserRepository.java
 │   ├── InterviewFeedbackRepository.java
 │   └── InterviewSessionRepository.java
+├── scheduler/
+│   └── SessionCleanupScheduler.java
 ├── service/
+│   ├── AdminService.java
+│   ├── AdminServiceImpl.java
+│   ├── AdminUserDetailsService.java
 │   ├── CvProcessingService.java
 │   ├── GeminiIntegrationService.java
 │   ├── GeminiLiveClient.java
@@ -347,9 +418,6 @@ src/main/java/net/k2ai/interviewSimulator/
 │   ├── InterviewPromptService.java
 │   ├── InterviewService.java
 │   └── RateLimitService.java
-├── exception/
-│   ├── RateLimitException.java
-│   └── ModelAccessException.java
 └── validation/
     └── (custom validators)
 
@@ -359,7 +427,9 @@ src/main/resources/
 ├── messages_bg.properties      # Bulgarian
 ├── messages_en.properties      # English
 ├── db/migration/
-│   └── V1__initial_schema.sql
+│   ├── V1__initial_schema.sql
+│   ├── V2__add_language_column.sql
+│   └── V3__create_admin_and_cleanup.sql
 ├── static/
 │   ├── audio/voices/          # Voice preview WAV files
 │   └── js/
@@ -378,11 +448,18 @@ src/main/resources/
     │       ├── microphone-modal.html
     │       └── styles.html
     └── pages/
+        ├── admin/
+        │   ├── dashboard.html # Admin dashboard with stats & sessions
+        │   └── login.html     # Admin login page
+        ├── legal/
+        │   ├── privacy.html   # Mode-aware Privacy Policy
+        │   └── terms.html     # Mode-aware Terms & Conditions
         ├── setup/
         │   ├── step1.html     # Profile
         │   ├── step2.html     # Details + CV
         │   └── step3.html     # Voice & Language
         ├── interview-standalone.html
+        ├── mobile-not-supported.html
         ├── report-standalone.html
         └── report-error.html
 ```

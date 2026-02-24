@@ -201,6 +201,20 @@ http://localhost:8080
 
 You'll be redirected to the setup wizard at `/setup/step1`.
 
+### Admin Panel
+
+Access the admin panel at:
+
+```
+http://localhost:8080/admin
+```
+
+**Default credentials:**
+- Username: `admin`
+- Password: `noit2026P4$$`
+
+> ⚠️ **Change the default password immediately** using the password change form in the admin dashboard.
+
 ---
 
 ## Development Commands
