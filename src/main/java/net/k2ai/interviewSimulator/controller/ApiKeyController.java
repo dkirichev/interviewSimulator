@@ -130,11 +130,8 @@ public class ApiKeyController {
 
 
 	private String getClientIp(HttpServletRequest request) {
-		String xForwardedFor = request.getHeader("X-Forwarded-For");
-		if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-			// Take the first IP in case of multiple proxies
-			return xForwardedFor.split(",")[0].trim();
-		}
+		// Only trust X-Forwarded-For when behind a known proxy.
+		// Use request.getRemoteAddr() as the reliable source.
 		return request.getRemoteAddr();
 	}// getClientIp
 

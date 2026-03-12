@@ -16,4 +16,7 @@ public interface InterviewSessionRepository extends JpaRepository<InterviewSessi
 
 	List<InterviewSession> findByStartedAtBefore(LocalDateTime cutoff);
 
+
+	List<InterviewSession> findByUserTokenOrderByStartedAtDesc(String userToken);
+
 }//InterviewSessionRepository

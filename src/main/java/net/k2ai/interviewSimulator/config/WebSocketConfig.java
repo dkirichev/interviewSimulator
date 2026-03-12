@@ -25,8 +25,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		// WebSocket endpoint that browser connects to
+		// In production, restrict to your domain via ALLOWED_ORIGINS env var
+		String allowedOrigins = System.getenv("ALLOWED_ORIGINS");
+		String[] origins = (allowedOrigins != null && !allowedOrigins.isBlank())
+				? allowedOrigins.split(",")
+				: new String[]{"http://localhost:8080", "http://127.0.0.1:8080"};
+
 		registry.addEndpoint("/ws/interview")
-				.setAllowedOriginPatterns("*")
+				.setAllowedOriginPatterns(origins)
 				.withSockJS();
 	}//registerStompEndpoints
 

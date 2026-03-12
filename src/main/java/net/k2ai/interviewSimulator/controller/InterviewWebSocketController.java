@@ -20,7 +20,7 @@ import java.util.UUID;
 public class InterviewWebSocketController {
 
 	private static final Set<String> VALID_DIFFICULTIES = Set.of("Easy", "Standard", "Hard");
-	private static final Set<String> VALID_LANGUAGES = Set.of("en", "bg");
+	private static final Set<String> VALID_LANGUAGES = Set.of("en", "bg", "de", "es", "fr");
 	private static final Set<String> VALID_VOICES = Set.of("Algieba", "Kore", "Fenrir", "Despina");
 
 	private final GeminiIntegrationService geminiIntegrationService;
@@ -43,6 +43,9 @@ public class InterviewWebSocketController {
 		String interviewerNameEN = sanitizerService.sanitizeName(payload.get("interviewerNameEN"));
 		String interviewerNameBG = sanitizerService.sanitizeName(payload.get("interviewerNameBG"));
 		String userApiKey = payload.get("userApiKey");
+		String userToken = payload.get("userToken");
+		String topicFocus = payload.get("topicFocus");
+		String interviewLength = payload.get("interviewLength");
 
 		// Validate required fields
 		if (candidateName == null || candidateName.isBlank()) {
@@ -83,7 +86,8 @@ public class InterviewWebSocketController {
 
 		UUID interviewSessionId = geminiIntegrationService.startInterview(
 				sessionIdStr, candidateName, position, difficulty, language, cvText,
-				voiceId, interviewerNameEN, interviewerNameBG, userApiKey);
+				voiceId, interviewerNameEN, interviewerNameBG, userApiKey,
+				userToken, topicFocus, interviewLength);
 
 		log.info("Interview started - WebSocket: {}, Interview Session: {}, Language: {}, Voice: {}, CV provided: {}, User API key: {}",
 				sessionIdStr, interviewSessionId, language, voiceId, cvText != null && !cvText.isBlank(), userApiKey != null);

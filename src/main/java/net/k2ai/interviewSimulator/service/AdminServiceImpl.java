@@ -8,6 +8,7 @@ import net.k2ai.interviewSimulator.entity.InterviewSession;
 import net.k2ai.interviewSimulator.repository.AdminUserRepository;
 import net.k2ai.interviewSimulator.repository.InterviewFeedbackRepository;
 import net.k2ai.interviewSimulator.repository.InterviewSessionRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ public class AdminServiceImpl implements AdminService {
 
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<InterviewSession> getRecentSessions(String position, String difficulty, String language) {
 		LocalDateTime cutoff = LocalDateTime.now().minusWeeks(2);
 		List<InterviewSession> sessions = sessionRepository.findByStartedAtAfterOrderByStartedAtDesc(cutoff);
@@ -47,6 +49,7 @@ public class AdminServiceImpl implements AdminService {
 
 
 	@Override
+	@Transactional(readOnly = true)
 	public Map<String, Object> getRecentSessionsPaginated(String position, String difficulty, String language, int page, int pageSize) {
 		List<InterviewSession> allSessions = getRecentSessions(position, difficulty, language);
 		
@@ -78,6 +81,7 @@ public class AdminServiceImpl implements AdminService {
 
 
 	@Override
+	@Transactional(readOnly = true)
 	public Map<String, Object> getDashboardStats() {
 		LocalDateTime cutoff = LocalDateTime.now().minusWeeks(2);
 		List<InterviewSession> recentSessions = sessionRepository.findByStartedAtAfterOrderByStartedAtDesc(cutoff);
@@ -120,7 +124,8 @@ public class AdminServiceImpl implements AdminService {
 	@Override
 	@Transactional
 	public boolean changePassword(String currentPassword, String newPassword) {
-		AdminUser admin = adminUserRepository.findByUsername("admin")
+		String username = SecurityContextHolder.getContext().getAuthentication().getName();
+		AdminUser admin = adminUserRepository.findByUsername(username)
 				.orElseThrow(() -> new RuntimeException("Admin user not found"));
 
 		if (!passwordEncoder.matches(currentPassword, admin.getPasswordHash())) {

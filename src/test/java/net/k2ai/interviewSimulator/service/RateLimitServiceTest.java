@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayNameGeneration(ReplaceCamelCase.class)
@@ -24,9 +23,9 @@ class RateLimitServiceTest {
     @Test
     void testCheckRateLimit_AllowsFirstRequest() {
         // Should not throw for first request
-        rateLimitService.checkRateLimit("192.168.1.1");
-        // If we get here, no exception was thrown
-        assertThat(true).isTrue();
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+                () -> rateLimitService.checkRateLimit("192.168.1.1")
+        );
     }//testCheckRateLimit_AllowsFirstRequest
 
 
@@ -34,13 +33,12 @@ class RateLimitServiceTest {
     void testCheckRateLimit_AllowsMultipleRequestsUnderLimit() {
         String ip = "192.168.1.2";
 
-        // Should allow 10 requests (the limit)
-        for (int i = 0; i < 10; i++) {
-            rateLimitService.checkRateLimit(ip);
-        }
-
-        // If we get here, no exception was thrown
-        assertThat(true).isTrue();
+        // Should allow 10 requests (the limit) without throwing
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> {
+            for (int i = 0; i < 10; i++) {
+                rateLimitService.checkRateLimit(ip);
+            }
+        });
     }//testCheckRateLimit_AllowsMultipleRequestsUnderLimit
 
 
@@ -70,18 +68,19 @@ class RateLimitServiceTest {
             rateLimitService.checkRateLimit(ip1);
         }
 
-        // ip2 should still work
-        rateLimitService.checkRateLimit(ip2);
-        assertThat(true).isTrue();
+        // ip2 should still work — ip1's limit does not affect ip2
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+                () -> rateLimitService.checkRateLimit(ip2)
+        );
     }//testCheckRateLimit_DifferentIpsHaveSeparateLimits
 
 
     @Test
     void testCleanup_DoesNotThrow() {
         rateLimitService.checkRateLimit("192.168.1.6");
-        rateLimitService.cleanup();
-        // Should not throw
-        assertThat(true).isTrue();
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+                () -> rateLimitService.cleanup()
+        );
     }//testCleanup_DoesNotThrow
 
 }//RateLimitServiceTest

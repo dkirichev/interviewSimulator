@@ -20,11 +20,21 @@ public class InterviewService {
 
 	@Transactional
 	public UUID startSession(String name, String position, String difficulty, String language) {
+		return startSession(name, position, difficulty, language, null, null, null);
+	}//startSession
+
+
+	@Transactional
+	public UUID startSession(String name, String position, String difficulty, String language,
+							 String userToken, String topicFocus, String interviewLength) {
 		InterviewSession session = InterviewSession.builder()
 				.candidateName(name)
 				.jobPosition(position)
 				.difficulty(difficulty)
 				.language(language != null ? language : "en")
+				.userToken(userToken)
+				.topicFocus(topicFocus)
+				.interviewLength(interviewLength != null ? interviewLength : "standard")
 				.startedAt(LocalDateTime.now())
 				.transcript("")
 				.build();

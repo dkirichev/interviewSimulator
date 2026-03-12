@@ -19,6 +19,20 @@
 
 <!--/*  Top Right Controls (hidden on admin pages)  */-->
 <div th:unless="${isAdminPage}" class="fixed top-4 right-4 z-50 flex items-center gap-3">
+	<!--/*  Theme Toggle (Feature 8)  */-->
+	<button onclick="toggleTheme()" id="theme-toggle"
+			class="flex items-center justify-center w-10 h-10 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg text-slate-200 hover:text-white"
+			th:title="#{global.theme.toggle}">
+		<i id="theme-icon" class="fa-solid fa-sun text-lg"></i>
+	</button>
+
+	<!--/*  History Link  */-->
+	<a th:href="@{/history}" id="history-link"
+			class="flex items-center justify-center w-10 h-10 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg text-slate-200 hover:text-white"
+			th:title="#{history.title}">
+		<i class="fa-solid fa-clock-rotate-left text-lg"></i>
+	</a>
+
 	<!--/*  GitHub Link  */-->
 	<a href="https://github.com/dkirichev/interviewSimulator" target="_blank"
 			class="flex items-center justify-center w-10 h-10 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg backdrop-blur-sm transition-all duration-200 shadow-lg text-slate-200 hover:text-white">
@@ -47,13 +61,34 @@
 				<path d="M30 0V40M0 20H60" stroke="white" stroke-width="12" />
 				<path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="6" />
 			</svg>
+			<svg id="current-flag-de" th:classappend="${#locale.language != 'de'} ? 'hidden' : ''"
+					class="w-6 h-4 rounded overflow-hidden" viewBox="0 0 60 40" fill="none"
+					xmlns="http://www.w3.org/2000/svg">
+				<rect width="60" height="13.33" fill="#000000" />
+				<rect y="13.33" width="60" height="13.33" fill="#DD0000" />
+				<rect y="26.66" width="60" height="13.34" fill="#FFCC00" />
+			</svg>
+			<svg id="current-flag-es" th:classappend="${#locale.language != 'es'} ? 'hidden' : ''"
+					class="w-6 h-4 rounded overflow-hidden" viewBox="0 0 60 40" fill="none"
+					xmlns="http://www.w3.org/2000/svg">
+				<rect width="60" height="10" fill="#AA151B" />
+				<rect y="10" width="60" height="20" fill="#F1BF00" />
+				<rect y="30" width="60" height="10" fill="#AA151B" />
+			</svg>
+			<svg id="current-flag-fr" th:classappend="${#locale.language != 'fr'} ? 'hidden' : ''"
+					class="w-6 h-4 rounded overflow-hidden" viewBox="0 0 60 40" fill="none"
+					xmlns="http://www.w3.org/2000/svg">
+				<rect width="20" height="40" fill="#002395" />
+				<rect x="20" width="20" height="40" fill="#FFFFFF" />
+				<rect x="40" width="20" height="40" fill="#ED2939" />
+			</svg>
 			<i id="lang-dropdown-arrow"
 					class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
 		</button>
 
 		<!--/*  Dropdown Menu  */-->
 		<div id="lang-dropdown-menu"
-				class="hidden absolute right-0 mt-2 w-44 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
+				class="hidden absolute right-0 mt-2 w-44 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden max-h-80 overflow-y-auto">
 			<!--/*  Bulgarian  */-->
 			<button id="lang-option-bg" onclick="changeLanguage('bg')"
 					class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors"
@@ -84,6 +119,45 @@
 				<span class="text-sm text-slate-200" data-i18n="global.language.name.english"
 						th:text="#{global.language.name.english}" />
 				<i id="lang-check-en" th:classappend="${#locale.language != 'en'} ? 'hidden' : ''"
+						class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
+			</button>
+			<!--/*  German  */-->
+			<button id="lang-option-de" onclick="changeLanguage('de')"
+					class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors"
+					th:classappend="${#locale.language == 'de'} ? 'bg-slate-700/50' : ''">
+				<svg class="w-6 h-4 rounded overflow-hidden flex-shrink-0" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect width="60" height="13.33" fill="#000000" />
+					<rect y="13.33" width="60" height="13.33" fill="#DD0000" />
+					<rect y="26.66" width="60" height="13.34" fill="#FFCC00" />
+				</svg>
+				<span class="text-sm text-slate-200" th:text="#{global.language.name.german}" />
+				<i id="lang-check-de" th:classappend="${#locale.language != 'de'} ? 'hidden' : ''"
+						class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
+			</button>
+			<!--/*  Spanish  */-->
+			<button id="lang-option-es" onclick="changeLanguage('es')"
+					class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors"
+					th:classappend="${#locale.language == 'es'} ? 'bg-slate-700/50' : ''">
+				<svg class="w-6 h-4 rounded overflow-hidden flex-shrink-0" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect width="60" height="10" fill="#AA151B" />
+					<rect y="10" width="60" height="20" fill="#F1BF00" />
+					<rect y="30" width="60" height="10" fill="#AA151B" />
+				</svg>
+				<span class="text-sm text-slate-200" th:text="#{global.language.name.spanish}" />
+				<i id="lang-check-es" th:classappend="${#locale.language != 'es'} ? 'hidden' : ''"
+						class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
+			</button>
+			<!--/*  French  */-->
+			<button id="lang-option-fr" onclick="changeLanguage('fr')"
+					class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors"
+					th:classappend="${#locale.language == 'fr'} ? 'bg-slate-700/50' : ''">
+				<svg class="w-6 h-4 rounded overflow-hidden flex-shrink-0" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect width="20" height="40" fill="#002395" />
+					<rect x="20" width="20" height="40" fill="#FFFFFF" />
+					<rect x="40" width="20" height="40" fill="#ED2939" />
+				</svg>
+				<span class="text-sm text-slate-200" th:text="#{global.language.name.french}" />
+				<i id="lang-check-fr" th:classappend="${#locale.language != 'fr'} ? 'hidden' : ''"
 						class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
 			</button>
 		</div>

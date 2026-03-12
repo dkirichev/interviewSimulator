@@ -29,21 +29,25 @@ public class SessionCleanupScheduler {
 	@Scheduled(fixedRate = 6 * 60 * 60 * 1000)
 	@Transactional
 	public void cleanupOldSessions() {
-		LocalDateTime cutoff = LocalDateTime.now().minusWeeks(2);
-		List<InterviewSession> oldSessions = sessionRepository.findByStartedAtBefore(cutoff);
+		try {
+			LocalDateTime cutoff = LocalDateTime.now().minusWeeks(2);
+			List<InterviewSession> oldSessions = sessionRepository.findByStartedAtBefore(cutoff);
 
-		if (oldSessions.isEmpty()) {
-			log.info("Session cleanup: no sessions older than 2 weeks found");
-			return;
+			if (oldSessions.isEmpty()) {
+				log.info("Session cleanup: no sessions older than 2 weeks found");
+				return;
+			}
+
+			int count = oldSessions.size();
+			for (InterviewSession session : oldSessions) {
+				feedbackRepository.deleteBySessionId(session.getId());
+			}
+			sessionRepository.deleteAll(oldSessions);
+
+			log.info("Session cleanup: deleted {} sessions older than 2 weeks", count);
+		} catch (Exception e) {
+			log.error("Session cleanup failed", e);
 		}
-
-		int count = oldSessions.size();
-		for (InterviewSession session : oldSessions) {
-			feedbackRepository.deleteBySessionId(session.getId());
-		}
-		sessionRepository.deleteAll(oldSessions);
-
-		log.info("Session cleanup: deleted {} sessions older than 2 weeks", count);
 	}//cleanupOldSessions
 
 }//SessionCleanupScheduler

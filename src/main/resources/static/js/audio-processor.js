@@ -34,6 +34,20 @@ let currentSession = {
 
 
 /**
+ * Get or create a persistent user token for interview history tracking.
+ * Stored in localStorage so it persists across sessions.
+ */
+function getOrCreateUserToken() {
+	let token = localStorage.getItem('interviewUserToken');
+	if (!token) {
+		token = crypto.randomUUID();
+		localStorage.setItem('interviewUserToken', token);
+	}
+	return token;
+}
+
+
+/**
  * Start interview from server-provided session data.
  * Called by interview-standalone.html when the page loads.
  * Reads from window.interviewSession set by Thymeleaf.
@@ -49,7 +63,10 @@ function startInterviewFromSession() {
 			cvText: window.interviewSession.cvText || null,
 			voiceId: window.interviewSession.voiceId || 'Algieba',
 			interviewerNameEN: window.interviewSession.interviewerNameEN || 'George',
-			interviewerNameBG: window.interviewSession.interviewerNameBG || 'Георги'
+			interviewerNameBG: window.interviewSession.interviewerNameBG || 'Георги',
+			topicFocus: window.interviewSession.topicFocus || null,
+			interviewLength: window.interviewSession.interviewLength || 'standard',
+			userToken: getOrCreateUserToken()
 		};
 
 		// Request microphone and start
@@ -104,6 +121,7 @@ function connectToBackend() {
 
 	stompClient.connect({}, function (frame) {
 		isConnected = true;
+		window._wsRetryCount = 0; // Reset retry counter on successful connect
 
 		// Subscribe to user-specific queues
 		stompClient.subscribe('/user/queue/status', handleStatusMessage);
@@ -118,8 +136,19 @@ function connectToBackend() {
 
 	}, function (error) {
 		console.error('WebSocket connection error:', error);
-		updateStatus('Connection Failed', 'bg-red-500/20 text-red-400 border-red-500/50');
-		hideConnectionOverlay();
+		updateStatus('Reconnecting...', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
+
+		// Retry connection with exponential backoff (max 3 attempts)
+		if (!window._wsRetryCount) window._wsRetryCount = 0;
+		window._wsRetryCount++;
+		if (window._wsRetryCount <= 3) {
+			const delay = Math.min(1000 * Math.pow(2, window._wsRetryCount - 1), 8000);
+			setTimeout(() => connectToBackend(), delay);
+		} else {
+			window._wsRetryCount = 0;
+			updateStatus('Connection Failed', 'bg-red-500/20 text-red-400 border-red-500/50');
+			hideConnectionOverlay();
+		}
 	});
 }
 
@@ -153,6 +182,21 @@ function startInterviewSession() {
 		startPayload.voiceId = currentSession.voiceId;
 		startPayload.interviewerNameEN = currentSession.interviewerNameEN;
 		startPayload.interviewerNameBG = currentSession.interviewerNameBG;
+	}
+
+	// Add topic focus if available
+	if (currentSession.topicFocus) {
+		startPayload.topicFocus = currentSession.topicFocus;
+	}
+
+	// Add interview length if available
+	if (currentSession.interviewLength) {
+		startPayload.interviewLength = currentSession.interviewLength;
+	}
+
+	// Add user token for history tracking
+	if (currentSession.userToken) {
+		startPayload.userToken = currentSession.userToken;
 	}
 
 	// Add user API key for PROD mode (from localStorage)
@@ -356,16 +400,25 @@ function handleErrorMessage(message) {
 
 function handleTextMessage(message) {
 	const data = JSON.parse(message.body);
+	// Display text responses in transcript if present
+	if (data.text) {
+		appendToLiveTranscript(data.speaker || 'AI', data.text);
+	}
 }
 
 // Audio capture
 async function startAudioCapture() {
 	try {
-		// Use pre-initialized stream if available, otherwise request new one
+		// Guard against double-init (previous close may still be in progress)
+		if (audioContext && audioContext.state !== 'closed') {
+			return;
+		}
+
+		// Use pre-initialized stream if available, reuse existing globalStream, or request new
 		if (window.preinitializedMicStream) {
 			globalStream = window.preinitializedMicStream;
-			window.preinitializedMicStream = null; // Clear it after use
-		} else {
+			window.preinitializedMicStream = null;
+		} else if (!globalStream || globalStream.getTracks().every(t => t.readyState === 'ended')) {
 			globalStream = await navigator.mediaDevices.getUserMedia({
 				audio: {
 					channelCount: 1,
@@ -411,16 +464,20 @@ async function startAudioCapture() {
 }
 
 function stopAudioCapture() {
-	if (globalStream) globalStream.getTracks().forEach(track => track.stop());
+	// Only disconnect audio nodes — keep globalStream alive for reuse on unmute
 	if (processor) processor.disconnect();
 	if (input) input.disconnect();
-	if (audioContext && audioContext.state !== 'closed') audioContext.close();
+	if (audioContext && audioContext.state !== 'closed') {
+		audioContext.close().catch(() => {});
+	}
+	processor = null;
+	input = null;
+	audioContext = null;
 
 	// Notify server that audio stream ended
 	if (stompClient && isConnected) {
 		stompClient.send('/app/interview/mic-off', {}, '');
 	}
-
 }
 
 // Convert Float32Array to Int16Array (PCM)
@@ -560,6 +617,11 @@ function endInterviewConnection() {
 	}
 
 	stopAudioCapture();
+	// Fully release microphone stream on interview end
+	if (globalStream) {
+		globalStream.getTracks().forEach(track => track.stop());
+		globalStream = null;
+	}
 	audioQueue.length = 0;
 	nextPlayTime = 0;
 	isPlaying = false;
@@ -607,26 +669,51 @@ function showGradingScreen() {
 		pleaseWait: 'This usually takes a few seconds'
 	};
 
-	overlay.innerHTML = `
-		<div class="flex flex-col items-center gap-6 max-w-sm text-center">
-			<div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-			<h2 class="text-xl font-semibold text-white">${msgs.title}</h2>
-			<p id="grading-step" class="text-blue-400 font-mono text-base transition-opacity duration-500">${msgs.step1}</p>
-			<div class="flex gap-2 mt-2">
-				<div id="grading-dot-1" class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-				<div id="grading-dot-2" class="w-2.5 h-2.5 rounded-full bg-slate-600"></div>
-				<div id="grading-dot-3" class="w-2.5 h-2.5 rounded-full bg-slate-600"></div>
-			</div>
-			<p class="text-slate-500 text-sm mt-2">${msgs.pleaseWait}</p>
-		</div>
-	`;
+	// Build grading overlay using DOM API to avoid innerHTML XSS risk
+	overlay.textContent = '';
+	const container = document.createElement('div');
+	container.className = 'flex flex-col items-center gap-6 max-w-sm text-center';
+
+	const spinner = document.createElement('div');
+	spinner.className = 'w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin';
+	container.appendChild(spinner);
+
+	const title = document.createElement('h2');
+	title.className = 'text-xl font-semibold text-white';
+	title.textContent = msgs.title;
+	container.appendChild(title);
+
+	const stepEl = document.createElement('p');
+	stepEl.id = 'grading-step';
+	stepEl.className = 'text-blue-400 font-mono text-base transition-opacity duration-500';
+	stepEl.textContent = msgs.step1;
+	container.appendChild(stepEl);
+
+	const dotsContainer = document.createElement('div');
+	dotsContainer.className = 'flex gap-2 mt-2';
+	for (let i = 1; i <= 3; i++) {
+		const dot = document.createElement('div');
+		dot.id = 'grading-dot-' + i;
+		dot.className = 'w-2.5 h-2.5 rounded-full ' + (i === 1 ? 'bg-blue-500' : 'bg-slate-600');
+		dotsContainer.appendChild(dot);
+	}
+	container.appendChild(dotsContainer);
+
+	const waitText = document.createElement('p');
+	waitText.className = 'text-slate-500 text-sm mt-2';
+	waitText.textContent = msgs.pleaseWait;
+	container.appendChild(waitText);
+
+	overlay.appendChild(container);
 	overlay.style.display = 'flex';
 	overlay.style.opacity = '1';
 
 	const steps = [msgs.step1, msgs.step2, msgs.step3];
 	let currentStep = 0;
 
-	window._gradingInterval = setInterval(() => {
+	// Assign to window immediately before the first callback fires,
+	// so handleReportMessage can clear it even if report arrives quickly
+	const intervalId = setInterval(() => {
 		currentStep = (currentStep + 1) % steps.length;
 		const stepEl = document.getElementById('grading-step');
 		if (stepEl) {
@@ -645,13 +732,38 @@ function showGradingScreen() {
 			}
 		}
 	}, 3000);
+	window._gradingInterval = intervalId;
 }
 
 // Live transcript (for debugging/display)
 let liveTranscript = [];
 
 function appendToLiveTranscript(speaker, text) {
-	liveTranscript.push({speaker, text});
+	liveTranscript.push({speaker, text, timestamp: Date.now()});
+
+	// Render into live transcript panel
+	const container = document.getElementById('transcript-content');
+	if (container) {
+		const entry = document.createElement('div');
+		const isUser = speaker === 'user' || speaker === 'Candidate';
+		entry.className = isUser
+			? 'flex flex-col items-end'
+			: 'flex flex-col items-start';
+
+		const label = document.createElement('span');
+		label.className = 'text-xs font-medium mb-1 ' + (isUser ? 'text-blue-400' : 'text-green-400');
+		label.textContent = isUser ? 'You' : 'Interviewer';
+
+		const bubble = document.createElement('div');
+		bubble.className = 'max-w-[90%] px-3 py-2 rounded-lg ' +
+			(isUser ? 'bg-blue-500/10 border border-blue-500/20 text-slate-200' : 'bg-green-500/10 border border-green-500/20 text-slate-200');
+		bubble.textContent = text;
+
+		entry.appendChild(label);
+		entry.appendChild(bubble);
+		container.appendChild(entry);
+		container.scrollTop = container.scrollHeight;
+	}
 }
 
 function getLiveTranscript() {
@@ -660,6 +772,13 @@ function getLiveTranscript() {
 
 function clearLiveTranscript() {
 	liveTranscript = [];
+}
+
+function toggleTranscriptPanel() {
+	const panel = document.getElementById('transcript-panel');
+	if (panel) {
+		panel.classList.toggle('translate-x-full');
+	}
 }
 
 // Check if AI is currently speaking (for UI state management)

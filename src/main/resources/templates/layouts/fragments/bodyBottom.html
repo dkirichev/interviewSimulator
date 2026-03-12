@@ -11,6 +11,29 @@
 	<!--/*  Language Switcher (all pages)  */-->
 	<script th:src="@{/js/language-switcher.js}"></script>
 
+	<!--/*  Theme Toggle (all pages)  */-->
+	<script>
+		function initTheme() {
+			var theme = localStorage.getItem('theme') || 'dark';
+			var icon = document.getElementById('theme-icon');
+			if (theme === 'light') {
+				document.body.classList.add('theme-light');
+				if (icon) { icon.className = 'fa-solid fa-moon text-lg'; }
+			} else {
+				if (icon) { icon.className = 'fa-solid fa-sun text-lg'; }
+			}
+		}
+		function toggleTheme() {
+			var isLight = document.body.classList.toggle('theme-light');
+			localStorage.setItem('theme', isLight ? 'light' : 'dark');
+			var icon = document.getElementById('theme-icon');
+			if (icon) {
+				icon.className = isLight ? 'fa-solid fa-moon text-lg' : 'fa-solid fa-sun text-lg';
+			}
+		}
+		initTheme();
+	</script>
+
 	<!--/*  Interview Scripts (interview page only)  */-->
 	<th:block th:if="${isInterviewPage}">
 		<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>

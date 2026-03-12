@@ -13,6 +13,7 @@ import net.k2ai.interviewSimulator.repository.InterviewFeedbackRepository;
 import net.k2ai.interviewSimulator.repository.InterviewSessionRepository;
 import okhttp3.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -95,6 +96,7 @@ public class GradingService {
 	 * Grading with model/key rotation (REVIEWER + PROD modes).
 	 * Tries each available model/key combo until one succeeds.
 	 */
+	@Transactional
 	private InterviewFeedback gradeWithRotation(InterviewSession session, String prompt, String userApiKey) {
 		int maxAttempts = geminiConfig.getGradingModelList().size();
 		if (geminiConfig.isReviewerMode()) {
@@ -144,6 +146,7 @@ public class GradingService {
 	/**
 	 * Simple grading for DEV mode (single key, single model, no rotation).
 	 */
+	@Transactional
 	private InterviewFeedback gradeSimple(InterviewSession session, String prompt, String userApiKey) {
 		String effectiveApiKey = userApiKey != null ? userApiKey : geminiConfig.getApiKey();
 		if (effectiveApiKey == null || effectiveApiKey.isBlank()) {
@@ -171,17 +174,45 @@ public class GradingService {
 
 
 	private String buildGradingPrompt(InterviewSession session, String language) {
-		String languageInstruction = "bg".equals(language)
-				? """
-						
+		String languageInstruction = switch (language != null ? language : "en") {
+			case "bg" -> """
+
 						ВАЖНО: Напиши ЦЕЛИЯ отговор на БЪЛГАРСКИ език.
 						Всички стойности в JSON трябва да бъдат на български:
 						- "strengths" масивът трябва да е на български
 						- "improvements" масивът трябва да е на български
 						- "detailedAnalysis" трябва да е на български
 						- "verdict" трябва да остане на английски (STRONG_HIRE, HIRE, MAYBE или NO_HIRE)
-						"""
-				: "";
+						""";
+			case "de" -> """
+
+						IMPORTANT: Write the ENTIRE response in GERMAN (Deutsch).
+						All JSON string values must be in German:
+						- "strengths" array must be in German
+						- "improvements" array must be in German
+						- "detailedAnalysis" must be in German
+						- "verdict" must remain in English (STRONG_HIRE, HIRE, MAYBE, or NO_HIRE)
+						""";
+			case "es" -> """
+
+						IMPORTANT: Write the ENTIRE response in SPANISH (Español).
+						All JSON string values must be in Spanish:
+						- "strengths" array must be in Spanish
+						- "improvements" array must be in Spanish
+						- "detailedAnalysis" must be in Spanish
+						- "verdict" must remain in English (STRONG_HIRE, HIRE, MAYBE, or NO_HIRE)
+						""";
+			case "fr" -> """
+
+						IMPORTANT: Write the ENTIRE response in FRENCH (Français).
+						All JSON string values must be in French:
+						- "strengths" array must be in French
+						- "improvements" array must be in French
+						- "detailedAnalysis" must be in French
+						- "verdict" must remain in English (STRONG_HIRE, HIRE, MAYBE, or NO_HIRE)
+						""";
+			default -> "";
+		};
 
 		return String.format("""
 						You are an expert interview evaluator. Analyze the following job interview transcript and provide a detailed evaluation.
@@ -270,6 +301,9 @@ public class GradingService {
 				throw new IOException("Gemini API error: " + response.code());
 			}
 
+			if (response.body() == null) {
+				throw new IOException("Empty response body from Gemini API");
+			}
 			String responseBody = response.body().string();
 			log.debug("Gemini grading response: {}", responseBody);
 			return responseBody;
@@ -296,12 +330,11 @@ public class GradingService {
 				throw new RuntimeException("AI response was truncated - output token limit reached");
 			}
 
-			String text = candidate
-					.path("content")
-					.path("parts")
-					.get(0)
-					.path("text")
-					.asText();
+			JsonNode parts = candidate.path("content").path("parts");
+			if (!parts.isArray() || parts.isEmpty()) {
+				throw new RuntimeException("Empty or missing parts in Gemini grading response");
+			}
+			String text = parts.get(0).path("text").asText("");
 
 			// Extract JSON from the response (might be wrapped in markdown code blocks)
 			String jsonStr = extractJson(text);

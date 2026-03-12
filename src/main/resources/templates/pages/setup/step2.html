@@ -121,6 +121,83 @@
 							</div>
 						</div>
 
+						<!--/*  Topic Focus (Feature 2)  */-->
+						<div>
+							<label class="block text-sm font-medium text-slate-300 mb-2">
+								<span th:text="#{setup.step2.topicFocus}">Interview Focus</span>
+								<span class="text-slate-500" th:text="#{setup.cv.optional}">(Optional)</span>
+							</label>
+							<input type="hidden" id="topic-focus-value" name="topicFocus" th:value="${setupForm.topicFocus}">
+							<div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="topic-chips">
+								<button type="button" onclick="selectTopic(this, 'general')"
+										th:classappend="${setupForm.topicFocus == null or setupForm.topicFocus == '' or setupForm.topicFocus == 'general'} ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'"
+										class="px-3 py-2 rounded-lg border-2 text-sm font-medium transition flex items-center justify-center gap-2">
+									<i class="fa-solid fa-shuffle"></i>
+									<span th:text="#{setup.topic.general}">General Mix</span>
+								</button>
+								<button type="button" onclick="selectTopic(this, 'system_design')"
+										th:classappend="${setupForm.topicFocus == 'system_design'} ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'"
+										class="px-3 py-2 rounded-lg border-2 text-sm font-medium transition flex items-center justify-center gap-2">
+									<i class="fa-solid fa-diagram-project"></i>
+									<span th:text="#{setup.topic.systemDesign}">System Design</span>
+								</button>
+								<button type="button" onclick="selectTopic(this, 'behavioral')"
+										th:classappend="${setupForm.topicFocus == 'behavioral'} ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'"
+										class="px-3 py-2 rounded-lg border-2 text-sm font-medium transition flex items-center justify-center gap-2">
+									<i class="fa-solid fa-users"></i>
+									<span th:text="#{setup.topic.behavioral}">Behavioral</span>
+								</button>
+								<button type="button" onclick="selectTopic(this, 'algorithms')"
+										th:classappend="${setupForm.topicFocus == 'algorithms'} ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'"
+										class="px-3 py-2 rounded-lg border-2 text-sm font-medium transition flex items-center justify-center gap-2">
+									<i class="fa-solid fa-code"></i>
+									<span th:text="#{setup.topic.algorithms}">Algorithms</span>
+								</button>
+								<button type="button" onclick="selectTopic(this, 'culture_fit')"
+										th:classappend="${setupForm.topicFocus == 'culture_fit'} ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'"
+										class="px-3 py-2 rounded-lg border-2 text-sm font-medium transition flex items-center justify-center gap-2">
+									<i class="fa-solid fa-heart"></i>
+									<span th:text="#{setup.topic.cultureFit}">Culture Fit</span>
+								</button>
+							</div>
+						</div>
+
+						<!--/*  Interview Length (Feature 7)  */-->
+						<div>
+							<label class="block text-sm font-medium text-slate-300 mb-3">
+								<span th:text="#{setup.step2.interviewLength}">Interview Length</span>
+							</label>
+							<div class="grid grid-cols-3 gap-3">
+								<label class="cursor-pointer group relative">
+									<input type="radio" name="interviewLength" value="quick" class="peer sr-only"
+										   th:checked="${setupForm.interviewLength == 'quick'}">
+									<div class="text-center py-3 rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-400 peer-checked:bg-green-500/10 peer-checked:border-green-500 peer-checked:text-green-400 transition hover:bg-slate-800 font-medium">
+										<i class="fa-solid fa-bolt text-xl mb-2"></i>
+										<div th:text="#{setup.length.quick}">Quick</div>
+										<div class="text-xs opacity-60" th:text="#{setup.length.quick.desc}">~3 questions</div>
+									</div>
+								</label>
+								<label class="cursor-pointer group relative">
+									<input type="radio" name="interviewLength" value="standard" class="peer sr-only"
+										   th:checked="${setupForm.interviewLength == null or setupForm.interviewLength == 'standard'}">
+									<div class="text-center py-3 rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-400 peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-400 transition hover:bg-slate-800 font-medium">
+										<i class="fa-solid fa-clock text-xl mb-2"></i>
+										<div th:text="#{setup.length.standard}">Standard</div>
+										<div class="text-xs opacity-60" th:text="#{setup.length.standard.desc}">~5-7 questions</div>
+									</div>
+								</label>
+								<label class="cursor-pointer group relative">
+									<input type="radio" name="interviewLength" value="marathon" class="peer sr-only"
+										   th:checked="${setupForm.interviewLength == 'marathon'}">
+									<div class="text-center py-3 rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-400 peer-checked:bg-red-500/10 peer-checked:border-red-500 peer-checked:text-red-400 transition hover:bg-slate-800 font-medium">
+										<i class="fa-solid fa-stopwatch text-xl mb-2"></i>
+										<div th:text="#{setup.length.marathon}">Marathon</div>
+										<div class="text-xs opacity-60" th:text="#{setup.length.marathon.desc}">~10+ questions</div>
+									</div>
+								</label>
+							</div>
+						</div>
+
 						<!--/*  CV Upload  */-->
 						<div id="cv-upload-section">
 							<label class="block text-sm font-medium text-slate-300 mb-3">
@@ -327,6 +404,24 @@
 			document.getElementById('custom-position-label').textContent = value;
 
 			closeCustomPositionModal();
+		}
+
+		function selectTopic(chipEl, value) {
+			document.getElementById('topic-focus-value').value = value;
+			document.querySelectorAll('#topic-chips button').forEach(function(btn) {
+				btn.className = btn.className
+					.replace(/bg-blue-500\/20/g, 'bg-slate-900')
+					.replace(/border-blue-500/g, 'border-slate-700')
+					.replace(/text-blue-400/g, 'text-slate-400');
+				if (!btn.classList.contains('hover:bg-slate-800')) {
+					btn.classList.add('hover:bg-slate-800');
+				}
+			});
+			chipEl.className = chipEl.className
+				.replace(/bg-slate-900/g, 'bg-blue-500/20')
+				.replace(/border-slate-700/g, 'border-blue-500')
+				.replace(/text-slate-400/g, 'text-blue-400');
+			chipEl.classList.remove('hover:bg-slate-800');
 		}
 
 		function showCvError(message) {

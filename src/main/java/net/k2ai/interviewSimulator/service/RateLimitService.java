@@ -1,6 +1,7 @@
 package net.k2ai.interviewSimulator.service;
 
 import net.k2ai.interviewSimulator.exception.RateLimitException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -50,6 +51,7 @@ public class RateLimitService {
 	/**
 	 * Periodically clean up old entries.
 	 */
+	@Scheduled(fixedRate = 120_000)
 	public void cleanup() {
 		long now = System.currentTimeMillis();
 		rateLimitMap.entrySet().removeIf(e -> now - e.getValue().windowStart > WINDOW_MILLIS * 2);
