@@ -18,7 +18,9 @@
 			cvText: /*[[${setupForm.cvText}]]*/ null,
 			voiceId: /*[[${setupForm.voiceId}]]*/ 'Algieba',
 			interviewerNameEN: /*[[${setupForm.interviewerNameEN}]]*/ 'George',
-			interviewerNameBG: /*[[${setupForm.interviewerNameBG}]]*/ 'Георги'
+			interviewerNameBG: /*[[${setupForm.interviewerNameBG}]]*/ 'Георги',
+			topicFocus: /*[[${setupForm.topicFocus}]]*/ null,
+			interviewLength: /*[[${setupForm.interviewLength}]]*/ 'standard'
 		};
 		// Grading screen i18n strings
 		window.gradingMessages = {
@@ -76,6 +78,28 @@
 			<div id="user-camera-container" class="absolute bottom-6 right-6 hidden">
 				<video id="user-camera-feed" autoplay playsinline muted class="w-48 h-36 rounded-xl border-2 border-slate-600 shadow-2xl object-cover bg-slate-900"></video>
 			</div>
+
+			<!--/*  Live Transcript Panel (Feature 3)  */-->
+			<div id="transcript-panel" class="absolute top-0 right-0 w-80 h-full bg-slate-900/95 border-l border-slate-700 backdrop-blur-sm z-10 flex flex-col transition-transform duration-300 translate-x-full">
+				<div class="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+					<h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+						<i class="fa-solid fa-closed-captioning text-blue-400"></i>
+						<span th:text="#{interview.transcript.title}">Live Transcript</span>
+					</h3>
+					<button onclick="toggleTranscriptPanel()" class="text-slate-400 hover:text-white transition">
+						<i class="fa-solid fa-xmark"></i>
+					</button>
+				</div>
+				<div id="transcript-content" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
+				</div>
+			</div>
+
+			<!--/*  Transcript Toggle Button  */-->
+			<button id="transcript-toggle-btn" onclick="toggleTranscriptPanel()"
+					class="absolute top-4 right-4 z-10 w-10 h-10 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition shadow-lg"
+					th:title="#{interview.transcript.toggle}">
+				<i class="fa-solid fa-closed-captioning"></i>
+			</button>
 
 			<!--/*  Connection Overlay  */-->
 			<div id="connection-overlay" class="absolute inset-0 bg-black/80 z-30 flex items-center justify-center flex-col">

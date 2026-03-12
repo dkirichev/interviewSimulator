@@ -12,7 +12,7 @@
 				<i class="fa-solid fa-exclamation-triangle text-4xl text-red-400"></i>
 			</div>
 
-			<h1 class="text-2xl font-bold text-white mb-3">Report Not Found</h1>
+			<h1 class="text-2xl font-bold text-white mb-3" th:text="#{error.reportNotFound}">Report Not Found</h1>
 
 			<p class="text-slate-400 mb-8" th:text="${error}">
 				The requested report could not be found. It may have expired or the session ID is invalid.

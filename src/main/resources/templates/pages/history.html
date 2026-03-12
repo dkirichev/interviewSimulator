@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<div th:fragment="content">
+	<section class="view-section active flex-col items-center min-h-screen w-full relative overflow-auto">
+		<!--/*  Background Decor  */-->
+		<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+			<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+			<div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+		</div>
+
+		<div class="w-full max-w-5xl px-4 py-8 space-y-6">
+			<!--/*  Header  */-->
+			<div class="flex justify-between items-center border-b border-slate-800 pb-6">
+				<div>
+					<h2 class="text-3xl font-bold" th:text="#{history.title}">Interview History</h2>
+					<p class="text-slate-400" th:text="#{history.subtitle}">Your past interview sessions</p>
+				</div>
+				<a th:href="@{/setup/step1}" class="text-slate-400 hover:text-white transition flex items-center gap-2">
+					<i class="fa-solid fa-plus"></i>
+					<span th:text="#{history.newInterview}">New Interview</span>
+				</a>
+			</div>
+
+			<!--/*  Empty State  */-->
+			<div th:if="${#lists.isEmpty(sessions)}" class="text-center py-16">
+				<i class="fa-solid fa-clock-rotate-left text-6xl text-slate-700 mb-4"></i>
+				<h3 class="text-xl font-medium text-slate-400 mb-2" th:text="#{history.empty.title}">No interviews yet</h3>
+				<p class="text-slate-500 mb-6" th:text="#{history.empty.description}">Complete an interview to see it here</p>
+				<a th:href="@{/setup/step1}"
+				   class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-500/30">
+					<i class="fa-solid fa-microphone"></i>
+					<span th:text="#{history.empty.startButton}">Start Your First Interview</span>
+				</a>
+			</div>
+
+			<!--/*  Session List  */-->
+			<div th:unless="${#lists.isEmpty(sessions)}" class="space-y-4">
+				<div th:each="session : ${sessions}"
+					 class="bg-slate-800/80 rounded-xl border border-slate-700 p-5 hover:border-slate-600 transition">
+					<div class="flex items-center justify-between">
+						<div class="flex-1">
+							<div class="flex items-center gap-3 mb-2">
+								<h3 class="font-bold text-lg text-white" th:text="${session.jobPosition}">Position</h3>
+								<span class="px-2 py-0.5 rounded-full text-xs font-medium"
+									  th:classappend="${session.difficulty == 'Easy'} ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+										  (${session.difficulty == 'Hard'} ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+										  'bg-blue-500/10 text-blue-400 border border-blue-500/20')"
+									  th:text="${session.difficulty}">Standard</span>
+								<span th:if="${session.topicFocus != null and session.topicFocus != ''}"
+									  class="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20"
+									  th:text="${session.topicFocus}">Topic</span>
+							</div>
+							<div class="flex items-center gap-4 text-sm text-slate-400">
+								<span>
+									<i class="fa-solid fa-calendar mr-1"></i>
+									<span th:text="${#temporals.format(session.startedAt, 'MMM d, yyyy HH:mm')}">Jan 1, 2026 12:00</span>
+								</span>
+								<span th:if="${session.score != null}">
+									<i class="fa-solid fa-star mr-1"></i>
+									<span th:text="${session.score + '/100'}">75/100</span>
+								</span>
+								<span th:if="${session.language != null}">
+									<i class="fa-solid fa-globe mr-1"></i>
+									<span th:text="${session.language.toUpperCase()}">EN</span>
+								</span>
+							</div>
+						</div>
+						<div class="flex items-center gap-3">
+							<span th:if="${session.score != null}"
+								  class="text-3xl font-bold"
+								  th:classappend="${session.score >= 80} ? 'text-green-400' :
+									  (${session.score >= 60} ? 'text-blue-400' :
+									  (${session.score >= 40} ? 'text-yellow-400' : 'text-red-400'))"
+								  th:text="${session.score}">75</span>
+							<a th:if="${session.score != null}"
+							   th:href="@{'/report/' + ${session.id}}"
+							   class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium transition">
+								<i class="fa-solid fa-file-lines mr-1"></i>
+								<span th:text="#{history.viewReport}">View Report</span>
+							</a>
+							<span th:if="${session.score == null}" class="text-sm text-slate-500 italic" th:text="#{history.incomplete}">Incomplete</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<script>
+		// Load history using the user's localStorage token
+		document.addEventListener('DOMContentLoaded', function() {
+			const token = localStorage.getItem('interviewUserToken');
+			if (token && !window.location.search.includes('token=')) {
+				window.location.replace('/history?token=' + encodeURIComponent(token));
+			}
+		});
+	</script>
+</div>
+
+</html>

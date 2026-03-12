@@ -6,7 +6,7 @@ public class SharedPostgresContainer extends PostgreSQLContainer<SharedPostgresC
 
     private static final String IMAGE_VERSION = PostgresTestImages.POSTGRES_TEST_IMAGE_NAME;
 
-    private static SharedPostgresContainer container;
+    private static volatile SharedPostgresContainer container;
 
 
     @SuppressWarnings("resource")
@@ -18,8 +18,12 @@ public class SharedPostgresContainer extends PostgreSQLContainer<SharedPostgresC
 
     public static SharedPostgresContainer getInstance() {
         if (container == null) {
-            container = new SharedPostgresContainer();
-            container.start();
+            synchronized (SharedPostgresContainer.class) {
+                if (container == null) {
+                    container = new SharedPostgresContainer();
+                    container.start();
+                }
+            }
         }
         return container;
     }//getInstance

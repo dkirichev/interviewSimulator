@@ -143,8 +143,8 @@ public class SetupController {
 				// Sanitize extracted CV text
 				String sanitizedCvText = sanitizerService.sanitizeCvText(extractedText);
 				form.setCvText(sanitizedCvText);
-				form.setCvFileName(cvFile.getOriginalFilename());
-				log.info("CV processed: {} ({} chars)", cvFile.getOriginalFilename(), sanitizedCvText.length());
+				form.setCvFileName(cvProcessingService.sanitizeFilename(cvFile.getOriginalFilename()));
+				log.info("CV processed: {} ({} chars)", form.getCvFileName(), sanitizedCvText.length());
 				cvWasUploaded = true;
 			} catch (IllegalArgumentException e) {
 				bindingResult.rejectValue("cvFile", "validation.cv.invalid");
@@ -176,6 +176,14 @@ public class SetupController {
 		// Validate difficulty
 		String[] validDifficulties = {"Easy", "Standard", "Hard"};
 		form.setDifficulty(sanitizerService.validateEnum(form.getDifficulty(), validDifficulties, "Easy"));
+
+		// Validate topic focus (optional)
+		String[] validTopics = {"general", "system_design", "behavioral", "algorithms", "culture_fit"};
+		form.setTopicFocus(sanitizerService.validateEnum(form.getTopicFocus(), validTopics, "general"));
+
+		// Validate interview length
+		String[] validLengths = {"quick", "standard", "marathon"};
+		form.setInterviewLength(sanitizerService.validateEnum(form.getInterviewLength(), validLengths, "standard"));
 
 		if (bindingResult.hasErrors()) {
 			model.addAttribute("content", "pages/setup/step2");
@@ -227,7 +235,7 @@ public class SetupController {
 		}
 
 		// Validate and sanitize language
-		String[] validLanguages = {"en", "bg"};
+		String[] validLanguages = {"en", "bg", "de", "es", "fr"};
 		String sanitizedLanguage = sanitizerService.validateEnum(form.getLanguage(), validLanguages, null);
 		if (sanitizedLanguage == null) {
 			bindingResult.rejectValue("language", "validation.language.required");

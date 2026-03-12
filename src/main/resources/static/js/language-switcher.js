@@ -23,7 +23,7 @@
 
 	// Reload page with ?lang= param to trigger Spring's LocaleChangeInterceptor
 	function changeLanguage(lang) {
-		if (lang !== 'en' && lang !== 'bg') return;
+		if (!['en', 'bg', 'de', 'es', 'fr'].includes(lang)) return;
 		if (isLanguageSwitchDisabled()) {
 			closeDropdown();
 			return;

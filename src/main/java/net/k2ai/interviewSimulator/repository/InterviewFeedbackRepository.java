@@ -15,6 +15,9 @@ public interface InterviewFeedbackRepository extends JpaRepository<InterviewFeed
 	Optional<InterviewFeedback> findBySessionId(UUID sessionId);
 
 
+	List<InterviewFeedback> findBySessionIdIn(List<UUID> sessionIds);
+
+
 	List<InterviewFeedback> findBySessionStartedAtAfter(LocalDateTime cutoff);
 
 

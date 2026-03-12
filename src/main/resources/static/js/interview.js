@@ -89,6 +89,7 @@ function toggleMic() {
 
 	isMicActive = !isMicActive;
 	const btn = document.getElementById('mic-btn');
+	if (!btn) return;
 	const icon = btn.querySelector('i');
 	const muteOverlay = document.getElementById('mic-mute-overlay');
 
@@ -244,6 +245,7 @@ let cameraStream = null;
 async function toggleCamera() {
 	isCameraActive = !isCameraActive;
 	const btn = document.getElementById('camera-btn');
+	if (!btn) return;
 	const icon = btn.querySelector('i');
 	const cameraOffOverlay = document.getElementById('camera-off-overlay');
 	const cameraContainer = document.getElementById('user-camera-container');

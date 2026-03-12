@@ -11,7 +11,7 @@ import java.util.Set;
  */
 public class ValidLanguageValidator implements ConstraintValidator<ValidLanguage, String> {
 
-	private static final Set<String> VALID_LANGUAGES = Set.of("en", "bg");
+	private static final Set<String> VALID_LANGUAGES = Set.of("en", "bg", "de", "es", "fr");
 
 	@Override
 	public boolean isValid(String value, ConstraintValidatorContext context) {

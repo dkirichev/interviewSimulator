@@ -137,11 +137,9 @@ public class GeminiModelRotationService {
 
 
 	private String buildComboKey(String apiKey, String model) {
-		// Use last 8 chars of key to avoid logging full keys
-		String keySuffix = apiKey != null && apiKey.length() > 8
-				? apiKey.substring(apiKey.length() - 8)
-				: "unknown";
-		return keySuffix + ":" + model;
+		// Use full key as map key for uniqueness; only truncate for logging
+		String key = apiKey != null ? apiKey : "unknown";
+		return key + ":" + model;
 	}//buildComboKey
 
 }//GeminiModelRotationService

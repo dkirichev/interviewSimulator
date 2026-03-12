@@ -18,6 +18,10 @@ import java.util.List;
 @ConfigurationProperties(prefix = "gemini")
 public class GeminiConfig {
 
+	/**
+	 * Application mode: DEV, PROD, or REVIEWER.
+	 * Note: Uses @Value because app.mode is outside the "gemini" prefix.
+	 */
 	@Value("${app.mode:DEV}")
 	private String appMode;
 
@@ -25,7 +29,7 @@ public class GeminiConfig {
 
 	private String liveModel = "gemini-2.0-flash-exp";
 
-	private String gradingModel = "gemini-2.5-pro-preview-05-06";
+	private String gradingModel = "gemini-2.5-flash";
 
 	private String voiceName = "Aoede";
 

@@ -37,6 +37,11 @@ public class InterviewSetupDTO implements Serializable {
 	private String cvText;
 	private String cvFileName;
 
+	// Step 2 (continued): Topic Focus and Interview Length
+	private String topicFocus;
+
+	private String interviewLength = "standard";
+
 	// Step 3: Voice & Language
 	@NotBlank(message = "{validation.language.required}")
 	@ValidLanguage

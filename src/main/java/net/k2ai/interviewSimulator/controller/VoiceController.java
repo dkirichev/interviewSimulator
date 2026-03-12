@@ -22,7 +22,7 @@ public class VoiceController {
 
 	private static final Set<String> VALID_VOICE_IDS = Set.of("Algieba", "Kore", "Fenrir", "Despina");
 
-	private static final Set<String> VALID_LANGUAGES = Set.of("EN", "BG");
+	private static final Set<String> VALID_LANGUAGES = Set.of("EN", "BG", "DE", "ES", "FR");
 
 
 	@GetMapping

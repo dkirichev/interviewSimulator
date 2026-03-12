@@ -22,5 +22,13 @@
 
 	<!--/*  Custom Styles  */-->
 	<th:block th:replace="~{layouts/fragments/styles :: styles}" />
+
+	<!--/*  Theme init (prevent flash)  */-->
+	<script>
+		(function() {
+			var t = localStorage.getItem('theme');
+			if (t === 'light') document.documentElement.classList.add('theme-light-pending');
+		})();
+	</script>
 </head>
 </html>

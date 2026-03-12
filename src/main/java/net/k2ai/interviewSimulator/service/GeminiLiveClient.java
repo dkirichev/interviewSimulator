@@ -17,9 +17,6 @@ public class GeminiLiveClient {
 
 	private static final String WS_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
 
-	// Safety margin before 15-minute limit (reconnect at 14 minutes)
-	private static final long SESSION_TIMEOUT_MS = 14 * 60 * 1000;
-
 	private final OkHttpClient client;
 
 	private final ObjectMapper objectMapper;
@@ -32,12 +29,12 @@ public class GeminiLiveClient {
 
 	private WebSocket webSocket;
 
-	private boolean isConnected = false;
+	private volatile boolean isConnected = false;
 
 	private String systemInstruction;
 
 	// Session resumption support
-	private String sessionResumptionHandle = null;
+	private volatile String sessionResumptionHandle = null;
 
 	private long sessionStartTime = 0;
 
@@ -469,6 +466,9 @@ public class GeminiLiveClient {
 			isConnected = false;
 			webSocket.close(1000, "Client closing");
 		}
+		// Shut down OkHttpClient resources to prevent thread/connection pool leaks
+		client.dispatcher().executorService().shutdown();
+		client.connectionPool().evictAll();
 	}//close
 
 
@@ -537,15 +537,5 @@ public class GeminiLiveClient {
 		return sessionResumptionHandle;
 	}//getSessionResumptionHandle
 
-
-	public long getSessionStartTime() {
-		return sessionStartTime;
-	}//getSessionStartTime
-
-
-	public boolean isApproachingTimeout() {
-		if (sessionStartTime == 0) return false;
-		return (System.currentTimeMillis() - sessionStartTime) > SESSION_TIMEOUT_MS;
-	}//isApproachingTimeout
 
 }//GeminiLiveClient

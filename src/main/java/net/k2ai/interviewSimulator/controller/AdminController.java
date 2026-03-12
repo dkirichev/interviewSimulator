@@ -79,10 +79,9 @@ public class AdminController {
 		// Override totalSessions with actual total from pagination (respects filters)
 		stats.put("totalSessions", pageData.get("totalElements"));
 
-		// Build feedback lookup map (sessionId -> feedback)
-		Map<UUID, InterviewFeedback> feedbackMap = sessions.stream()
-				.map(s -> feedbackRepository.findBySessionId(s.getId()).orElse(null))
-				.filter(f -> f != null)
+		// Build feedback lookup map (sessionId -> feedback) — single batch query
+		List<UUID> sessionIds = sessions.stream().map(InterviewSession::getId).toList();
+		Map<UUID, InterviewFeedback> feedbackMap = feedbackRepository.findBySessionIdIn(sessionIds).stream()
 				.collect(Collectors.toMap(f -> f.getSession().getId(), f -> f));
 
 		// Calculate durations (in minutes)

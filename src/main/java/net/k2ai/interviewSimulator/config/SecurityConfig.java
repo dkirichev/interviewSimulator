@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
@@ -38,6 +39,11 @@ public class SecurityConfig {
 				.csrf(csrf -> csrf
 						.ignoringRequestMatchers("/ws/**", "/api/**")
 				)
+				.sessionManagement(session -> session
+						.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+						.sessionFixation().migrateSession()
+						.maximumSessions(1)
+				)
 				.headers(headers -> headers
 						.frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
 						.xssProtection(xss -> xss
@@ -55,7 +61,7 @@ public class SecurityConfig {
 						.contentSecurityPolicy(csp -> csp
 								.policyDirectives(
 										"default-src 'self'; " +
-												"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; " +
+												"script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; " +
 												"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
 												"font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
 												"img-src 'self' data:; " +

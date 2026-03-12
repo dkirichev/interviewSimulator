@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.k2ai.interviewSimulator.config.GeminiConfig;
 import net.k2ai.interviewSimulator.entity.InterviewFeedback;
 import net.k2ai.interviewSimulator.repository.InterviewFeedbackRepository;
+import net.k2ai.interviewSimulator.repository.InterviewSessionRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +14,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.Arrays;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +34,8 @@ public class ReportController {
 
 	private final InterviewFeedbackRepository feedbackRepository;
 	private final GeminiConfig geminiConfig;
+	private final ObjectMapper objectMapper;
+	private final InterviewSessionRepository sessionRepository;
 
 	@ModelAttribute("appMode")
 	public String appMode() {
@@ -65,10 +70,16 @@ public class ReportController {
 			List<String> strengths = parseJsonArray(feedback.getStrengths());
 			List<String> improvements = parseJsonArray(feedback.getImprovements());
 
+			// Load session for transcript replay
+			var sessionOpt = sessionRepository.findById(uuid);
+			String transcript = sessionOpt.map(s -> s.getTranscript()).orElse("");
+
 			model.addAttribute("feedback", feedback);
 			model.addAttribute("sessionId", sessionId.substring(0, 8));
+			model.addAttribute("fullSessionId", sessionId);
 			model.addAttribute("strengths", strengths);
 			model.addAttribute("improvements", improvements);
+			model.addAttribute("transcript", transcript);
 			model.addAttribute("content", "pages/report-standalone");
 
 			// Clear the setup form from session since interview is complete
@@ -95,24 +106,10 @@ public class ReportController {
 		}
 
 		try {
-			// Simple parsing for JSON arrays like ["item1", "item2"]
-			String cleaned = jsonArray.trim();
-			if (cleaned.startsWith("[") && cleaned.endsWith("]")) {
-				cleaned = cleaned.substring(1, cleaned.length() - 1);
-			}
-
-			if (cleaned.isBlank()) {
-				return Collections.emptyList();
-			}
-
-			// Split by "," and clean up quotes
-			return Arrays.stream(cleaned.split("\",\\s*\""))
-					.map(s -> s.replaceAll("^\"|\"$", "").trim())
-					.filter(s -> !s.isBlank())
-					.toList();
+			return objectMapper.readValue(jsonArray, new TypeReference<List<String>>() {});
 		} catch (Exception e) {
 			log.warn("Failed to parse JSON array: {}", jsonArray);
-			return List.of(jsonArray); // Return as single item if parsing fails
+			return List.of(jsonArray);
 		}
 	}// parseJsonArray
 

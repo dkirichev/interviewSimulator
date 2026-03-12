@@ -10,11 +10,16 @@ import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PreDestroy;
+
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,30 +39,38 @@ public class GeminiIntegrationService {
 	// Maps WebSocket session ID to interview state
 	private final Map<String, InterviewState> activeSessions = new ConcurrentHashMap<>();
 
+	// Bounded thread pool for grading tasks
+	private final ExecutorService gradingExecutor = Executors.newFixedThreadPool(10);
+
 
 	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, String language) {
-		return startInterview(wsSessionId, candidateName, position, difficulty, language, null, null, null, null, null);
+		return startInterview(wsSessionId, candidateName, position, difficulty, language, null, null, null, null, null, null, null, null);
 	}//startInterview
 
 
 	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, String language, String cvText) {
-		return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText, null, null, null, null);
+		return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText, null, null, null, null, null, null, null);
 	}//startInterview
 
 
 	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty,
 							   String language, String cvText, String voiceId, String interviewerNameEN, String interviewerNameBG) {
-		return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText, voiceId, interviewerNameEN, interviewerNameBG, null);
+		return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText, voiceId, interviewerNameEN, interviewerNameBG, null, null, null, null);
 	}//startInterview
 
 
 	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty,
 							   String language, String cvText, String voiceId, String interviewerNameEN,
 							   String interviewerNameBG, String userApiKey) {
-		// Create database session
-		UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty, language);
+		return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText, voiceId, interviewerNameEN, interviewerNameBG, userApiKey, null, null, null);
+	}//startInterview
 
-		// Determine which API key to use
+
+	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty,
+							   String language, String cvText, String voiceId, String interviewerNameEN,
+							   String interviewerNameBG, String userApiKey,
+							   String userToken, String topicFocus, String interviewLength) {
+		// Validate API key BEFORE creating database session to avoid orphaned rows
 		String effectiveApiKey = determineApiKey(userApiKey);
 		if (effectiveApiKey == null || effectiveApiKey.isBlank()) {
 			log.error("No API key available for session: {}", wsSessionId);
@@ -65,8 +78,11 @@ public class GeminiIntegrationService {
 					"message", "API key required. Please provide a valid Gemini API key.",
 					"requiresApiKey", true
 			));
-			return interviewSessionId;
+			return null;
 		}
+
+		// Create database session
+		UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty, language, userToken, topicFocus, interviewLength);
 
 		// Use provided voice or fall back to config default
 		String effectiveVoice = (voiceId != null && !voiceId.isBlank()) ? voiceId : geminiConfig.getVoiceName();
@@ -77,7 +93,7 @@ public class GeminiIntegrationService {
 		// Generate system instruction for the AI interviewer (language-aware, with optional CV and custom names)
 		String systemInstruction;
 		if (interviewerNameEN != null && interviewerNameBG != null) {
-			systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText, interviewerNameEN, interviewerNameBG);
+			systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText, interviewerNameEN, interviewerNameBG, topicFocus, interviewLength);
 		} else {
 			systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText);
 		}
@@ -203,8 +219,8 @@ public class GeminiIntegrationService {
 					"message", "AI finished speaking"
 			));
 
-			// Check if this turn contained conclusion phrases
-			if (promptService.isInterviewConcluding(turnText)) {
+			// Check if this turn contained conclusion phrases (language-specific)
+			if (promptService.isInterviewConcluding(turnText, state.getLanguage())) {
 				log.info("AI concluded interview - ending session: {}", wsSessionId);
 				endInterviewInternal(wsSessionId, state);
 			}
@@ -375,16 +391,13 @@ public class GeminiIntegrationService {
 				"message", "Interview ended. Analyzing your performance..."
 		));
 
-		// Trigger grading (async)
+		// Trigger grading (async) — session is removed after grading completes
 		triggerGrading(wsSessionId, state);
-
-		// Remove from active sessions
-		activeSessions.remove(wsSessionId);
 	}//endInterviewInternal
 
 
 	private void triggerGrading(String wsSessionId, InterviewState state) {
-		new Thread(() -> {
+		gradingExecutor.execute(() -> {
 			try {
 				InterviewFeedback feedback = gradingService.gradeInterview(state.getInterviewSessionId(), state.getUserApiKey(), state.getLanguage());
 
@@ -412,8 +425,11 @@ public class GeminiIntegrationService {
 				sendToClient(wsSessionId, "/queue/error", Map.of(
 						"message", "Failed to generate report. Please try again."
 				));
+			} finally {
+				// Remove from active sessions after grading completes
+				activeSessions.remove(wsSessionId);
 			}
-		}).start();
+		});
 	}//triggerGrading
 
 
@@ -436,13 +452,27 @@ public class GeminiIntegrationService {
 
 
 	public void handleDisconnect(String wsSessionId) {
-		InterviewState state = activeSessions.get(wsSessionId);
+		InterviewState state = activeSessions.remove(wsSessionId);
 		if (state != null) {
 			log.info("WebSocket disconnected, cleaning up session: {}", wsSessionId);
+			state.setEnded(true); // Prevent callbacks from reconnecting
 			state.getGeminiClient().close();
-			activeSessions.remove(wsSessionId);
 		}
 	}//handleDisconnect
+
+
+	@PreDestroy
+	public void shutdown() {
+		gradingExecutor.shutdown();
+		try {
+			if (!gradingExecutor.awaitTermination(60, TimeUnit.SECONDS)) {
+				gradingExecutor.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			gradingExecutor.shutdownNow();
+			Thread.currentThread().interrupt();
+		}
+	}//shutdown
 
 
 	// Inner class to track interview state
@@ -452,7 +482,7 @@ public class GeminiIntegrationService {
 
 		private final UUID interviewSessionId;
 
-		private GeminiLiveClient geminiClient;
+		private volatile GeminiLiveClient geminiClient;
 
 		private final String candidateName;
 
@@ -473,10 +503,13 @@ public class GeminiIntegrationService {
 		// Tracks last speaker to avoid duplicate prefixes on streaming tokens
 		private String lastSpeaker = "";
 
-		private boolean ended = false;
+		private volatile boolean ended = false;
 
 		// For session resumption
-		private boolean reconnecting = false;
+		private volatile boolean reconnecting = false;
+
+		// Max audio buffer size during reconnection (~20 seconds at 100ms chunks)
+		private static final int MAX_AUDIO_BUFFER = 200;
 
 		private String voiceId;
 
@@ -555,7 +588,7 @@ public class GeminiIntegrationService {
 		}//clearCurrentTurnTranscript
 
 
-		public String getFullTranscript() {
+		public synchronized String getFullTranscript() {
 			return fullTranscript.toString();
 		}//getFullTranscript
 
@@ -611,7 +644,7 @@ public class GeminiIntegrationService {
 
 
 		public synchronized void bufferAudio(byte[] audioData) {
-			if (reconnecting) {
+			if (reconnecting && audioBuffer.size() < MAX_AUDIO_BUFFER) {
 				audioBuffer.add(audioData);
 			}
 		}//bufferAudio

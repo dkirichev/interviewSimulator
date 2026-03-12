@@ -43,7 +43,7 @@ public class CvController {
 			log.error("CV processing failed", e);
 			return ResponseEntity.internalServerError().body(Map.of(
 					"success", false,
-					"error", "Failed to process CV: " + e.getMessage()
+					"error", "Failed to process CV. Please ensure the file is a valid PDF or DOCX."
 			));
 		}
 	}//uploadCv

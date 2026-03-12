@@ -155,14 +155,116 @@
 				</div>
 			</div>
 
-			<!--/*  Start New Interview Button  */-->
-			<div class="text-center py-4">
+			<!--/*  Interview Transcript Replay (Feature 4)  */-->
+			<div th:if="${transcript != null and !transcript.isEmpty()}" class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+				<div class="bg-slate-900/50 px-6 py-3 border-b border-slate-700 flex items-center justify-between cursor-pointer" onclick="toggleTranscriptReplay()">
+					<h3 class="font-bold flex items-center gap-2">
+						<i class="fa-solid fa-message text-slate-400"></i>
+						<span th:text="#{report.transcript}">Interview Transcript</span>
+					</h3>
+					<i id="transcript-replay-arrow" class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-200"></i>
+				</div>
+				<div id="transcript-replay-body" class="hidden p-4 max-h-96 overflow-y-auto">
+					<div id="transcript-replay-content" class="space-y-3 text-sm">
+					</div>
+				</div>
+			</div>
+
+			<!--/*  Action Buttons  */-->
+			<div class="flex items-center justify-center gap-4 py-4">
 				<a th:href="@{/setup/step1}"
 						class="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-500/30">
 					<i class="fa-solid fa-rotate-right"></i>
 					<span th:text="#{report.newInterview}">Start New Interview</span>
 				</a>
+				<!--/*  Share Button (Feature 5)  */-->
+				<button onclick="copyReportLink()" id="share-btn"
+						class="inline-flex items-center gap-2 px-6 py-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-medium transition">
+					<i class="fa-solid fa-link" id="share-icon"></i>
+					<span id="share-text" th:text="#{report.copyLink}">Copy Link</span>
+				</button>
 			</div>
+
+			<script th:inline="javascript">
+				// Transcript Replay (Feature 4)
+				var rawTranscript = /*[[${transcript}]]*/ '';
+				var copiedLabel = /*[[#{report.linkCopied}]]*/ 'Copied!';
+				var copyLabel = /*[[#{report.copyLink}]]*/ 'Copy Link';
+
+				function toggleTranscriptReplay() {
+					var body = document.getElementById('transcript-replay-body');
+					var arrow = document.getElementById('transcript-replay-arrow');
+					if (body && arrow) {
+						body.classList.toggle('hidden');
+						arrow.classList.toggle('rotate-180');
+						if (!body.dataset.rendered) {
+							renderTranscriptReplay();
+							body.dataset.rendered = 'true';
+						}
+					}
+				}
+
+				function renderTranscriptReplay() {
+					var container = document.getElementById('transcript-replay-content');
+					if (!container || !rawTranscript) return;
+
+					var lines = rawTranscript.split('\n').filter(function(l) { return l.trim(); });
+					lines.forEach(function(line) {
+						var entry = document.createElement('div');
+						var isInterviewer = line.indexOf('[Interviewer]') !== -1;
+						var isCandidate = line.indexOf('[Candidate]') !== -1;
+						var text = line.replace(/\[(Interviewer|Candidate)\]:\s*/, '');
+
+						if (isInterviewer) {
+							entry.className = 'flex flex-col items-start';
+							var label = document.createElement('span');
+							label.className = 'text-xs font-medium mb-1 text-green-400';
+							label.textContent = 'Interviewer';
+							var bubble = document.createElement('div');
+							bubble.className = 'max-w-[85%] px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/20 text-slate-200';
+							bubble.textContent = text;
+							entry.appendChild(label);
+							entry.appendChild(bubble);
+						} else if (isCandidate) {
+							entry.className = 'flex flex-col items-end';
+							var label2 = document.createElement('span');
+							label2.className = 'text-xs font-medium mb-1 text-blue-400';
+							label2.textContent = 'You';
+							var bubble2 = document.createElement('div');
+							bubble2.className = 'max-w-[85%] px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-slate-200';
+							bubble2.textContent = text;
+							entry.appendChild(label2);
+							entry.appendChild(bubble2);
+						} else if (text.trim()) {
+							entry.className = 'text-slate-400 text-xs text-center';
+							entry.textContent = text;
+						}
+
+						if (entry.childNodes.length > 0) {
+							container.appendChild(entry);
+						}
+					});
+				}
+
+				// Copy Link (Feature 5)
+				function copyReportLink() {
+					navigator.clipboard.writeText(window.location.href).then(function() {
+						var icon = document.getElementById('share-icon');
+						var text = document.getElementById('share-text');
+						var btn = document.getElementById('share-btn');
+						icon.className = 'fa-solid fa-check';
+						text.textContent = copiedLabel;
+						btn.classList.remove('bg-slate-700');
+						btn.classList.add('bg-green-600');
+						setTimeout(function() {
+							icon.className = 'fa-solid fa-link';
+							text.textContent = copyLabel;
+							btn.classList.remove('bg-green-600');
+							btn.classList.add('bg-slate-700');
+						}, 2000);
+					});
+				}
+			</script>
 		</div>
 	</section>
 </div>
