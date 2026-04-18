@@ -11,6 +11,23 @@
 	<!--/*  Favicon  */-->
 	<link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
 
+	<!--/*  Theme bootstrap (prevents flash by setting class before CSS paints)  */-->
+	<script>
+		(function () {
+			const STORAGE_KEY = 'ui_theme_preference';
+			let storedTheme = null;
+			try {
+				storedTheme = localStorage.getItem(STORAGE_KEY);
+			} catch (e) {
+				storedTheme = null;
+			}
+			const theme = storedTheme === 'dark' ? 'dark' : 'light';
+			const root = document.documentElement;
+			root.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light');
+			root.setAttribute('data-theme', theme);
+		})();
+	</script>
+
 	<!--/*  Tailwind CSS (purged + minified)  */-->
 	<link rel="stylesheet" th:href="@{/css/tailwind.min.css}">
 
