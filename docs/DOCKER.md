@@ -146,6 +146,9 @@ services:
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-secret}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_REVIEWER_KEYS: ${GEMINI_REVIEWER_KEYS:-}
+      GEMINI_GRADING_MODELS: ${GEMINI_GRADING_MODELS:-gemini-3-flash-preview,gemini-2.5-flash,gemini-2.5-flash-lite,gemma-3-12b-it}
+      JAVA_OPTS: ${JAVA_OPTS:-"-Xmx512m -Xms256m"}
     depends_on:
       postgres:
         condition: service_healthy
@@ -161,17 +164,25 @@ volumes:
 # Build stage
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
+RUN apk add --no-cache bash
 COPY mvnw pom.xml ./
 COPY .mvn .mvn
-RUN chmod +x mvnw && ./mvnw dependency:go-offline
+COPY package.json package-lock.json tailwind.config.js ./
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 COPY src src
-RUN ./mvnw clean package -DskipTests
+RUN ./mvnw clean package -DskipTests -B
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
 COPY --from=builder /app/target/*.jar app.jar
+RUN chown -R appuser:appgroup /app
+USER appuser
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+    CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
@@ -228,7 +239,7 @@ services:
 | `DB_PASSWORD` | Yes | - | Database password |
 | `GEMINI_API_KEY` | DEV only | - | Backend API key (ignored in PROD/REVIEWER) |
 | `GEMINI_REVIEWER_KEYS` | REVIEWER only | - | Comma-separated API keys for model rotation |
-| `GEMINI_GRADING_MODELS` | No | `gemini-2.5-pro,...` | Grading model fallback chain |
+| `GEMINI_GRADING_MODELS` | No | `gemini-3-flash-preview,gemini-2.5-flash,gemini-2.5-flash-lite,gemma-3-12b-it` | Grading model fallback chain |
 
 ---
 

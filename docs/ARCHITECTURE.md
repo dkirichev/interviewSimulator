@@ -85,7 +85,7 @@ The AI Interview Simulator is a **real-time voice-based interview practice platf
 | **Web Audio API** | Microphone capture & audio playback |
 | **STOMP.js** | WebSocket messaging protocol |
 | **SockJS** | WebSocket fallback for older browsers |
-| **Tailwind CSS** | Utility-first styling (CDN) |
+| **Tailwind CSS** | Utility-first styling (compiled locally to `static/css/tailwind.min.css`) |
 | **Thymeleaf** | Server-side HTML rendering |
 
 ### AI Models
@@ -243,8 +243,9 @@ CREATE INDEX idx_feedback_session ON interview_feedback(session_id);
 1. User loads page → App checks mode via `/api/mode`
 2. Modal appears → Step-by-step guide to get free API key
 3. User enters key → Validated via `/api/validate-key`
-4. Key stored → In browser localStorage (never sent to our server again)
-5. Key sent → Only to Gemini API via WebSocket
+4. Key cached → In browser localStorage for user convenience
+5. Key sent → To backend when interview starts so server can open the Gemini Live connection
+6. Key persistence policy → Key is never stored in our database or on disk (memory-only during active session)
 
 ### REVIEWER Mode Flow
 
@@ -322,6 +323,7 @@ The application is designed to collect as little data as possible:
 | **No CV file storage** | Uploaded CVs are parsed in-memory and immediately discarded — only extracted text is used during the session |
 | **No audio storage** | Voice is streamed in real-time via WebSocket and never saved to disk or database |
 | **No transcript retention** | The interview transcript exists only in-memory during the session for grading, then is discarded |
+| **No API key persistence on server** | User keys may be received for active sessions in PROD mode, but are never persisted to database or disk |
 | **Automatic cleanup** | `SessionCleanupScheduler` runs every 6 hours and deletes all sessions + feedback older than 2 weeks |
 | **Mode-aware legal pages** | Privacy Policy and Terms & Conditions hide API key sections when not in PROD mode |
 

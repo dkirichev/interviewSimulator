@@ -81,7 +81,7 @@ Uploads and extracts text from a CV/resume file.
 {
   "success": true,
   "text": "Extracted CV text content...",
-  "fileName": "resume.pdf"
+  "characterCount": 1234
 }
 ```
 
@@ -104,34 +104,32 @@ Returns available interviewer voices.
 
 **Response:**
 ```json
-{
-  "voices": [
-    {
-      "id": "Algieba",
-      "nameEN": "George",
-      "nameBG": "Георги",
-      "gender": "male"
-    },
-    {
-      "id": "Kore",
-      "nameEN": "Victoria",
-      "nameBG": "Виктория",
-      "gender": "female"
-    },
-    {
-      "id": "Fenrir",
-      "nameEN": "Max",
-      "nameBG": "Макс",
-      "gender": "male"
-    },
-    {
-      "id": "Despina",
-      "nameEN": "Diana",
-      "nameBG": "Диана",
-      "gender": "female"
-    }
-  ]
-}
+[
+  {
+    "id": "Algieba",
+    "nameEN": "George",
+    "nameBG": "Георги",
+    "gender": "male"
+  },
+  {
+    "id": "Kore",
+    "nameEN": "Victoria",
+    "nameBG": "Виктория",
+    "gender": "female"
+  },
+  {
+    "id": "Fenrir",
+    "nameEN": "Max",
+    "nameBG": "Макс",
+    "gender": "male"
+  },
+  {
+    "id": "Despina",
+    "nameEN": "Diana",
+    "nameBG": "Диана",
+    "gender": "female"
+  }
+]
 ```
 
 #### `GET /api/voices/preview/{voiceId}/{language}`

@@ -2,10 +2,12 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
+RUN apk add --no-cache bash
 
 # Copy Maven wrapper and pom.xml first (for layer caching)
 COPY mvnw pom.xml ./
 COPY .mvn .mvn
+COPY package.json package-lock.json tailwind.config.js ./
 
 # Make mvnw executable and download dependencies
 RUN chmod +x mvnw && ./mvnw dependency:go-offline -B

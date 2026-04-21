@@ -182,7 +182,7 @@ export APP_MODE=DEV
 **Frontend:**
 - Vanilla JavaScript (minimal, ~1,500 lines)
 - Thymeleaf templates with i18n support
-- Tailwind CSS (via CDN)
+- Tailwind CSS (compiled locally with Tailwind CLI)
 - Web Audio API for audio capture/playback
 
 **AI:**
@@ -215,6 +215,7 @@ This project is built with a **privacy-by-design** philosophy:
 | **No CV/resume storage** | Uploaded CV files are parsed for text in-memory and immediately discarded. The file is never saved to disk or database |
 | **No audio storage** | Voice recordings are streamed in real-time and never persisted |
 | **No transcript retention** | Interview transcripts are not permanently stored — they exist only during the session for grading purposes |
+| **No API key persistence on server** | In PROD mode, API keys may pass through backend memory for active Gemini sessions, but are never persisted to database or disk |
 | **Automatic data cleanup** | A scheduled task runs every 6 hours and deletes all interview session reports older than **2 weeks** |
 | **Mobile device blocking** | Mobile phones and tablets are redirected away from the app via a server-side interceptor — a professional interview requires a desktop environment with a proper microphone |
 | **Mode-aware legal pages** | Privacy Policy and Terms & Conditions adapt their content based on the app mode (DEV/PROD/REVIEWER), so users only see information relevant to their context |
