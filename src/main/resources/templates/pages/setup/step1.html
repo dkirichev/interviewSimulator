@@ -27,8 +27,8 @@
 				<form th:action="@{/setup/step1}" th:object="${setupForm}" method="post">
 					<!--/*  Step Title  */-->
 					<div class="text-center mb-4 tall:mb-8">
-						<h2 class="text-xl tall:text-2xl font-bold text-white mb-2" th:text="#{setup.step1.title}">Your Profile</h2>
-						<p class="text-slate-400 text-sm" th:text="#{setup.step1.subtitle}">Tell us about yourself</p>
+						<h2 class="text-xl tall:text-2xl font-bold text-white mb-2" th:text="#{setup.step1.title}" />
+						<p class="text-slate-400 text-sm" th:text="#{setup.step1.subtitle}" />
 					</div>
 
 					<!--/*  Candidate Name Field  */-->
@@ -57,14 +57,63 @@
 						</p>
 					</div>
 
+					<!--/*  Terms & Conditions Checkbox (non-DEV modes)  */-->
+					<div th:if="${appMode != 'DEV'}" class="max-w-md mx-auto mt-6">
+						<label class="flex items-start gap-3 cursor-pointer">
+							<input type="checkbox" id="terms-checkbox"
+									class="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-900 accent-blue-500 cursor-pointer flex-shrink-0"
+									onchange="updateSubmitState()">
+							<span class="text-sm text-slate-400 leading-relaxed">
+								<span th:text="#{setup.terms.agree}">I agree to the</span>
+								<a th:href="@{/legal/terms}" target="_blank" rel="noopener noreferrer"
+										class="text-blue-400 hover:text-blue-300 underline mx-1" th:text="#{setup.terms.link}">Terms & Conditions</a>
+								<span th:text="#{setup.terms.and}">and</span>
+								<a th:href="@{/legal/privacy}" target="_blank" rel="noopener noreferrer"
+										class="text-blue-400 hover:text-blue-300 underline ml-1" th:text="#{setup.terms.privacyLink}">Privacy Policy</a>
+							</span>
+						</label>
+						<p id="terms-error" class="hidden mt-2 text-xs text-red-400 flex items-center gap-1">
+							<i class="fa-solid fa-circle-exclamation"></i>
+							<span th:text="#{setup.terms.required}">You must agree to continue</span>
+						</p>
+					</div>
+
 					<!--/*  Navigation Buttons  */-->
 					<div class="flex items-center justify-end mt-6 tall:mt-10 pt-4 tall:pt-6 border-t border-slate-700">
-						<button type="submit"
-								class="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-500/30">
+						<button type="submit" id="step1-submit-btn"
+								th:disabled="${appMode != 'DEV'}"
+								th:classappend="${appMode != 'DEV'} ? 'opacity-50 cursor-not-allowed' : ''"
+								class="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:hover:bg-blue-600 text-white font-bold transition shadow-lg shadow-blue-500/30">
 							<span th:text="#{setup.button.next}" />
 							<i class="fa-solid fa-arrow-right ml-2"></i>
 						</button>
 					</div>
+
+					<!--/*  Terms checkbox JS (non-DEV modes)  */-->
+					<th:block th:if="${appMode != 'DEV'}">
+						<script>
+							function updateSubmitState() {
+								var cb = document.getElementById('terms-checkbox');
+								var btn = document.getElementById('step1-submit-btn');
+								var err = document.getElementById('terms-error');
+								if (cb && btn) {
+									btn.disabled = !cb.checked;
+									btn.classList.toggle('opacity-50', !cb.checked);
+									btn.classList.toggle('cursor-not-allowed', !cb.checked);
+								}
+								if (err) err.classList.add('hidden');
+							}
+
+							document.getElementById('step1-submit-btn').closest('form').addEventListener('submit', function (e) {
+								var cb = document.getElementById('terms-checkbox');
+								if (!cb.checked) {
+									e.preventDefault();
+									document.getElementById('terms-error').classList.remove('hidden');
+									cb.focus();
+								}
+							});
+						</script>
+					</th:block>
 				</form>
 			</div>
 		</div>

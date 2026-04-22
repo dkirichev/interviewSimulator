@@ -303,6 +303,22 @@
 									</p>
 								</div>
 
+								<!--/*  Terms checkbox  */-->
+								<div class="mt-3">
+									<label class="flex items-start gap-3 cursor-pointer">
+										<input type="checkbox" id="apikey-terms-checkbox"
+												class="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-900 accent-blue-500 cursor-pointer flex-shrink-0">
+										<span class="text-xs text-slate-400 leading-relaxed">
+											<span th:text="#{apikey.modal.agreeTerms}">I agree to the</span>
+											<a th:href="@{/legal/terms}" target="_blank" rel="noopener noreferrer"
+													class="text-blue-400 hover:text-blue-300 underline mx-1" th:text="#{apikey.modal.termsLink}">Terms & Conditions</a>
+										</span>
+									</label>
+								</div>
+
+								<!--/*  Hidden i18n for JS  */-->
+								<span class="hidden" data-i18n="apikey.error.termsRequired" th:text="#{apikey.error.termsRequired}"></span>
+
 								<!--/*  Submit Button  */-->
 								<button type="button" id="apikey-submit-btn" onclick="validateAndSaveApiKey()"
 										class="mt-4 w-full px-6 py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-bold text-lg rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-green-500/25">

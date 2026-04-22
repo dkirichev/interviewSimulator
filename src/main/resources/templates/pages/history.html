@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+
+<div th:fragment="content">
+	<section class="view-section active flex-col items-center min-h-screen w-full relative overflow-auto">
+		<!--/*  Background Decor  */-->
+		<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+			<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+			<div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+		</div>
+
+		<div class="w-full max-w-5xl px-4 py-4 space-y-6">
+			<!--/*  Header  */-->
+			<div class="flex justify-between items-center border-b border-slate-800 pb-6">
+				<div>
+					<h2 class="text-3xl font-bold" th:text="#{history.title}">Interview History</h2>
+					<p class="text-slate-400 text-sm mt-1" th:text="#{history.subtitle}">Your past interviews from the last 2 weeks</p>
+				</div>
+				<a th:href="@{/setup/step1}" class="text-slate-400 hover:text-white transition flex items-center gap-2 text-sm">
+					<i class="fa-solid fa-plus"></i>
+					<span th:text="#{history.empty.cta}">Start an Interview</span>
+				</a>
+			</div>
+
+			<!--/*  Hidden i18n strings for JS  */-->
+			<div class="hidden">
+				<span id="i18n-empty-title" th:text="#{history.empty.title}">No interviews yet</span>
+				<span id="i18n-empty-desc" th:text="#{history.empty.desc}">Complete an interview to see your history here</span>
+				<span id="i18n-empty-cta" th:text="#{history.empty.cta}">Start an Interview</span>
+				<span id="i18n-col-date" th:text="#{history.col.date}">Date</span>
+				<span id="i18n-col-name" th:text="#{history.col.name}">Candidate</span>
+				<span id="i18n-col-position" th:text="#{history.col.position}">Position</span>
+				<span id="i18n-col-difficulty" th:text="#{history.col.difficulty}">Difficulty</span>
+				<span id="i18n-col-score" th:text="#{history.col.score}">Score</span>
+				<span id="i18n-col-verdict" th:text="#{history.col.verdict}">Verdict</span>
+				<span id="i18n-col-action" th:text="#{history.col.action}">Action</span>
+				<span id="i18n-action-view" th:text="#{history.action.view}">View Report</span>
+				<span id="i18n-clear" th:text="#{history.clear}">Clear History</span>
+				<span id="i18n-clear-confirm" th:text="#{history.clear.confirm}">Clear all interview history? This cannot be undone.</span>
+				<span id="i18n-verdict-strong-hire" th:text="#{report.verdict.strongHire}">STRONG HIRE</span>
+				<span id="i18n-verdict-hire" th:text="#{report.verdict.hire}">HIRE</span>
+				<span id="i18n-verdict-maybe" th:text="#{report.verdict.maybe}">MAYBE</span>
+				<span id="i18n-verdict-no-hire" th:text="#{report.verdict.noHire}">NO HIRE</span>
+			</div>
+
+			<!--/*  History Content (rendered by JS)  */-->
+			<div id="history-content">
+				<!--/*  Loading state  */-->
+				<div class="text-center py-16 text-slate-500">
+					<i class="fa-solid fa-spinner fa-spin text-2xl mb-3"></i>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<script>
+		(function() {
+			var TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+
+			function t(id) {
+				var el = document.getElementById(id);
+				return el ? el.textContent : '';
+			}
+
+			function verdictLabel(verdict) {
+				var map = {
+					'STRONG_HIRE': t('i18n-verdict-strong-hire'),
+					'HIRE': t('i18n-verdict-hire'),
+					'MAYBE': t('i18n-verdict-maybe'),
+					'NO_HIRE': t('i18n-verdict-no-hire')
+				};
+				return map[verdict] || verdict;
+			}
+
+			function verdictClass(verdict) {
+				var map = {
+					'STRONG_HIRE': 'bg-green-500/10 text-green-400 border-green-500/30',
+					'HIRE': 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+					'MAYBE': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+					'NO_HIRE': 'bg-red-500/10 text-red-400 border-red-500/30'
+				};
+				return map[verdict] || 'bg-slate-500/10 text-slate-400 border-slate-500/30';
+			}
+
+			function scoreClass(score) {
+				if (score >= 80) return 'text-green-400';
+				if (score >= 60) return 'text-blue-400';
+				if (score >= 40) return 'text-yellow-400';
+				return 'text-red-400';
+			}
+
+			function formatDate(iso) {
+				try {
+					var d = new Date(iso);
+					return d.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})
+						+ ' ' + d.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'});
+				} catch(e) { return iso; }
+			}
+
+			function renderEmpty() {
+				return '<div class="text-center py-16">'
+					+ '<div class="w-20 h-20 mx-auto rounded-2xl bg-slate-800 flex items-center justify-center mb-5 border border-slate-700">'
+					+ '<i class="fa-solid fa-clock-rotate-left text-3xl text-slate-600"></i>'
+					+ '</div>'
+					+ '<h3 class="text-xl font-bold text-white mb-2">' + t('i18n-empty-title') + '</h3>'
+					+ '<p class="text-slate-400 text-sm mb-6">' + t('i18n-empty-desc') + '</p>'
+					+ '<a href="/setup/step1" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition">'
+					+ '<i class="fa-solid fa-plus"></i>'
+					+ t('i18n-empty-cta')
+					+ '</a>'
+					+ '</div>';
+			}
+
+			function renderTable(entries) {
+				var rows = entries.map(function(e) {
+					return '<tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition-colors">'
+						+ '<td class="px-4 py-3 text-sm text-slate-400 whitespace-nowrap">' + formatDate(e.date) + '</td>'
+						+ '<td class="px-4 py-3 text-sm text-white font-medium">' + escapeHtml(e.candidateName || '—') + '</td>'
+						+ '<td class="px-4 py-3 text-sm text-slate-300 max-w-40 truncate" title="' + escapeHtml(e.position || '') + '">' + escapeHtml(e.position || '—') + '</td>'
+						+ '<td class="px-4 py-3 text-sm text-slate-400">' + escapeHtml(e.difficulty || '—') + '</td>'
+						+ '<td class="px-4 py-3 text-sm font-bold ' + scoreClass(e.overallScore) + '">' + (e.overallScore != null ? e.overallScore : '—') + '</td>'
+						+ '<td class="px-4 py-3">'
+						+ '<span class="px-2 py-0.5 rounded-full text-xs font-bold border ' + verdictClass(e.verdict) + '">' + verdictLabel(e.verdict) + '</span>'
+						+ '</td>'
+						+ '<td class="px-4 py-3">'
+						+ '<a href="' + e.url + '" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium rounded-lg transition">'
+						+ '<i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>'
+						+ t('i18n-action-view')
+						+ '</a>'
+						+ '</td>'
+						+ '</tr>';
+				}).join('');
+
+				return '<div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">'
+					+ '<div class="overflow-x-auto">'
+					+ '<table class="w-full">'
+					+ '<thead>'
+					+ '<tr class="border-b border-slate-700 bg-slate-900/50">'
+					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-date') + '</th>'
+					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-name') + '</th>'
+					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-position') + '</th>'
+					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-difficulty') + '</th>'
+					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-score') + '</th>'
+					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-verdict') + '</th>'
+					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-action') + '</th>'
+					+ '</tr>'
+					+ '</thead>'
+					+ '<tbody>'
+					+ rows
+					+ '</tbody>'
+					+ '</table>'
+					+ '</div>'
+					+ '</div>'
+					+ '<div class="text-right">'
+					+ '<button onclick="clearHistory()" class="text-xs text-slate-600 hover:text-red-400 transition px-2 py-1">'
+					+ '<i class="fa-solid fa-trash mr-1"></i>'
+					+ t('i18n-clear')
+					+ '</button>'
+					+ '</div>';
+			}
+
+			function escapeHtml(str) {
+				return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+			}
+
+			function loadHistory() {
+				var container = document.getElementById('history-content');
+				if (!container) return;
+
+				try {
+					var raw = localStorage.getItem('interview_history');
+					var entries = raw ? JSON.parse(raw) : [];
+					var now = Date.now();
+					entries = entries.filter(function(e) { return now - new Date(e.date).getTime() < TWO_WEEKS_MS; });
+
+					if (entries.length === 0) {
+						container.innerHTML = renderEmpty();
+					} else {
+						container.innerHTML = renderTable(entries);
+					}
+				} catch(e) {
+					container.innerHTML = renderEmpty();
+				}
+			}
+
+			window.clearHistory = function() {
+				if (confirm(t('i18n-clear-confirm'))) {
+					try { localStorage.removeItem('interview_history'); } catch(e) {}
+					loadHistory();
+				}
+			};
+
+			document.addEventListener('DOMContentLoaded', loadHistory);
+		})();
+	</script>
+</div>
+
+</html>

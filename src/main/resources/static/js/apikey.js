@@ -290,6 +290,13 @@ function getI18nMessage(key, fallback) {
 
 // Validate and save API key
 async function validateAndSaveApiKey() {
+	const termsCheckbox = document.getElementById('apikey-terms-checkbox');
+	if (termsCheckbox && !termsCheckbox.checked) {
+		const errorMsg = getI18nMessage('apikey.error.termsRequired', 'Please agree to the Terms & Conditions to continue');
+		showApiKeyError(errorMsg);
+		return;
+	}
+
 	const input = document.getElementById('apikey-input');
 	const apiKey = input.value.trim();
 

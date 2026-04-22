@@ -30,6 +30,17 @@ public class PageController {
 
 
 	/**
+	 * Interview history page - reads from localStorage client-side.
+	 */
+	@GetMapping("/history")
+	public String history(Model model) {
+		model.addAttribute("content", "pages/history");
+		model.addAttribute("appMode", geminiConfig.getAppMode());
+		return LAYOUT;
+	}// history
+
+
+	/**
 	 * Interview page - requires completed setup.
 	 * Reads setup data from session to pass to JS for WebSocket connection.
 	 * Clears setup form from session after loading (one-time use).
