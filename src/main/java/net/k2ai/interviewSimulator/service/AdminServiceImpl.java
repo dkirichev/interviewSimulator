@@ -35,7 +35,7 @@ public class AdminServiceImpl implements AdminService {
 
 	@Override
 	public List<InterviewSession> getRecentSessions(String position, String difficulty, String language) {
-		LocalDateTime cutoff = LocalDateTime.now().minusWeeks(2);
+		LocalDateTime cutoff = LocalDateTime.now().minusDays(14);
 		List<InterviewSession> sessions = sessionRepository.findByStartedAtAfterOrderByStartedAtDesc(cutoff);
 
 		return sessions.stream()
@@ -79,7 +79,7 @@ public class AdminServiceImpl implements AdminService {
 
 	@Override
 	public Map<String, Object> getDashboardStats() {
-		LocalDateTime cutoff = LocalDateTime.now().minusWeeks(2);
+		LocalDateTime cutoff = LocalDateTime.now().minusDays(14);
 		List<InterviewSession> recentSessions = sessionRepository.findByStartedAtAfterOrderByStartedAtDesc(cutoff);
 
 		Map<String, Object> stats = new HashMap<>();

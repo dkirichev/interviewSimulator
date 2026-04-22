@@ -62,9 +62,6 @@ public class GeminiIntegrationService {
 	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty,
 							   String language, String cvText, String voiceId, String interviewerNameEN,
 							   String interviewerNameBG, String userApiKey, String interviewLength) {
-		// Create database session
-		UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty, language);
-
 		// Determine which API key to use
 		String effectiveApiKey = determineApiKey(userApiKey);
 		if (effectiveApiKey == null || effectiveApiKey.isBlank()) {
@@ -73,41 +70,53 @@ public class GeminiIntegrationService {
 					"message", "API key required. Please provide a valid Gemini API key.",
 					"requiresApiKey", true
 			));
-			return interviewSessionId;
+			return null;
 		}
+
+		UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty, language);
 
 		// Use provided voice or fall back to config default
 		String effectiveVoice = (voiceId != null && !voiceId.isBlank()) ? voiceId : geminiConfig.getVoiceName();
 
-		// Create Gemini client with the selected voice and effective API key
-		GeminiLiveClient geminiClient = new GeminiLiveClient(effectiveApiKey, geminiConfig.getLiveModel(), effectiveVoice);
+		try {
+			// Create Gemini client with the selected voice and effective API key
+			GeminiLiveClient geminiClient = new GeminiLiveClient(effectiveApiKey, geminiConfig.getLiveModel(), effectiveVoice);
 
-		// Generate system instruction for the AI interviewer (language-aware, with optional CV and custom names)
-		String systemInstruction;
-		if (interviewerNameEN != null && interviewerNameBG != null) {
-			systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText, interviewerNameEN, interviewerNameBG, interviewLength);
-		} else {
-			systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText);
+			// Generate system instruction for the AI interviewer (language-aware, with optional CV and custom names)
+			String systemInstruction;
+			if (interviewerNameEN != null && interviewerNameBG != null) {
+				systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText, interviewerNameEN, interviewerNameBG, interviewLength);
+			} else {
+				systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText);
+			}
+			geminiClient.setSystemInstruction(systemInstruction);
+
+			// Create interview state (store voice, instruction, and API key for potential reconnection)
+			InterviewState state = new InterviewState(interviewSessionId, geminiClient, language);
+			state.setVoiceId(effectiveVoice);
+			state.setSystemInstruction(systemInstruction);
+			state.setUserApiKey(effectiveApiKey);
+			activeSessions.put(wsSessionId, state);
+
+			// Setup callbacks
+			setupGeminiCallbacks(wsSessionId, state);
+
+			// Connect to Gemini
+			geminiClient.connect();
+
+			log.info("Started interview session {} with voice: {}, length: {}, using {}",
+					interviewSessionId, effectiveVoice, interviewLength, userApiKey != null ? "user API key" : "backend API key");
+
+			return interviewSessionId;
+		} catch (Exception e) {
+			log.error("Failed to start interview session: {}", interviewSessionId, e);
+			activeSessions.remove(wsSessionId);
+			interviewService.deleteSession(interviewSessionId);
+			sendToClient(wsSessionId, "/queue/error", Map.of(
+					"message", "Failed to start interview session. Please try again."
+			));
+			return null;
 		}
-		geminiClient.setSystemInstruction(systemInstruction);
-
-		// Create interview state (store voice, instruction, and API key for potential reconnection)
-		InterviewState state = new InterviewState(interviewSessionId, geminiClient, candidateName, position, difficulty, language);
-		state.setVoiceId(effectiveVoice);
-		state.setSystemInstruction(systemInstruction);
-		state.setUserApiKey(effectiveApiKey);
-		activeSessions.put(wsSessionId, state);
-
-		// Setup callbacks
-		setupGeminiCallbacks(wsSessionId, state);
-
-		// Connect to Gemini
-		geminiClient.connect();
-
-		log.info("Started interview session {} with voice: {}, length: {}, using {}",
-				interviewSessionId, effectiveVoice, interviewLength, userApiKey != null ? "user API key" : "backend API key");
-
-		return interviewSessionId;
 	}//startInterview
 
 
@@ -206,8 +215,7 @@ public class GeminiIntegrationService {
 			String turnText = state.getCurrentTurnTranscript();
 			state.clearCurrentTurnTranscript();
 
-			log.info("AI turn complete. Turn text ({} chars): {}", turnText.length(),
-					turnText.length() > 200 ? turnText.substring(0, 200) + "..." : turnText);
+			log.info("AI turn complete ({} chars)", turnText.length());
 
 			sendToClient(wsSessionId, "/queue/status", Map.of(
 					"type", "TURN_COMPLETE",
@@ -247,9 +255,11 @@ public class GeminiIntegrationService {
 				));
 			} else {
 				sendToClient(wsSessionId, "/queue/error", Map.of(
-						"message", error
+						"message", error != null ? error : "Unexpected Gemini connection error"
 				));
 			}
+
+			abandonInterviewSession(wsSessionId, state, "gemini_error");
 		});
 
 		// Handle GoAway - server is about to close connection, trigger reconnection
@@ -274,6 +284,7 @@ public class GeminiIntegrationService {
 							"type", "DISCONNECTED",
 							"message", "Connection lost"
 					));
+					abandonInterviewSession(wsSessionId, state, "connection_lost_no_resumption");
 				}
 			}
 		});
@@ -378,9 +389,7 @@ public class GeminiIntegrationService {
 		// Close Gemini connection
 		state.getGeminiClient().close();
 
-		// Save transcript to database
-		String fullTranscript = state.getFullTranscript();
-		interviewService.appendTranscript(state.getInterviewSessionId(), fullTranscript);
+		// Finalize database session metadata
 		interviewService.finalizeSession(state.getInterviewSessionId());
 
 		// Notify client to show loading/grading screen
@@ -399,8 +408,14 @@ public class GeminiIntegrationService {
 
 	private void triggerGrading(String wsSessionId, InterviewState state) {
 		new Thread(() -> {
+			String transcript = state.getFullTranscript();
 			try {
-				InterviewFeedback feedback = gradingService.gradeInterview(state.getInterviewSessionId(), state.getUserApiKey(), state.getLanguage());
+				InterviewFeedback feedback = gradingService.gradeInterview(
+						state.getInterviewSessionId(),
+						transcript,
+						state.getUserApiKey(),
+						state.getLanguage()
+				);
 
 				Map<String, Object> reportData = new HashMap<>();
 				reportData.put("sessionId", state.getInterviewSessionId().toString());
@@ -412,7 +427,6 @@ public class GeminiIntegrationService {
 				reportData.put("improvements", feedback.getImprovements());
 				reportData.put("detailedAnalysis", feedback.getDetailedAnalysis());
 				reportData.put("verdict", feedback.getVerdict());
-				reportData.put("transcript", state.getFullTranscript());
 
 				sendToClient(wsSessionId, "/queue/report", reportData);
 			} catch (RateLimitException e) {
@@ -426,14 +440,14 @@ public class GeminiIntegrationService {
 				sendToClient(wsSessionId, "/queue/error", Map.of(
 						"message", "Failed to generate report. Please try again."
 				));
+			} finally {
+				state.clearSensitiveState();
 			}
 		}).start();
 	}//triggerGrading
 
 
 	private void sendToClient(String wsSessionId, String destination, Map<String, Object> payload) {
-		log.debug("Sending to session {} destination {}: {}", wsSessionId, destination, payload);
-
 		// Create headers targeting the specific WebSocket session
 		SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create(SimpMessageType.MESSAGE);
 		headerAccessor.setSessionId(wsSessionId);
@@ -452,11 +466,25 @@ public class GeminiIntegrationService {
 	public void handleDisconnect(String wsSessionId) {
 		InterviewState state = activeSessions.get(wsSessionId);
 		if (state != null) {
-			log.info("WebSocket disconnected, cleaning up session: {}", wsSessionId);
-			state.getGeminiClient().close();
-			activeSessions.remove(wsSessionId);
+			log.info("WebSocket disconnected for session: {}", wsSessionId);
+			abandonInterviewSession(wsSessionId, state, "websocket_disconnected");
 		}
 	}//handleDisconnect
+
+
+	private void abandonInterviewSession(String wsSessionId, InterviewState state, String reason) {
+		if (state.isEnded()) {
+			activeSessions.remove(wsSessionId);
+			return;
+		}
+
+		state.setEnded(true);
+		state.getGeminiClient().close();
+		interviewService.deleteSession(state.getInterviewSessionId());
+		state.clearSensitiveState();
+		activeSessions.remove(wsSessionId);
+		log.info("Abandoned interview session {} ({})", state.getInterviewSessionId(), reason);
+	}//abandonInterviewSession
 
 
 	// Inner class to track interview state
@@ -468,17 +496,7 @@ public class GeminiIntegrationService {
 
 		private GeminiLiveClient geminiClient;
 
-		private final String candidateName;
-
-		private final String position;
-
-		private final String difficulty;
-
 		private final String language;
-
-		private final StringBuilder userTranscript = new StringBuilder();
-
-		private final StringBuilder aiTranscript = new StringBuilder();
 
 		private final StringBuilder fullTranscript = new StringBuilder();
 
@@ -506,13 +524,9 @@ public class GeminiIntegrationService {
 		private long interviewStartTime = 0;
 
 
-		public InterviewState(UUID interviewSessionId, GeminiLiveClient geminiClient,
-							  String candidateName, String position, String difficulty, String language) {
+		public InterviewState(UUID interviewSessionId, GeminiLiveClient geminiClient, String language) {
 			this.interviewSessionId = interviewSessionId;
 			this.geminiClient = geminiClient;
-			this.candidateName = candidateName;
-			this.position = position;
-			this.difficulty = difficulty;
 			this.language = language;
 		}//InterviewState
 
@@ -538,7 +552,6 @@ public class GeminiIntegrationService {
 
 
 		public synchronized void appendUserTranscript(String text) {
-			userTranscript.append(text);
 			if (!"Candidate".equals(lastSpeaker)) {
 				fullTranscript.append("\n[Candidate]: ");
 				lastSpeaker = "Candidate";
@@ -548,7 +561,6 @@ public class GeminiIntegrationService {
 
 
 		public synchronized void appendAiTranscript(String text) {
-			aiTranscript.append(text);
 			if (!"Interviewer".equals(lastSpeaker)) {
 				fullTranscript.append("\n[Interviewer]: ");
 				lastSpeaker = "Interviewer";
@@ -659,6 +671,16 @@ public class GeminiIntegrationService {
 				audioBuffer.clear();
 			}
 		}//flushBufferedAudio
+
+
+		public synchronized void clearSensitiveState() {
+			fullTranscript.setLength(0);
+			currentTurnTranscript.setLength(0);
+			lastSpeaker = "";
+			audioBuffer.clear();
+			systemInstruction = null;
+			userApiKey = null;
+		}//clearSensitiveState
 
 	}//InterviewState
 

@@ -332,8 +332,7 @@ Final interview report after grading.
   "strengths": ["Clear communication", "Good problem-solving approach"],
   "improvements": ["Could provide more specific examples"],
   "detailedAnalysis": "The candidate demonstrated solid technical knowledge...",
-  "verdict": "HIRE",
-  "transcript": "[Interviewer]: Hello...\n[Candidate]: Hi..."
+  "verdict": "HIRE"
 }
 ```
 

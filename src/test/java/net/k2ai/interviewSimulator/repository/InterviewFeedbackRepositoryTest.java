@@ -91,14 +91,13 @@ class InterviewFeedbackRepositoryTest extends AbstractIntegrationTest {
     }//testFindBySessionId_ReturnsEmptyForNonExistent
 
 
-    private InterviewSession createTestSession() {
-        return InterviewSession.builder()
-                .candidateName("Test Candidate")
-                .jobPosition("Developer")
-                .difficulty("Standard")
-                .startedAt(LocalDateTime.now())
-                .transcript("Test transcript")
-                .build();
-    }//createTestSession
+	private InterviewSession createTestSession() {
+		return InterviewSession.builder()
+				.candidateName("Test Candidate")
+				.jobPosition("Developer")
+				.difficulty("Standard")
+				.startedAt(LocalDateTime.now())
+				.build();
+	}//createTestSession
 
 }//InterviewFeedbackRepositoryTest

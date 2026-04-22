@@ -23,17 +23,17 @@ public class SessionCleanupScheduler {
 
 
 	/**
-	 * Runs every 6 hours to delete sessions older than 2 weeks.
+	 * Runs every 6 hours to delete sessions older than 14 days.
 	 * Deletes associated feedback first (FK constraint), then sessions.
 	 */
 	@Scheduled(fixedRate = 6 * 60 * 60 * 1000)
 	@Transactional
 	public void cleanupOldSessions() {
-		LocalDateTime cutoff = LocalDateTime.now().minusWeeks(2);
+		LocalDateTime cutoff = LocalDateTime.now().minusDays(14);
 		List<InterviewSession> oldSessions = sessionRepository.findByStartedAtBefore(cutoff);
 
 		if (oldSessions.isEmpty()) {
-			log.info("Session cleanup: no sessions older than 2 weeks found");
+			log.info("Session cleanup: no sessions older than 14 days found");
 			return;
 		}
 
@@ -43,7 +43,7 @@ public class SessionCleanupScheduler {
 		}
 		sessionRepository.deleteAll(oldSessions);
 
-		log.info("Session cleanup: deleted {} sessions older than 2 weeks", count);
+		log.info("Session cleanup: deleted {} sessions older than 14 days", count);
 	}//cleanupOldSessions
 
 }//SessionCleanupScheduler

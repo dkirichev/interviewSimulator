@@ -26,25 +26,12 @@ public class InterviewService {
 				.difficulty(difficulty)
 				.language(language != null ? language : "en")
 				.startedAt(LocalDateTime.now())
-				.transcript("")
 				.build();
 
 		InterviewSession saved = repository.save(session);
-		log.info("Started interview session: {} for candidate: {}", saved.getId(), name);
+		log.info("Started interview session: {}", saved.getId());
 		return saved.getId();
 	}//startSession
-
-
-	@Transactional
-	public void appendTranscript(UUID sessionId, String text) {
-		InterviewSession session = repository.findById(sessionId)
-				.orElseThrow(() -> new RuntimeException("Session not found: " + sessionId));
-
-		String currentTranscript = session.getTranscript() != null ? session.getTranscript() : "";
-		session.setTranscript(currentTranscript + text);
-
-		repository.save(session);
-	}//appendTranscript
 
 
 	@Transactional
@@ -57,5 +44,17 @@ public class InterviewService {
 		repository.save(session);
 		log.info("Finalized interview session: {}", sessionId);
 	}//finalizeSession
+
+
+	@Transactional
+	public void deleteSession(UUID sessionId) {
+		if (!repository.existsById(sessionId)) {
+			log.warn("Cannot delete interview session that does not exist: {}", sessionId);
+			return;
+		}
+
+		repository.deleteById(sessionId);
+		log.info("Deleted interview session: {}", sessionId);
+	}//deleteSession
 
 }//InterviewService

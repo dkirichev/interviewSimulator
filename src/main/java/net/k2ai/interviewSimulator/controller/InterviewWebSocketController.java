@@ -92,8 +92,12 @@ public class InterviewWebSocketController {
 				sessionIdStr, candidateName, position, difficulty, language, cvText,
 				voiceId, interviewerNameEN, interviewerNameBG, userApiKey, interviewLength);
 
-		log.info("Interview started - WebSocket: {}, Interview Session: {}, Language: {}, Voice: {}, CV provided: {}, User API key: {}",
-				sessionIdStr, interviewSessionId, language, voiceId, cvText != null && !cvText.isBlank(), userApiKey != null);
+		if (interviewSessionId != null) {
+			log.info("Interview started - WebSocket: {}, Interview Session: {}, Language: {}, Voice: {}, CV provided: {}, User API key: {}",
+					sessionIdStr, interviewSessionId, language, voiceId, cvText != null && !cvText.isBlank(), userApiKey != null);
+		} else {
+			log.warn("Interview start failed for WebSocket: {}", sessionIdStr);
+		}
 	}//startInterview
 
 

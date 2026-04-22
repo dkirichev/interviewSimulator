@@ -535,13 +535,12 @@ public class InterviewPromptService {
 		}
 
 		String lowerTranscript = transcript.toLowerCase();
-		log.debug("Checking conclusion patterns in: {}", lowerTranscript.length() > 100 ? lowerTranscript.substring(0, 100) + "..." : lowerTranscript);
+		log.debug("Checking conclusion patterns in transcript ({} chars)", lowerTranscript.length());
 
 		// Check English patterns
 		for (Pattern pattern : CONCLUSION_PATTERNS_EN) {
 			if (pattern.matcher(transcript).find()) {
-				log.info("MATCHED EN conclusion pattern: {} in text: {}", pattern.pattern(),
-						transcript.length() > 100 ? transcript.substring(0, 100) + "..." : transcript);
+				log.info("Matched EN conclusion pattern: {}", pattern.pattern());
 				return true;
 			}
 		}
@@ -549,8 +548,7 @@ public class InterviewPromptService {
 		// Check Bulgarian patterns
 		for (Pattern pattern : CONCLUSION_PATTERNS_BG) {
 			if (pattern.matcher(transcript).find()) {
-				log.info("MATCHED BG conclusion pattern: {} in text: {}", pattern.pattern(),
-						transcript.length() > 100 ? transcript.substring(0, 100) + "..." : transcript);
+				log.info("Matched BG conclusion pattern: {}", pattern.pattern());
 				return true;
 			}
 		}

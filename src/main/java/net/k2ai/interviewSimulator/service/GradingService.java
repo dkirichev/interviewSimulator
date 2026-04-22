@@ -42,35 +42,18 @@ public class GradingService {
 
 
 	/**
-	 * Grade interview using backend API key (for DEV mode or backward compatibility)
-	 */
-	public InterviewFeedback gradeInterview(UUID sessionId) {
-		return gradeInterview(sessionId, null, null);
-	}//gradeInterview
-
-
-	/**
-	 * Grade interview with optional user-provided API key
-	 */
-	public InterviewFeedback gradeInterview(UUID sessionId, String userApiKey) {
-		return gradeInterview(sessionId, userApiKey, null);
-	}//gradeInterview
-
-
-	/**
-	 * Grade interview with optional user-provided API key and language.
+	 * Grade interview with in-memory transcript and optional user API key/language.
 	 * In REVIEWER/PROD mode, retries with model/key rotation on rate limit or access errors.
 	 */
-	public InterviewFeedback gradeInterview(UUID sessionId, String userApiKey, String language) {
+	public InterviewFeedback gradeInterview(UUID sessionId, String transcript, String userApiKey, String language) {
 		log.info("Starting grading for session: {}", sessionId);
 
 		InterviewSession session = sessionRepository.findById(sessionId)
 				.orElseThrow(() -> new RuntimeException("Session not found: " + sessionId));
 
-		String transcript = session.getTranscript();
 		if (transcript == null || transcript.isBlank()) {
 			log.warn("No transcript available for session: {}", sessionId);
-			return createDefaultFeedback(session);
+			return saveFeedback(session, createDefaultFeedback(session));
 		}
 
 		// Determine effective language
@@ -79,7 +62,7 @@ public class GradingService {
 			effectiveLanguage = session.getLanguage() != null ? session.getLanguage() : "en";
 		}
 
-		String prompt = buildGradingPrompt(session, effectiveLanguage);
+		String prompt = buildGradingPrompt(session, transcript, effectiveLanguage);
 
 		// Use rotation for REVIEWER and PROD modes
 		if (geminiConfig.isReviewerMode() || geminiConfig.isProdMode()) {
@@ -117,9 +100,7 @@ public class GradingService {
 				InterviewFeedback feedback = parseGradingResponse(response, session);
 
 				// Save to database
-				InterviewFeedback saved = feedbackRepository.save(feedback);
-				session.setScore(saved.getOverallScore());
-				sessionRepository.save(session);
+				InterviewFeedback saved = saveFeedback(session, feedback);
 
 				log.info("Grading complete for session: {}. Score: {} (model: {})",
 						session.getId(), saved.getOverallScore(), config.model());
@@ -154,9 +135,7 @@ public class GradingService {
 			String response = callGeminiApi(prompt, effectiveApiKey, geminiConfig.getGradingModel());
 			InterviewFeedback feedback = parseGradingResponse(response, session);
 
-			InterviewFeedback saved = feedbackRepository.save(feedback);
-			session.setScore(saved.getOverallScore());
-			sessionRepository.save(session);
+			InterviewFeedback saved = saveFeedback(session, feedback);
 
 			log.info("Grading complete for session: {}. Score: {}", session.getId(), saved.getOverallScore());
 			return saved;
@@ -165,12 +144,12 @@ public class GradingService {
 		} catch (Exception e) {
 			log.error("Failed to grade interview for session: {}: {}", session.getId(), e.getMessage());
 			InterviewFeedback fallback = createDefaultFeedback(session);
-			return feedbackRepository.save(fallback);
+			return saveFeedback(session, fallback);
 		}
 	}//gradeSimple
 
 
-	private String buildGradingPrompt(InterviewSession session, String language) {
+	private String buildGradingPrompt(InterviewSession session, String transcript, String language) {
 		String languageInstruction = "bg".equals(language)
 				? """
 						
@@ -224,9 +203,17 @@ public class GradingService {
 				session.getJobPosition(),
 				session.getDifficulty(),
 				session.getCandidateName(),
-				session.getTranscript()
+				transcript
 		);
 	}//buildGradingPrompt
+
+
+	private InterviewFeedback saveFeedback(InterviewSession session, InterviewFeedback feedback) {
+		InterviewFeedback saved = feedbackRepository.save(feedback);
+		session.setScore(saved.getOverallScore());
+		sessionRepository.save(session);
+		return saved;
+	}//saveFeedback
 
 
 	private String callGeminiApi(String prompt, String apiKey, String model) throws IOException {

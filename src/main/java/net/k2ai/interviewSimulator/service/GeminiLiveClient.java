@@ -107,7 +107,7 @@ public class GeminiLiveClient {
 
 			@Override
 			public void onMessage(WebSocket webSocket, String text) {
-				log.debug("Received text message from Gemini: {}", text.length() > 200 ? text.substring(0, 200) + "..." : text);
+				log.debug("Received text message from Gemini ({} chars)", text.length());
 				handleMessage(text);
 			}//onMessage
 
@@ -115,7 +115,7 @@ public class GeminiLiveClient {
 			@Override
 			public void onMessage(WebSocket webSocket, ByteString bytes) {
 				String text = bytes.utf8();
-				log.debug("Received binary message from Gemini: {}", text.length() > 200 ? text.substring(0, 200) + "..." : text);
+				log.debug("Received binary message from Gemini ({} chars)", text.length());
 				handleMessage(text);
 			}//onMessage
 
@@ -239,7 +239,6 @@ public class GeminiLiveClient {
 			String json = objectMapper.writeValueAsString(root);
 			log.info("Sending Gemini setup message (compression: enabled, resumption: {})",
 					sessionResumptionHandle != null ? "resuming" : "new");
-			log.debug("Setup payload: {}", json);
 			webSocket.send(json);
 		} catch (Exception e) {
 			log.error("Failed to send setup message", e);
@@ -307,7 +306,7 @@ public class GeminiLiveClient {
 			root.set("clientContent", clientContent);
 
 			String json = objectMapper.writeValueAsString(root);
-			log.debug("Sending text to Gemini: {}", text);
+			log.debug("Sending text to Gemini ({} chars)", text.length());
 			webSocket.send(json);
 		} catch (Exception e) {
 			log.error("Failed to send text to Gemini", e);
@@ -331,7 +330,7 @@ public class GeminiLiveClient {
 
 			String json = objectMapper.writeValueAsString(root);
 			webSocket.send(json);
-			log.debug("Sent realtime text to Gemini: {}", text);
+			log.debug("Sent realtime text to Gemini");
 		} catch (Exception e) {
 			log.error("Failed to send realtime text to Gemini", e);
 		}
@@ -411,7 +410,7 @@ public class GeminiLiveClient {
 					JsonNode inputTranscription = serverContent.get("inputTranscription");
 					if (inputTranscription.has("text")) {
 						String transcript = inputTranscription.get("text").asText();
-						log.debug("Input transcription: {}", transcript);
+						log.debug("Input transcription received ({} chars)", transcript.length());
 						if (onInputTranscript != null) {
 							onInputTranscript.accept(transcript);
 						}
@@ -423,7 +422,7 @@ public class GeminiLiveClient {
 					JsonNode outputTranscription = serverContent.get("outputTranscription");
 					if (outputTranscription.has("text")) {
 						String transcript = outputTranscription.get("text").asText();
-						log.debug("Output transcription: {}", transcript);
+						log.debug("Output transcription received ({} chars)", transcript.length());
 						if (onOutputTranscript != null) {
 							onOutputTranscript.accept(transcript);
 						}
@@ -454,7 +453,7 @@ public class GeminiLiveClient {
 							// Handle text content
 							if (part.has("text")) {
 								String text = part.get("text").asText();
-								log.debug("Received text: {}", text);
+								log.debug("Received model text part ({} chars)", text.length());
 								if (onTextReceived != null) {
 									onTextReceived.accept(text);
 								}
@@ -475,7 +474,7 @@ public class GeminiLiveClient {
 			}
 
 		} catch (Exception e) {
-			log.error("Failed to parse Gemini message: {}", json, e);
+			log.error("Failed to parse Gemini message", e);
 			if (onError != null) {
 				onError.accept("Failed to parse message: " + e.getMessage());
 			}

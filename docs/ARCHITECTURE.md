@@ -55,7 +55,7 @@ The AI Interview Simulator is a **real-time voice-based interview practice platf
 | Benefit | Description |
 |---------|-------------|
 | **Security** | API keys handled server-side, never exposed to browser |
-| **Persistence** | Transcripts and feedback stored permanently |
+| **Persistence** | Only interview results + minimal metadata persisted for 14 days |
 | **Business Logic** | Grading, prompts, session management centralized |
 | **Multi-user** | Concurrent sessions with proper isolation |
 | **i18n** | Server-side internationalization in English/Bulgarian |
@@ -200,9 +200,7 @@ interview_sessions (
     difficulty VARCHAR(50) NOT NULL,
     started_at TIMESTAMP NOT NULL,
     ended_at TIMESTAMP,
-    transcript TEXT,
-    score INTEGER,
-    feedback_json TEXT
+    score INTEGER
 )
 
 -- Interview Feedback
@@ -330,12 +328,12 @@ The application is designed to collect as little data as possible:
 | **No audio storage** | Voice is streamed in real-time via WebSocket and never saved to disk or database |
 | **No transcript retention** | The interview transcript exists only in-memory during the session for grading, then is discarded |
 | **No API key persistence on server** | User keys may be received for active sessions in PROD mode, but are never persisted to database or disk |
-| **Automatic cleanup** | `SessionCleanupScheduler` runs every 6 hours and deletes all sessions + feedback older than 2 weeks |
+| **Automatic cleanup** | `SessionCleanupScheduler` runs every 6 hours and deletes all sessions + feedback older than 14 days |
 | **Mode-aware legal pages** | Privacy Policy and Terms & Conditions hide API key sections when not in PROD mode |
 
 ### What IS Stored (temporarily)
 
-The only data persisted to the database is the **grading report** (scores, strengths, improvements, verdict) and basic session metadata (candidate name, position, difficulty). This is automatically deleted after 2 weeks.
+The only data persisted to the database is the **grading report** (scores, strengths, improvements, verdict) and basic session metadata (candidate name, position, difficulty). This is automatically deleted after 14 days.
 
 ---
 
@@ -351,7 +349,7 @@ The `MobileDeviceInterceptor` detects mobile User-Agent strings (Android, iPhone
 
 - **Login page** at `/admin/login` with Spring Security form-based authentication
 - **Dashboard** at `/admin/dashboard` showing:
-  - Total sessions (last 2 weeks), sessions today, average score, top position
+  - Total sessions (last 14 days), sessions today, average score, top position
   - Paginated session table with filtering by position, difficulty, language
   - Session duration calculation
   - Feedback/verdict per session

@@ -95,7 +95,7 @@ public class SetupController {
 		}
 		form.setCandidateName(sanitizedName);
 
-		log.debug("Step 1 completed: candidateName={}", form.getCandidateName());
+		log.debug("Step 1 completed");
 		return "redirect:/setup/step2";
 	}// processStep1
 
@@ -188,8 +188,8 @@ public class SetupController {
 			return LAYOUT;
 		}
 
-		log.debug("Step 2 completed: position={}, difficulty={}, hasCV={}",
-				form.getEffectivePosition(), form.getDifficulty(), form.getCvText() != null);
+		log.debug("Step 2 completed (difficulty: {}, hasCV: {})",
+				form.getDifficulty(), form.getCvText() != null);
 		return "redirect:/setup/step3";
 	}// processStep2
 
@@ -249,9 +249,8 @@ public class SetupController {
 		// Update interviewer names based on voice selection
 		updateInterviewerNames(form);
 
-		log.info("Setup completed: candidate={}, position={}, difficulty={}, language={}, voice={}",
-				form.getCandidateName(), form.getEffectivePosition(), form.getDifficulty(),
-				form.getLanguage(), form.getVoiceId());
+		log.info("Setup completed (difficulty: {}, language: {}, voice: {})",
+				form.getDifficulty(), form.getLanguage(), form.getVoiceId());
 
 		// Redirect to interview page (handled by PageController)
 		return "redirect:/interview";

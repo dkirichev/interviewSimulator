@@ -58,14 +58,13 @@ class ReportControllerTest extends AbstractIntegrationTest {
     @Test
     void testShowReport_ValidSession_ShowsReport() throws Exception {
         // Create session
-        InterviewSession session = InterviewSession.builder()
-                .candidateName("Test Candidate")
-                .jobPosition("Java Developer")
-                .difficulty("Standard")
-                .startedAt(LocalDateTime.now())
-                .endedAt(LocalDateTime.now())
-                .transcript("Test transcript")
-                .build();
+		InterviewSession session = InterviewSession.builder()
+				.candidateName("Test Candidate")
+				.jobPosition("Java Developer")
+				.difficulty("Standard")
+				.startedAt(LocalDateTime.now())
+				.endedAt(LocalDateTime.now())
+				.build();
         InterviewSession savedSession = sessionRepository.save(session);
 
         // Create feedback
@@ -91,14 +90,13 @@ class ReportControllerTest extends AbstractIntegrationTest {
 
     @Test
     void testShowReport_DisplaysScores() throws Exception {
-        InterviewSession session = InterviewSession.builder()
-                .candidateName("Score Test")
-                .jobPosition("QA Engineer")
-                .difficulty("Easy")
-                .startedAt(LocalDateTime.now())
-                .endedAt(LocalDateTime.now())
-                .transcript("Test")
-                .build();
+		InterviewSession session = InterviewSession.builder()
+				.candidateName("Score Test")
+				.jobPosition("QA Engineer")
+				.difficulty("Easy")
+				.startedAt(LocalDateTime.now())
+				.endedAt(LocalDateTime.now())
+				.build();
         InterviewSession savedSession = sessionRepository.save(session);
 
         InterviewFeedback feedback = InterviewFeedback.builder()

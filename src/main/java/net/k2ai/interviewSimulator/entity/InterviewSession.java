@@ -38,12 +38,6 @@ public class InterviewSession {
 
 	private LocalDateTime endedAt;
 
-	@Column(columnDefinition = "TEXT")
-	private String transcript;
-
 	private Integer score;
-
-	@Column(columnDefinition = "TEXT")
-	private String feedbackJson;
 
 }//InterviewSession

@@ -43,27 +43,25 @@ class InterviewServiceTest extends AbstractIntegrationTest {
     }//testStartSession_CreatesNewSession
 
 
-    @Test
-    void testAppendTranscript_UpdatesExistingSession() {
-        UUID sessionId = interviewService.startSession("Jane Smith", "QA Engineer", "Easy", "bg");
+	@Test
+	void testDeleteSession_RemovesExistingSession() {
+		UUID sessionId = interviewService.startSession("Jane Smith", "QA Engineer", "Easy", "bg");
 
-        interviewService.appendTranscript(sessionId, "Hello, nice to meet you. ");
-        interviewService.appendTranscript(sessionId, "Tell me about yourself.");
+		interviewService.deleteSession(sessionId);
 
-        Optional<InterviewSession> found = sessionRepository.findById(sessionId);
-        assertThat(found).isPresent();
-        assertThat(found.get().getTranscript()).isEqualTo("Hello, nice to meet you. Tell me about yourself.");
-    }//testAppendTranscript_UpdatesExistingSession
+		Optional<InterviewSession> found = sessionRepository.findById(sessionId);
+		assertThat(found).isEmpty();
+	}//testDeleteSession_RemovesExistingSession
 
 
-    @Test
-    void testAppendTranscript_ThrowsForInvalidSession() {
-        UUID invalidId = UUID.randomUUID();
+	@Test
+	void testDeleteSession_NonExistentSession_DoesNotThrow() {
+		UUID invalidId = UUID.randomUUID();
 
-        assertThatThrownBy(() -> interviewService.appendTranscript(invalidId, "Some text"))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Session not found");
-    }//testAppendTranscript_ThrowsForInvalidSession
+		interviewService.deleteSession(invalidId);
+
+		assertThat(sessionRepository.findById(invalidId)).isEmpty();
+	}//testDeleteSession_NonExistentSession_DoesNotThrow
 
 
     @Test
@@ -79,12 +77,12 @@ class InterviewServiceTest extends AbstractIntegrationTest {
 
 
     @Test
-    void testFinalizeSession_ThrowsForInvalidSession() {
-        UUID invalidId = UUID.randomUUID();
+	void testFinalizeSession_ThrowsForInvalidSession() {
+		UUID invalidId = UUID.randomUUID();
 
-        assertThatThrownBy(() -> interviewService.finalizeSession(invalidId))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Session not found");
-    }//testFinalizeSession_ThrowsForInvalidSession
+		assertThatThrownBy(() -> interviewService.finalizeSession(invalidId))
+				.isInstanceOf(RuntimeException.class)
+				.hasMessageContaining("Session not found");
+	}//testFinalizeSession_ThrowsForInvalidSession
 
 }//InterviewServiceTest

@@ -63,7 +63,7 @@ Get detailed performance feedback after each interview:
 
 ### 📋 Interview History
 
-Your past interviews are automatically saved in your browser. Visit `/history` to see a full table of your sessions from the last 2 weeks — with scores, verdicts, and links back to each report. No account needed.
+Your past interviews are automatically saved in your browser. Visit `/history` to see a full table of your sessions from the last 14 days — with scores, verdicts, and links back to each report. No account needed.
 
 ### 🔗 Shareable Results
 
@@ -232,7 +232,7 @@ This project is built with a **privacy-by-design** philosophy:
 | **No audio storage** | Voice recordings are streamed in real-time and never persisted |
 | **No transcript retention** | Interview transcripts are not permanently stored — they exist only during the session for grading purposes |
 | **No API key persistence on server** | In PROD mode, API keys may pass through backend memory for active Gemini sessions, but are never persisted to database or disk |
-| **Automatic data cleanup** | A scheduled task runs every 6 hours and deletes all interview session reports older than **2 weeks** |
+| **Automatic data cleanup** | A scheduled task runs every 6 hours and deletes all interview session reports older than **14 days** |
 | **Mobile device blocking** | Mobile phones and tablets are redirected away from the app via a server-side interceptor — a professional interview requires a desktop environment with a proper microphone |
 | **Mode-aware legal pages** | Privacy Policy and Terms & Conditions adapt their content based on the app mode (DEV/PROD/REVIEWER), so users only see information relevant to their context |
 

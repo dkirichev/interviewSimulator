@@ -26,13 +26,12 @@ class InterviewSessionRepositoryTest extends AbstractIntegrationTest {
 
     @Test
     void testSave_CreatesNewSession() {
-        InterviewSession session = InterviewSession.builder()
-                .candidateName("John Doe")
-                .jobPosition("Java Developer")
-                .difficulty("Standard")
-                .startedAt(LocalDateTime.now())
-                .transcript("")
-                .build();
+		InterviewSession session = InterviewSession.builder()
+				.candidateName("John Doe")
+				.jobPosition("Java Developer")
+				.difficulty("Standard")
+				.startedAt(LocalDateTime.now())
+				.build();
 
         InterviewSession saved = repository.save(session);
 
@@ -45,23 +44,21 @@ class InterviewSessionRepositoryTest extends AbstractIntegrationTest {
 
     @Test
     void testFindById_ReturnsSession() {
-        InterviewSession session = InterviewSession.builder()
-                .candidateName("Jane Smith")
-                .jobPosition("QA Engineer")
-                .difficulty("Easy")
-                .startedAt(LocalDateTime.now())
-                .transcript("Test transcript")
-                .build();
+		InterviewSession session = InterviewSession.builder()
+				.candidateName("Jane Smith")
+				.jobPosition("QA Engineer")
+				.difficulty("Easy")
+				.startedAt(LocalDateTime.now())
+				.build();
 
         InterviewSession saved = repository.save(session);
         UUID id = saved.getId();
 
-        Optional<InterviewSession> found = repository.findById(id);
+		Optional<InterviewSession> found = repository.findById(id);
 
-        assertThat(found).isPresent();
-        assertThat(found.get().getCandidateName()).isEqualTo("Jane Smith");
-        assertThat(found.get().getTranscript()).isEqualTo("Test transcript");
-    }//testFindById_ReturnsSession
+		assertThat(found).isPresent();
+		assertThat(found.get().getCandidateName()).isEqualTo("Jane Smith");
+	}//testFindById_ReturnsSession
 
 
     @Test
@@ -76,22 +73,21 @@ class InterviewSessionRepositoryTest extends AbstractIntegrationTest {
 
     @Test
     void testSave_UpdatesExistingSession() {
-        InterviewSession session = InterviewSession.builder()
-                .candidateName("Update Test")
-                .jobPosition("Developer")
-                .difficulty("Standard")
-                .startedAt(LocalDateTime.now())
-                .transcript("Initial")
-                .build();
+		InterviewSession session = InterviewSession.builder()
+				.candidateName("Update Test")
+				.jobPosition("Developer")
+				.difficulty("Standard")
+				.startedAt(LocalDateTime.now())
+				.build();
 
-        InterviewSession saved = repository.save(session);
-        saved.setTranscript("Updated transcript");
-        saved.setEndedAt(LocalDateTime.now());
+		InterviewSession saved = repository.save(session);
+		saved.setJobPosition("Backend Developer");
+		saved.setEndedAt(LocalDateTime.now());
 
-        InterviewSession updated = repository.save(saved);
+		InterviewSession updated = repository.save(saved);
 
-        assertThat(updated.getTranscript()).isEqualTo("Updated transcript");
-        assertThat(updated.getEndedAt()).isNotNull();
-    }//testSave_UpdatesExistingSession
+		assertThat(updated.getJobPosition()).isEqualTo("Backend Developer");
+		assertThat(updated.getEndedAt()).isNotNull();
+	}//testSave_UpdatesExistingSession
 
 }//InterviewSessionRepositoryTest
