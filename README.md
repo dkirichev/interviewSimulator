@@ -61,6 +61,14 @@ Get detailed performance feedback after each interview:
 </tr>
 </table>
 
+### 📋 Interview History
+
+Your past interviews are automatically saved in your browser. Visit `/history` to see a full table of your sessions from the last 2 weeks — with scores, verdicts, and links back to each report. No account needed.
+
+### 🔗 Shareable Results
+
+Every report page has a **Copy Link** button. Share your interview results directly with friends, mentors, or recruiters.
+
 ### 🎯 Difficulty Levels
 
 | Level | Style | Best For |
