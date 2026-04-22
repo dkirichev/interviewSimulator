@@ -31,6 +31,19 @@
 		};
 	</script>
 
+	<style>
+		/* Gear button: ensure visibility in light theme where bg-slate-800/text-slate-500 gets overridden */
+		.theme-light #interview-settings-btn {
+			background-color: rgba(226, 232, 240, 0.9) !important;
+			border-color: #94a3b8 !important;
+			color: #334155 !important;
+		}
+		.theme-light #interview-settings-btn:hover {
+			background-color: rgba(203, 213, 225, 0.95) !important;
+			color: #0f172a !important;
+		}
+	</style>
+
 	<section id="interview-view" class="view-section active flex-col h-screen w-full overflow-hidden">
 		<!--/*  Header / Status Bar  */-->
 		<header class="h-20 border-b border-slate-800 bg-slate-900/90 backdrop-blur flex items-center justify-between px-8 sticky top-0 z-20">
@@ -112,16 +125,21 @@
 					</div>
 				</button>
 
-				<!--/*  Mic Toggle  */-->
-				<button id="mic-btn" onclick="toggleMic()"
-						class="w-16 h-16 rounded-full bg-slate-800 text-white hover:bg-slate-700 border-2 border-slate-600 flex items-center justify-center text-2xl transition shadow-lg relative overflow-hidden group">
-					<i class="fa-solid fa-microphone group-hover:scale-110 transition-transform"></i>
-					<div class="absolute inset-0 bg-red-500/20" id="mic-mute-overlay">
-						<div class="absolute inset-0 flex items-center justify-center">
-							<div class="w-full h-0.5 bg-red-500 rotate-45 transform origin-center"></div>
+				<!--/*  Mic Toggle (or PTT indicator when in PTT mode)  */-->
+				<div class="flex flex-col items-center gap-1.5">
+					<button id="mic-btn" onclick="toggleMic()"
+							class="w-16 h-16 rounded-full bg-slate-800 text-white hover:bg-slate-700 border-2 border-slate-600 flex items-center justify-center text-2xl transition shadow-lg relative overflow-hidden group">
+						<i class="fa-solid fa-microphone group-hover:scale-110 transition-transform"></i>
+						<div class="absolute inset-0 bg-red-500/20" id="mic-mute-overlay">
+							<div class="absolute inset-0 flex items-center justify-center">
+								<div class="w-full h-0.5 bg-red-500 rotate-45 transform origin-center"></div>
+							</div>
 						</div>
+					</button>
+					<div id="ptt-mic-indicator" class="hidden">
+						<span class="text-xs font-mono font-semibold text-slate-400 bg-slate-800/90 border border-slate-700 px-2 py-0.5 rounded-full tracking-wide">PTT</span>
 					</div>
-				</button>
+				</div>
 
 				<!--/*  End Call  */-->
 				<button onclick="endInterview()"
@@ -130,14 +148,144 @@
 				</button>
 			</div>
 
-			<!--/*  Status Badge  */-->
-			<div class="w-40 hidden md:flex justify-end">
-				<div id="status-badge" class="px-4 py-1.5 rounded-full text-sm font-bold tracking-wider uppercase bg-slate-800 text-slate-400 border border-slate-700"
-						th:text="#{interview.status.initializing}">INITIALIZING
+			<!--/*  Status Badge + gear settings button  */-->
+			<div class="w-40 hidden md:flex items-center gap-2 justify-end">
+				<button onclick="openPttModal()" id="interview-settings-btn"
+						title="Interview Settings"
+						class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-500 hover:text-white transition-all duration-200 group">
+					<i class="fa-solid fa-gear text-sm group-hover:rotate-45 transition-transform duration-300"></i>
+				</button>
+				<div class="flex flex-col items-end gap-1">
+					<div id="status-badge" class="px-3 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase bg-slate-800 text-slate-400 border border-slate-700"
+							th:text="#{interview.status.initializing}">INITIALIZING
+					</div>
+					<span id="ptt-hint" class="hidden text-xs font-mono text-slate-500 text-right leading-tight"></span>
 				</div>
 			</div>
 		</footer>
 	</section>
+
+	<!--/*  PTT Settings Modal  */-->
+	<div id="ptt-settings-modal"
+		 class="hidden fixed inset-0 z-[100] items-center justify-center bg-black/75 backdrop-blur-sm"
+		 onclick="handlePttModalBackdrop(event)">
+		<div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-md mx-4 shadow-2xl shadow-black/60 overflow-hidden">
+			<!--/* Gradient accent line */-->
+			<div class="h-0.5 w-full bg-gradient-to-r from-blue-600 via-violet-500 to-blue-600"></div>
+
+			<!--/* Header */-->
+			<div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+				<div class="flex items-center gap-3">
+					<div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600/20 to-violet-600/20 border border-blue-500/30 flex items-center justify-center">
+						<i class="fa-solid fa-sliders text-blue-400 text-sm"></i>
+					</div>
+					<h3 class="text-white font-semibold text-base">Interview Settings</h3>
+				</div>
+				<button onclick="closePttModal()"
+						class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+					<i class="fa-solid fa-xmark"></i>
+				</button>
+			</div>
+
+			<!--/* Body */-->
+			<div class="px-6 py-5 space-y-4">
+
+				<!--/* Input Mode Toggle */-->
+				<div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-slate-600/50 transition-colors cursor-pointer select-none"
+					 onclick="togglePttMode(!isPttMode)">
+					<div class="flex items-center justify-between gap-4">
+						<div class="flex items-center gap-3">
+							<div class="w-9 h-9 rounded-lg bg-slate-700/80 flex items-center justify-center flex-shrink-0">
+								<i class="fa-solid fa-keyboard text-slate-300 text-sm"></i>
+							</div>
+							<div>
+								<p class="text-white text-sm font-semibold">Push to Talk</p>
+								<p class="text-slate-400 text-xs mt-0.5">Hold a key combo to record</p>
+							</div>
+						</div>
+						<!--/* JS-driven toggle — no peer-* classes needed */-->
+						<div id="ptt-toggle-track"
+							 class="w-11 h-6 rounded-full flex-shrink-0 relative transition-colors duration-200"
+							 style="background-color: #374151;">
+							<div id="ptt-toggle-thumb"
+								 class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+								 style="left: 2px; transform: translateX(0px);"></div>
+						</div>
+					</div>
+				</div>
+
+				<!--/* Free Talk info (hidden in PTT mode) */-->
+				<div id="ptt-freetalk-section" class="space-y-3">
+					<!--/* Mode cards */-->
+					<div class="grid grid-cols-2 gap-3">
+						<div class="p-3 bg-blue-600/10 border border-blue-500/30 rounded-xl">
+							<div class="flex items-center gap-2 mb-1.5">
+								<i class="fa-solid fa-circle-check text-blue-400 text-xs"></i>
+								<span class="text-blue-300 text-xs font-semibold">Current mode</span>
+							</div>
+							<p class="text-white text-sm font-medium">Free Talk</p>
+							<p class="text-slate-400 text-xs mt-0.5 leading-snug">Mic button in controls bar toggles recording</p>
+						</div>
+						<div class="p-3 bg-slate-800/60 border border-slate-700/50 rounded-xl opacity-60">
+							<div class="flex items-center gap-2 mb-1.5">
+								<i class="fa-solid fa-keyboard text-slate-500 text-xs"></i>
+								<span class="text-slate-500 text-xs font-semibold">Alternative</span>
+							</div>
+							<p class="text-slate-300 text-sm font-medium">Push to Talk</p>
+							<p class="text-slate-500 text-xs mt-0.5 leading-snug">Hold key combo while speaking</p>
+						</div>
+					</div>
+				</div>
+
+				<!--/* PTT Key Config (hidden in free-talk mode) */-->
+				<div id="ptt-key-section" class="hidden space-y-4">
+					<!--/* Active PTT indicator */-->
+					<div class="grid grid-cols-2 gap-3">
+						<div class="p-3 bg-slate-800/60 border border-slate-700/50 rounded-xl opacity-60">
+							<div class="flex items-center gap-2 mb-1.5">
+								<i class="fa-solid fa-microphone text-slate-500 text-xs"></i>
+								<span class="text-slate-500 text-xs font-semibold">Disabled</span>
+							</div>
+							<p class="text-slate-300 text-sm font-medium">Free Talk</p>
+							<p class="text-slate-500 text-xs mt-0.5 leading-snug">Mic button inactive in this mode</p>
+						</div>
+						<div class="p-3 bg-blue-600/10 border border-blue-500/30 rounded-xl">
+							<div class="flex items-center gap-2 mb-1.5">
+								<i class="fa-solid fa-circle-check text-blue-400 text-xs"></i>
+								<span class="text-blue-300 text-xs font-semibold">Current mode</span>
+							</div>
+							<p class="text-white text-sm font-medium">Push to Talk</p>
+							<p class="text-slate-400 text-xs mt-0.5 leading-snug">Hold shortcut, release to send</p>
+						</div>
+					</div>
+
+					<!--/* Shortcut picker */-->
+					<div>
+						<div class="flex items-center justify-between mb-2">
+							<p class="text-slate-300 text-sm font-medium">Activation Shortcut</p>
+							<span id="ptt-current-key"
+								  class="px-3 py-1 bg-slate-800 border border-blue-500/40 rounded-lg text-blue-300 font-mono text-sm font-bold tracking-wide">Ctrl+D</span>
+						</div>
+						<div id="ptt-combo-list" class="space-y-2"></div>
+					</div>
+
+					<div class="flex items-start gap-2">
+						<i class="fa-solid fa-circle-info text-slate-600 text-xs mt-0.5 flex-shrink-0"></i>
+						<p class="text-slate-500 text-xs leading-relaxed">
+							Hold while speaking, release when done. The AI responds only after you release — silence while holding never triggers a response.
+						</p>
+					</div>
+				</div>
+			</div>
+
+			<!--/* Footer */-->
+			<div class="px-6 py-3 border-t border-slate-800 bg-slate-800/30">
+				<p class="text-slate-600 text-xs text-center">
+					<i class="fa-solid fa-floppy-disk mr-1"></i>Preference saved to browser storage
+				</p>
+			</div>
+		</div>
+	</div>
 
 	<!--/*  Interview Scripts  */-->
 	<script th:inline="javascript">
@@ -145,6 +293,11 @@
 		document.addEventListener('DOMContentLoaded', function () {
 			// Mark interview as active so mic/end buttons work
 			isInterviewActive = true;
+
+			// Initialise Push-to-Talk module (loads saved preferences)
+			if (typeof initPtt === 'function') {
+				initPtt();
+			}
 
 			// The audio-processor.js will read from window.interviewSession
 			if (typeof startInterviewFromSession === 'function') {

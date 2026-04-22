@@ -45,6 +45,7 @@ public class InterviewWebSocketController {
 		String interviewerNameEN = sanitizerService.sanitizeName(payload.get("interviewerNameEN"));
 		String interviewerNameBG = sanitizerService.sanitizeName(payload.get("interviewerNameBG"));
 		String userApiKey = payload.get("userApiKey");
+		boolean pttMode = Boolean.parseBoolean(payload.getOrDefault("pttMode", "false"));
 
 		// Validate required fields
 		if (candidateName == null || candidateName.isBlank()) {
@@ -90,7 +91,7 @@ public class InterviewWebSocketController {
 
 		UUID interviewSessionId = geminiIntegrationService.startInterview(
 				sessionIdStr, candidateName, position, difficulty, language, cvText,
-				voiceId, interviewerNameEN, interviewerNameBG, userApiKey, interviewLength);
+				voiceId, interviewerNameEN, interviewerNameBG, userApiKey, interviewLength, pttMode);
 
 		if (interviewSessionId != null) {
 			log.info("Interview started - WebSocket: {}, Interview Session: {}, Language: {}, Voice: {}, CV provided: {}, User API key: {}",
@@ -122,6 +123,14 @@ public class InterviewWebSocketController {
 		log.debug("Mic turned off for session: {}", sessionId);
 		geminiIntegrationService.sendAudioStreamEnd(sessionId);
 	}//micOff
+
+
+	@MessageMapping("/interview/mode-switch")
+	public void modeSwitchMicOff(SimpMessageHeaderAccessor headerAccessor) {
+		String sessionId = headerAccessor.getSessionId();
+		log.debug("Input mode switch mic-off (no timestamp) for session: {}", sessionId);
+		geminiIntegrationService.sendAudioStreamEndNoTimestamp(sessionId);
+	}//modeSwitchMicOff
 
 
 	private void sendError(String sessionId, String message) {

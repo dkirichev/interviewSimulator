@@ -85,6 +85,17 @@ Every report page has a **Copy Link** button. Share your interview results direc
 | **🧭 Standard** | 5-8 min | 4-6 balanced questions |
 | **🏁 Marathon** | 10-15 min | 8-12 in-depth questions |
 
+### 🎙️ Push to Talk
+
+During an interview, click the **Settings** button (⚙️ next to the status badge) to switch between two input modes:
+
+| Mode | How it works |
+|------|-------------|
+| **Free Talk** | Mic toggle button controls recording (default) |
+| **Push to Talk** | Hold a keyboard shortcut to record; release to send |
+
+Default shortcut is `Ctrl+D` — changeable to `Ctrl+Space`, `Ctrl+M`, `Ctrl+Shift+M`, `Ctrl+Shift+D`, or `F9`. Preference is saved to browser storage.
+
 ### 💼 Position-Specific Questions
 
 The AI tailors questions to your target role:

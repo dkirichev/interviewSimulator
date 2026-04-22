@@ -62,6 +62,14 @@ public class GeminiIntegrationService {
 	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty,
 							   String language, String cvText, String voiceId, String interviewerNameEN,
 							   String interviewerNameBG, String userApiKey, String interviewLength) {
+		return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText,
+				voiceId, interviewerNameEN, interviewerNameBG, userApiKey, interviewLength, false);
+	}//startInterview
+
+
+	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty,
+							   String language, String cvText, String voiceId, String interviewerNameEN,
+							   String interviewerNameBG, String userApiKey, String interviewLength, boolean pttMode) {
 		// Determine which API key to use
 		String effectiveApiKey = determineApiKey(userApiKey);
 		if (effectiveApiKey == null || effectiveApiKey.isBlank()) {
@@ -81,6 +89,7 @@ public class GeminiIntegrationService {
 		try {
 			// Create Gemini client with the selected voice and effective API key
 			GeminiLiveClient geminiClient = new GeminiLiveClient(effectiveApiKey, geminiConfig.getLiveModel(), effectiveVoice);
+			geminiClient.setPttMode(pttMode);
 
 			// Generate system instruction for the AI interviewer (language-aware, with optional CV and custom names)
 			String systemInstruction;
@@ -91,11 +100,12 @@ public class GeminiIntegrationService {
 			}
 			geminiClient.setSystemInstruction(systemInstruction);
 
-			// Create interview state (store voice, instruction, and API key for potential reconnection)
+			// Create interview state (store voice, instruction, API key, and pttMode for potential reconnection)
 			InterviewState state = new InterviewState(interviewSessionId, geminiClient, language);
 			state.setVoiceId(effectiveVoice);
 			state.setSystemInstruction(systemInstruction);
 			state.setUserApiKey(effectiveApiKey);
+			state.setPttMode(pttMode);
 			activeSessions.put(wsSessionId, state);
 
 			// Setup callbacks
@@ -319,6 +329,7 @@ public class GeminiIntegrationService {
 		String effectiveApiKey = state.getUserApiKey();
 		GeminiLiveClient newClient = new GeminiLiveClient(effectiveApiKey, geminiConfig.getLiveModel(), effectiveVoice);
 		newClient.setSystemInstruction(state.getSystemInstruction());
+		newClient.setPttMode(state.isPttMode());
 
 		// Update state with new client
 		state.setGeminiClient(newClient);
@@ -365,6 +376,20 @@ public class GeminiIntegrationService {
 			state.getGeminiClient().sendAudioStreamEnd();
 		}
 	}//sendAudioStreamEnd
+
+
+	/**
+	 * Sends audioStreamEnd to Gemini WITHOUT timestamp injection.
+	 * Used when switching input modes mid-interview so the current Gemini turn ends
+	 * cleanly (no VAD timeout) without giving the AI an elapsed-time cue that could
+	 * trigger early interview conclusion.
+	 */
+	public void sendAudioStreamEndNoTimestamp(String wsSessionId) {
+		InterviewState state = activeSessions.get(wsSessionId);
+		if (state != null && !state.isEnded()) {
+			state.getGeminiClient().sendAudioStreamEnd();
+		}
+	}//sendAudioStreamEndNoTimestamp
 
 
 	public void endInterview(String wsSessionId) {
@@ -523,6 +548,9 @@ public class GeminiIntegrationService {
 		// Elapsed-time timer (milliseconds since interview started)
 		private long interviewStartTime = 0;
 
+		// PTT mode flag (persisted for reconnection)
+		private boolean pttMode = false;
+
 
 		public InterviewState(UUID interviewSessionId, GeminiLiveClient geminiClient, String language) {
 			this.interviewSessionId = interviewSessionId;
@@ -637,6 +665,16 @@ public class GeminiIntegrationService {
 		public void setUserApiKey(String userApiKey) {
 			this.userApiKey = userApiKey;
 		}//setUserApiKey
+
+
+		public boolean isPttMode() {
+			return pttMode;
+		}//isPttMode
+
+
+		public void setPttMode(boolean pttMode) {
+			this.pttMode = pttMode;
+		}//setPttMode
 
 
 		public synchronized void startTimer() {

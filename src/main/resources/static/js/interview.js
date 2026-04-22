@@ -19,6 +19,14 @@ const callDurationEl = document.getElementById('call-duration');
 function enableMicAfterAI() {
 	if (!isInterviewActive) return;
 
+	// PTT mode: don't auto-enable mic, show key hint
+	if (typeof isPttMode !== 'undefined' && isPttMode) {
+		if (typeof pttKeyConfig !== 'undefined') {
+			updateStatus('Hold ' + pttKeyConfig.display + ' to speak', 'bg-slate-700/50 text-slate-400 border-slate-600/50');
+		}
+		return;
+	}
+
 	// Enable mic
 	isMicActive = true;
 	const btn = document.getElementById('mic-btn');
@@ -217,6 +225,7 @@ function endInterview() {
 	isInterviewActive = false;
 	isMicActive = false;
 
+	if (typeof cleanupPtt === 'function') cleanupPtt();
 	stopVisualizer();
 	stopAudioCapture();
 	stopCallTimer();

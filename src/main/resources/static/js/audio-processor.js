@@ -142,7 +142,8 @@ function startInterviewSession() {
 		position: currentSession.position,
 		difficulty: currentSession.difficulty,
 		interviewLength: currentSession.interviewLength,
-		language: currentSession.language
+		language: currentSession.language,
+		pttMode: String(typeof isPttMode !== 'undefined' ? isPttMode : false)
 	};
 
 	// Add CV text if available
@@ -214,7 +215,11 @@ function handleStatusMessage(message) {
 			} else if (isMicActive) {
 				updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
 			} else {
-				updateStatus('Your Turn', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
+				if (typeof isPttMode !== 'undefined' && isPttMode && typeof pttKeyConfig !== 'undefined') {
+					updateStatus('Hold ' + pttKeyConfig.display + ' to speak', 'bg-slate-700/50 text-slate-400 border-slate-600/50');
+				} else {
+					updateStatus('Your Turn', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
+				}
 			}
 			break;
 		case 'INTERRUPTED':
@@ -394,6 +399,14 @@ async function startAudioCapture() {
 
 			const inputData = e.inputBuffer.getChannelData(0);
 
+			// PTT mode: skip silence chunks so Gemini's VAD never sees silence and
+			// never auto-responds while the user is pausing mid-thought with key held.
+			if (typeof isPttMode !== 'undefined' && isPttMode) {
+				let sumSq = 0;
+				for (let i = 0; i < inputData.length; i++) sumSq += inputData[i] * inputData[i];
+				if (Math.sqrt(sumSq / inputData.length) < 0.005) return;
+			}
+
 			// Convert Float32 to Int16 PCM
 			const pcmData = floatTo16BitPCM(inputData);
 
@@ -412,17 +425,22 @@ async function startAudioCapture() {
 	}
 }
 
-function stopAudioCapture() {
+function sendMicOffSignal() {
+	if (stompClient && isConnected) {
+		stompClient.send('/app/interview/mic-off', {}, '');
+	}
+}
+
+function stopAudioCaptureOnly() {
 	if (globalStream) globalStream.getTracks().forEach(track => track.stop());
 	if (processor) processor.disconnect();
 	if (input) input.disconnect();
 	if (audioContext && audioContext.state !== 'closed') audioContext.close();
+}
 
-	// Notify server that audio stream ended
-	if (stompClient && isConnected) {
-		stompClient.send('/app/interview/mic-off', {}, '');
-	}
-
+function stopAudioCapture() {
+	stopAudioCaptureOnly();
+	sendMicOffSignal();
 }
 
 // Convert Float32Array to Int16Array (PCM)

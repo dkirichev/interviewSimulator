@@ -64,6 +64,10 @@ public class GeminiLiveClient {
 	private Runnable onSessionResumptionReady;
 
 
+	// When true: disables Gemini's built-in VAD so silence doesn't trigger a turn end.
+	// Required for Push-to-Talk mode — turn ends only on explicit audioStreamEnd.
+	private boolean pttMode = false;
+
 	public GeminiLiveClient(String apiKey, String model, String voiceName) {
 		this.apiKey = apiKey;
 		this.model = model;
@@ -74,6 +78,10 @@ public class GeminiLiveClient {
 				.pingInterval(30, TimeUnit.SECONDS)
 				.build();
 	}//GeminiLiveClient
+
+	public void setPttMode(boolean pttMode) {
+		this.pttMode = pttMode;
+	}//setPttMode
 
 
 	public void setSystemInstruction(String instruction) {
@@ -233,6 +241,17 @@ public class GeminiLiveClient {
 			// Enable transcription for building transcript (camelCase)
 			setup.set("inputAudioTranscription", objectMapper.createObjectNode());
 			setup.set("outputAudioTranscription", objectMapper.createObjectNode());
+
+			// PTT mode: disable VAD so Gemini never auto-ends a turn on silence.
+			// Turn completion is signalled explicitly via audioStreamEnd on key release.
+			if (pttMode) {
+				ObjectNode realtimeInputConfig = objectMapper.createObjectNode();
+				ObjectNode autoActivityDetection = objectMapper.createObjectNode();
+				autoActivityDetection.put("disabled", true);
+				realtimeInputConfig.set("automaticActivityDetection", autoActivityDetection);
+				setup.set("realtimeInputConfig", realtimeInputConfig);
+				log.info("PTT mode: automatic activity detection disabled");
+			}
 
 			root.set("setup", setup);
 
