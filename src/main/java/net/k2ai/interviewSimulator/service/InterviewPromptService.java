@@ -42,55 +42,65 @@ public class InterviewPromptService {
 
 
 	public String generateInterviewerPrompt(String position, String difficulty, String language) {
-		return generateInterviewerPrompt(position, difficulty, language, null, "Alex", "Алекс");
+		return generateInterviewerPrompt(position, difficulty, language, null, "Alex", "Алекс", "Standard");
 	}//generateInterviewerPrompt
 
 
 	public String generateInterviewerPrompt(String position, String difficulty, String language, String cvText) {
-		return generateInterviewerPrompt(position, difficulty, language, cvText, "Alex", "Алекс");
+		return generateInterviewerPrompt(position, difficulty, language, cvText, "Alex", "Алекс", "Standard");
 	}//generateInterviewerPrompt
 
 
 	public String generateInterviewerPrompt(String position, String difficulty, String language, String cvText, String interviewerNameEN, String interviewerNameBG) {
-		if ("bg".equals(language)) {
-			return generateBulgarianPrompt(position, difficulty, cvText, interviewerNameBG);
-		}
-		return generateEnglishPrompt(position, difficulty, cvText, interviewerNameEN);
+		return generateInterviewerPrompt(position, difficulty, language, cvText, interviewerNameEN, interviewerNameBG, "Standard");
 	}//generateInterviewerPrompt
 
 
-	private String generateEnglishPrompt(String position, String difficulty, String cvText, String interviewerName) {
+	public String generateInterviewerPrompt(String position, String difficulty, String language, String cvText, String interviewerNameEN, String interviewerNameBG, String interviewLength) {
+		if ("bg".equals(language)) {
+			return generateBulgarianPrompt(position, difficulty, cvText, interviewerNameBG, interviewLength);
+		}
+		return generateEnglishPrompt(position, difficulty, cvText, interviewerNameEN, interviewLength);
+	}//generateInterviewerPrompt
+
+
+	private String generateEnglishPrompt(String position, String difficulty, String cvText, String interviewerName, String interviewLength) {
 		String difficultyBehavior = getDifficultyBehaviorEn(difficulty);
 		String positionContext = getPositionContextEn(position);
 		String cvSection = getCvSectionEn(cvText, difficulty);
+		String lengthBehavior = getInterviewLengthBehaviorEn(interviewLength);
 
 		return String.format("""
 						You are an experienced HR interviewer conducting a job interview for a %s position.
-						
+
 						## Your Role
 						You are a professional interviewer. Your name is %s.
 						You should sound natural, professional, and human-like in your responses.
-						
+
+						## Interview Length & Pacing
+						%s
+
 						## Interview Guidelines
 						1. Start by briefly introducing yourself and asking the candidate to introduce themselves
-						2. Ask 5-7 relevant questions appropriate for a %s role
+						2. Ask the number of questions specified by the Interview Length above
 						3. Listen carefully to responses and ask follow-up questions when needed
 						4. Keep your responses concise - this is a conversation, not a lecture
 						5. Be professional but conversational
-						
+
 						## Difficulty Level: %s
 						%s
-						
+
 						## Position-Specific Focus
 						%s
 						%s
 						## Concluding the Interview
-						When you have gathered enough information (after 5-7 questions), naturally conclude by:
+						Conclude the interview when you have reached the target question count OR when the timestamps indicate you have reached the target duration — whichever comes first.
+						Conclude naturally by:
 						- Thanking the candidate for their time
 						- Mentioning that "we have all the information we need"
 						- Saying something like "we'll be in touch with next steps"
 						- CRITICAL: You MUST end your final concluding message with the exact token [END_INTERVIEW] — this signals the system to end the session. Do not say this token aloud; just include it at the very end of your last response text.
-						
+
 						## Important Notes
 						- Do NOT mention that you are an AI - you are %s, the interviewer
 						- NEVER mention the company name - do not say "Company Name" or any placeholder company names
@@ -99,47 +109,52 @@ public class InterviewPromptService {
 						- React naturally to the candidate's answers
 						- If the candidate gives a poor answer, probe deeper but remain professional
 						- If the candidate is clearly struggling, you may offer gentle encouragement
-						
+
 						Begin the interview now by introducing yourself briefly.
 						""",
-				position, interviewerName, position, difficulty, difficultyBehavior, positionContext, cvSection, interviewerName
+				position, interviewerName, lengthBehavior, difficulty, difficultyBehavior, positionContext, cvSection, interviewerName
 		);
 	}//generateEnglishPrompt
 
 
-	private String generateBulgarianPrompt(String position, String difficulty, String cvText, String interviewerName) {
+	private String generateBulgarianPrompt(String position, String difficulty, String cvText, String interviewerName, String interviewLength) {
 		String difficultyBehavior = getDifficultyBehaviorBg(difficulty);
 		String positionContext = getPositionContextBg(position);
 		String cvSection = getCvSectionBg(cvText, difficulty);
+		String lengthBehavior = getInterviewLengthBehaviorBg(interviewLength);
 
 		return String.format("""
 						Ти си опитен HR интервюиращ, провеждащ интервю за работа за позиция %s.
-						
+
 						## Твоята Роля
 						Ти си професионален интервюиращ. Казваш се %s.
 						Трябва да звучиш естествено, професионално и човешки в отговорите си.
 						ВАЖНО: Говори САМО на български език през цялото интервю.
-						
+
+						## Продължителност и Темпо на Интервюто
+						%s
+
 						## Насоки за Интервюто
 						1. Започни като се представиш накратко и помоли кандидата да се представи
-						2. Задай 5-7 релевантни въпроса, подходящи за %s позиция
+						2. Задай броя въпроси, посочен в секцията за продължителност по-горе
 						3. Слушай внимателно отговорите и задавай допълнителни въпроси при нужда
 						4. Дръж отговорите си кратки - това е разговор, не лекция
 						5. Бъди професионален, но разговорен
-						
+
 						## Ниво на Трудност: %s
 						%s
-						
+
 						## Фокус за Позицията
 						%s
 						%s
 						## Приключване на Интервюто
-						Когато събереш достатъчно информация (след 5-7 въпроса), приключи естествено като:
+						Приключи когато достигнеш целевия брой въпроси ИЛИ когато timestamp-овете покажат, че си достигнал целевата продължителност — което от двете дойде първо.
+						Приключи естествено като:
 						- Благодариш на кандидата за отделеното време
 						- Споменеш, че "имаме цялата информация, която ни трябва"
 						- Кажеш нещо като "ще се свържем с вас за следващите стъпки"
 						- КРИТИЧНО: ТРЯБВА да завършиш последното си съобщение с точния токен [END_INTERVIEW] — това сигнализира на системата да приключи сесията. Не го казвай на глас; просто го добави в самия край на последния си текстов отговор.
-						
+
 						## Важни Бележки
 						- НЕ споменавай, че си AI - ти си %s, интервюиращият
 						- НИКОГА не споменавай името на компанията - не казвай "Company Name" или други placeholder имена
@@ -148,12 +163,64 @@ public class InterviewPromptService {
 						- Реагирай естествено на отговорите на кандидата
 						- Ако кандидатът даде слаб отговор, задълбочи, но остани професионален
 						- Ако кандидатът очевидно се затруднява, можеш да предложиш леко насърчение
-						
+
 						Започни интервюто сега като се представиш накратко.
 						""",
-				position, interviewerName, position, difficulty, difficultyBehavior, positionContext, cvSection, interviewerName
+				position, interviewerName, lengthBehavior, difficulty, difficultyBehavior, positionContext, cvSection, interviewerName
 		);
 	}//generateBulgarianPrompt
+
+
+	private String getInterviewLengthBehaviorEn(String interviewLength) {
+		return switch (interviewLength == null ? "standard" : interviewLength.toLowerCase()) {
+			case "quick" -> """
+					Target duration: 2-3 minutes. Ask 2-3 focused questions maximum.
+					The system injects [M:SS] elapsed-time markers with each user message.
+					- When you see [1:30] or later, start planning your conclusion
+					- When you see [2:00] or later, wrap up immediately after the current answer
+					- Do NOT ask new questions once the time limit is near
+					- Prioritize only the single most critical role-relevant question""";
+			case "marathon" -> """
+					Target duration: 10-15 minutes. Ask 8-12 comprehensive questions.
+					The system injects [M:SS] elapsed-time markers with each user message.
+					- Take time to explore each answer with follow-up questions
+					- Include scenario-based, behavioral, and deep technical questions
+					- When you see [12:00] or later, begin moving toward your conclusion
+					- When you see [14:00] or later, wrap up after the current answer""";
+			default -> """
+					Target duration: 5-8 minutes. Ask 4-6 balanced questions.
+					The system injects [M:SS] elapsed-time markers with each user message.
+					- When you see [6:00] or later, start planning your conclusion
+					- When you see [8:00] or later, wrap up immediately after the current answer
+					- Balance depth and breadth — one or two follow-ups per main question is enough""";
+		};
+	}//getInterviewLengthBehaviorEn
+
+
+	private String getInterviewLengthBehaviorBg(String interviewLength) {
+		return switch (interviewLength == null ? "standard" : interviewLength.toLowerCase()) {
+			case "quick" -> """
+					Целева продължителност: 2-3 минути. Задай максимум 2-3 фокусирани въпроса.
+					Системата инжектира [М:СС] маркери за изминало време с всяко съобщение на потребителя.
+					- Когато видиш [1:30] или по-късно, започни да планираш приключването
+					- Когато видиш [2:00] или по-късно, приключи веднага след текущия отговор
+					- НЕ задавай нови въпроси когато лимитът е близо
+					- Приоритизирай само единствения най-важен въпрос за ролята""";
+			case "marathon" -> """
+					Целева продължителност: 10-15 минути. Задай 8-12 изчерпателни въпроса.
+					Системата инжектира [М:СС] маркери за изминало време с всяко съобщение на потребителя.
+					- Отделяй време за допълнителни въпроси към всеки отговор
+					- Включи ситуационни, поведенчески и дълбоки технически въпроси
+					- Когато видиш [12:00] или по-късно, започни да се насочваш към приключване
+					- Когато видиш [14:00] или по-късно, приключи след текущия отговор""";
+			default -> """
+					Целева продължителност: 5-8 минути. Задай 4-6 балансирани въпроса.
+					Системата инжектира [М:СС] маркери за изминало време с всяко съобщение на потребителя.
+					- Когато видиш [6:00] или по-късно, започни да планираш приключването
+					- Когато видиш [8:00] или по-късно, приключи веднага след текущия отговор
+					- Балансирай дълбочина и широта — едно или две допълнителни питания на въпрос е достатъчно""";
+		};
+	}//getInterviewLengthBehaviorBg
 
 
 	private String getDifficultyBehaviorEn(String difficulty) {

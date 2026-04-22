@@ -22,6 +22,7 @@ public class InterviewWebSocketController {
 	private static final Set<String> VALID_DIFFICULTIES = Set.of("Easy", "Standard", "Hard");
 	private static final Set<String> VALID_LANGUAGES = Set.of("en", "bg");
 	private static final Set<String> VALID_VOICES = Set.of("Algieba", "Kore", "Fenrir", "Despina");
+	private static final Set<String> VALID_INTERVIEW_LENGTHS = Set.of("Quick", "Standard", "Marathon");
 
 	private final GeminiIntegrationService geminiIntegrationService;
 	private final SimpMessagingTemplate messagingTemplate;
@@ -38,6 +39,7 @@ public class InterviewWebSocketController {
 		String position = sanitizerService.sanitizePosition(payload.getOrDefault("position", ""));
 		String difficulty = payload.getOrDefault("difficulty", "Standard");
 		String language = payload.getOrDefault("language", "en");
+		String interviewLength = payload.getOrDefault("interviewLength", "Standard");
 		String cvText = sanitizerService.sanitizeCvText(payload.get("cvText"));
 		String voiceId = payload.get("voiceId");
 		String interviewerNameEN = sanitizerService.sanitizeName(payload.get("interviewerNameEN"));
@@ -63,6 +65,11 @@ public class InterviewWebSocketController {
 			difficulty = "Standard";
 		}
 
+		if (!VALID_INTERVIEW_LENGTHS.contains(interviewLength)) {
+			log.warn("Validation failed: invalid interviewLength '{}'", interviewLength);
+			interviewLength = "Standard";
+		}
+
 		if (!VALID_LANGUAGES.contains(language)) {
 			log.warn("Validation failed: invalid language '{}'", language);
 			language = "en";
@@ -83,7 +90,7 @@ public class InterviewWebSocketController {
 
 		UUID interviewSessionId = geminiIntegrationService.startInterview(
 				sessionIdStr, candidateName, position, difficulty, language, cvText,
-				voiceId, interviewerNameEN, interviewerNameBG, userApiKey);
+				voiceId, interviewerNameEN, interviewerNameBG, userApiKey, interviewLength);
 
 		log.info("Interview started - WebSocket: {}, Interview Session: {}, Language: {}, Voice: {}, CV provided: {}, User API key: {}",
 				sessionIdStr, interviewSessionId, language, voiceId, cvText != null && !cvText.isBlank(), userApiKey != null);

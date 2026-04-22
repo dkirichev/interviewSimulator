@@ -318,6 +318,26 @@ public class GeminiLiveClient {
 	}//sendText
 
 
+	public void sendRealtimeText(String text) {
+		if (!isConnected || webSocket == null) {
+			return;
+		}
+
+		try {
+			ObjectNode root = objectMapper.createObjectNode();
+			ObjectNode realtimeInput = objectMapper.createObjectNode();
+			realtimeInput.put("text", text);
+			root.set("realtimeInput", realtimeInput);
+
+			String json = objectMapper.writeValueAsString(root);
+			webSocket.send(json);
+			log.debug("Sent realtime text to Gemini: {}", text);
+		} catch (Exception e) {
+			log.error("Failed to send realtime text to Gemini", e);
+		}
+	}//sendRealtimeText
+
+
 	public void sendAudioStreamEnd() {
 		if (!isConnected || webSocket == null) {
 			return;

@@ -54,6 +54,14 @@ public class GeminiIntegrationService {
 	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty,
 							   String language, String cvText, String voiceId, String interviewerNameEN,
 							   String interviewerNameBG, String userApiKey) {
+		return startInterview(wsSessionId, candidateName, position, difficulty, language, cvText,
+				voiceId, interviewerNameEN, interviewerNameBG, userApiKey, "Standard");
+	}//startInterview
+
+
+	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty,
+							   String language, String cvText, String voiceId, String interviewerNameEN,
+							   String interviewerNameBG, String userApiKey, String interviewLength) {
 		// Create database session
 		UUID interviewSessionId = interviewService.startSession(candidateName, position, difficulty, language);
 
@@ -77,7 +85,7 @@ public class GeminiIntegrationService {
 		// Generate system instruction for the AI interviewer (language-aware, with optional CV and custom names)
 		String systemInstruction;
 		if (interviewerNameEN != null && interviewerNameBG != null) {
-			systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText, interviewerNameEN, interviewerNameBG);
+			systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText, interviewerNameEN, interviewerNameBG, interviewLength);
 		} else {
 			systemInstruction = promptService.generateInterviewerPrompt(position, difficulty, language, cvText);
 		}
@@ -96,8 +104,8 @@ public class GeminiIntegrationService {
 		// Connect to Gemini
 		geminiClient.connect();
 
-		log.info("Started interview session {} with voice: {}, using {}",
-				interviewSessionId, effectiveVoice, userApiKey != null ? "user API key" : "backend API key");
+		log.info("Started interview session {} with voice: {}, length: {}, using {}",
+				interviewSessionId, effectiveVoice, interviewLength, userApiKey != null ? "user API key" : "backend API key");
 
 		return interviewSessionId;
 	}//startInterview
@@ -134,6 +142,9 @@ public class GeminiIntegrationService {
 			log.info("Gemini ready for session: {} (new: {})", wsSessionId, isNewSession);
 
 			if (isNewSession) {
+				// Start elapsed-time timer when interview begins
+				state.startTimer();
+
 				// New session - send greeting to trigger AI to introduce itself
 				sendToClient(wsSessionId, "/queue/status", Map.of(
 						"type", "CONNECTED",
@@ -337,6 +348,9 @@ public class GeminiIntegrationService {
 	public void sendAudioStreamEnd(String wsSessionId) {
 		InterviewState state = activeSessions.get(wsSessionId);
 		if (state != null && !state.isEnded()) {
+			// Inject elapsed-time timestamp before stream end so the AI can track pacing
+			String timestamp = state.getElapsedTimestamp();
+			state.getGeminiClient().sendRealtimeText(timestamp);
 			state.getGeminiClient().sendAudioStreamEnd();
 		}
 	}//sendAudioStreamEnd
@@ -488,6 +502,9 @@ public class GeminiIntegrationService {
 		// Buffer for audio during reconnection
 		private final java.util.List<byte[]> audioBuffer = new java.util.ArrayList<>();
 
+		// Elapsed-time timer (milliseconds since interview started)
+		private long interviewStartTime = 0;
+
 
 		public InterviewState(UUID interviewSessionId, GeminiLiveClient geminiClient,
 							  String candidateName, String position, String difficulty, String language) {
@@ -608,6 +625,22 @@ public class GeminiIntegrationService {
 		public void setUserApiKey(String userApiKey) {
 			this.userApiKey = userApiKey;
 		}//setUserApiKey
+
+
+		public synchronized void startTimer() {
+			if (interviewStartTime == 0) {
+				interviewStartTime = System.currentTimeMillis();
+			}
+		}//startTimer
+
+
+		public String getElapsedTimestamp() {
+			if (interviewStartTime == 0) return "[0:00]";
+			long elapsedSeconds = (System.currentTimeMillis() - interviewStartTime) / 1000;
+			long minutes = elapsedSeconds / 60;
+			long seconds = elapsedSeconds % 60;
+			return String.format("[%d:%02d]", minutes, seconds);
+		}//getElapsedTimestamp
 
 
 		public synchronized void bufferAudio(byte[] audioData) {

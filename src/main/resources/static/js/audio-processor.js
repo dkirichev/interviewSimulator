@@ -45,6 +45,7 @@ function startInterviewFromSession() {
 			candidateName: window.interviewSession.candidateName || 'Candidate',
 			position: window.interviewSession.position || 'Developer',
 			difficulty: window.interviewSession.difficulty || 'Easy',
+			interviewLength: window.interviewSession.interviewLength || 'Standard',
 			language: window.interviewSession.language || 'bg',
 			cvText: window.interviewSession.cvText || null,
 			voiceId: window.interviewSession.voiceId || 'Algieba',
@@ -140,6 +141,7 @@ function startInterviewSession() {
 		candidateName: currentSession.candidateName,
 		position: currentSession.position,
 		difficulty: currentSession.difficulty,
+		interviewLength: currentSession.interviewLength,
 		language: currentSession.language
 	};
 

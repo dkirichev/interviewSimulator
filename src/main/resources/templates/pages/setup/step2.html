@@ -121,6 +121,52 @@
 							</div>
 						</div>
 
+						<!--/*  Interview Length  */-->
+						<div>
+							<label class="block text-sm font-medium text-slate-300 mb-2">
+								<span th:text="#{setup.interviewLength.label}">Interview Length</span>
+								<span class="text-red-500">*</span>
+							</label>
+							<div class="grid grid-cols-3 gap-2" id="interview-length-chips">
+								<!--/*  Quick  */-->
+								<label class="cursor-pointer group relative" onclick="selectInterviewLength('Quick')">
+									<input type="radio" th:field="*{interviewLength}" value="Quick" class="sr-only">
+									<div class="il-card il-card-Quick text-center py-2 rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-400 transition hover:bg-slate-800 font-medium">
+										<i class="fa-solid fa-bolt text-base mb-1 block"></i>
+										<div class="text-sm" th:text="#{setup.interviewLength.quick}">Quick</div>
+										<div class="text-xs opacity-60" th:text="#{setup.interviewLength.quick.duration}">2-3 min</div>
+									</div>
+									<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10" th:text="#{setup.interviewLength.quick.tooltip}">
+										<div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-700"></div>
+									</div>
+								</label>
+								<!--/*  Standard  */-->
+								<label class="cursor-pointer group relative" onclick="selectInterviewLength('Standard')">
+									<input type="radio" th:field="*{interviewLength}" value="Standard" class="sr-only">
+									<div class="il-card il-card-Standard text-center py-2 rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-400 transition hover:bg-slate-800 font-medium">
+										<i class="fa-solid fa-hourglass-half text-base mb-1 block"></i>
+										<div class="text-sm" th:text="#{setup.interviewLength.standard}">Standard</div>
+										<div class="text-xs opacity-60" th:text="#{setup.interviewLength.standard.duration}">5-8 min</div>
+									</div>
+									<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10" th:text="#{setup.interviewLength.standard.tooltip}">
+										<div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-700"></div>
+									</div>
+								</label>
+								<!--/*  Marathon  */-->
+								<label class="cursor-pointer group relative" onclick="selectInterviewLength('Marathon')">
+									<input type="radio" th:field="*{interviewLength}" value="Marathon" class="sr-only">
+									<div class="il-card il-card-Marathon text-center py-2 rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-400 transition hover:bg-slate-800 font-medium">
+										<i class="fa-solid fa-mountain text-base mb-1 block"></i>
+										<div class="text-sm" th:text="#{setup.interviewLength.marathon}">Marathon</div>
+										<div class="text-xs opacity-60" th:text="#{setup.interviewLength.marathon.duration}">10-15 min</div>
+									</div>
+									<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-700 text-xs text-slate-200 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10" th:text="#{setup.interviewLength.marathon.tooltip}">
+										<div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-700"></div>
+									</div>
+								</label>
+							</div>
+						</div>
+
 						<!--/*  CV Upload  */-->
 						<div id="cv-upload-section">
 							<label class="block text-sm font-medium text-slate-300 mb-3">
@@ -229,6 +275,18 @@
 			</div>
 		</div>
 	</div>
+
+	<style>
+		.il-card { transition: background-color .15s, border-color .15s, color .15s; }
+		/* Dark theme */
+		.il-card.il-active-Quick    { background-color: rgb(245 158 11 / .12) !important; border-color: rgb(245 158 11)  !important; color: rgb(251 191 36)  !important; }
+		.il-card.il-active-Standard { background-color: rgb(139 92 246 / .12)  !important; border-color: rgb(139 92 246) !important; color: rgb(167 139 250) !important; }
+		.il-card.il-active-Marathon { background-color: rgb(249 115 22 / .12)  !important; border-color: rgb(249 115 22) !important; color: rgb(251 146 60)  !important; }
+		/* Light theme — stronger bg + darker text for contrast */
+		.theme-light .il-card.il-active-Quick    { background-color: rgba(245, 158, 11, .18) !important; border-color: rgb(217 119 6)  !important; color: rgb(146 64 14)  !important; box-shadow: 0 0 0 1px rgba(245,158,11,.4) !important; }
+		.theme-light .il-card.il-active-Standard { background-color: rgba(139, 92, 246, .16) !important; border-color: rgb(109 40 217) !important; color: rgb(76 29 149)  !important; box-shadow: 0 0 0 1px rgba(139,92,246,.4)  !important; }
+		.theme-light .il-card.il-active-Marathon { background-color: rgba(249, 115, 22, .16) !important; border-color: rgb(234 88 12)  !important; color: rgb(154 52 18)  !important; box-shadow: 0 0 0 1px rgba(249,115,22,.4)  !important; }
+	</style>
 
 	<script th:inline="javascript">
 		const PRESET_POSITIONS = [
@@ -344,6 +402,20 @@
 				errorContainer.classList.add('hidden');
 			}
 		}
+
+		function selectInterviewLength(value) {
+			document.querySelectorAll('.il-card').forEach(card => {
+				card.classList.remove('il-active-Quick', 'il-active-Standard', 'il-active-Marathon');
+			});
+			const card = document.querySelector('.il-card-' + value);
+			if (card) card.classList.add('il-active-' + value);
+		}
+
+		// Reflect server-side default on page load
+		(function() {
+			const checked = document.querySelector('#interview-length-chips input[type=radio]:checked');
+			if (checked) selectInterviewLength(checked.value);
+		})();
 
 		function handleCvFileSelect(input) {
 			hideCvError();

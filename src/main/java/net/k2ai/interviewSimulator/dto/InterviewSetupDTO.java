@@ -32,6 +32,10 @@ public class InterviewSetupDTO implements Serializable {
 	@ValidDifficulty
 	private String difficulty = "Easy";
 
+	@NotBlank(message = "{validation.interviewLength.required}")
+	@ValidInterviewLength
+	private String interviewLength = "Standard";
+
 	// CV - transient (not serializable), extracted text stored instead
 	private transient MultipartFile cvFile;
 	private String cvText;

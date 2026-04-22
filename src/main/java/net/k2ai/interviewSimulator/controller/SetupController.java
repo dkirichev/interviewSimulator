@@ -177,6 +177,10 @@ public class SetupController {
 		String[] validDifficulties = {"Easy", "Standard", "Hard"};
 		form.setDifficulty(sanitizerService.validateEnum(form.getDifficulty(), validDifficulties, "Easy"));
 
+		// Validate interview length
+		String[] validInterviewLengths = {"Quick", "Standard", "Marathon"};
+		form.setInterviewLength(sanitizerService.validateEnum(form.getInterviewLength(), validInterviewLengths, "Standard"));
+
 		if (bindingResult.hasErrors()) {
 			model.addAttribute("content", "pages/setup/step2");
 			model.addAttribute("currentStep", 2);
