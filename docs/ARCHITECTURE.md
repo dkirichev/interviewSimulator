@@ -69,7 +69,7 @@ The AI Interview Simulator is a **real-time voice-based interview practice platf
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | **Spring Boot** | 4.0.0 | Application framework |
-| **Java** | 21 | Runtime (LTS) |
+| **Java** | 25 | Runtime (LTS) |
 | **Spring WebSocket** | - | STOMP broker for browser communication |
 | **OkHttp** | 4.12.0 | WebSocket client for Gemini API |
 | **Spring Data JPA** | - | Database abstraction |

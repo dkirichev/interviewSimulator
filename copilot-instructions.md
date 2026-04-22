@@ -6,7 +6,7 @@ AI assistant guidance for the Interview Simulator project.
 
 **AI-Powered Job Interview Simulator** using Gemini Live API with real-time bidirectional audio.
 
-**Stack:** Spring Boot 4.0.0 | Java 21 | PostgreSQL | Thymeleaf | WebSocket/STOMP | OkHttp | Lombok | PDFBox | Apache POI
+**Stack:** Spring Boot 4.0.0 | Java 25 | PostgreSQL | Thymeleaf | WebSocket/STOMP | OkHttp | Lombok | PDFBox | Apache POI
 
 **Features:**
 - Real-time voice conversation with AI interviewer

@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=openjdk" alt="Java 21" />
+  <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square&logo=openjdk" alt="Java 25" />
   <img src="https://img.shields.io/badge/Spring%20Boot-4.0.0-brightgreen?style=flat-square&logo=spring" alt="Spring Boot 4.0.0" />
   <img src="https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Gemini-2.5%20Flash-red?style=flat-square&logo=google" alt="Gemini AI" />
@@ -117,7 +117,7 @@ open http://localhost:8080
 ### Option 2: Local Development
 
 **Prerequisites:**
-- Java 21+
+- Java 25+
 - PostgreSQL 14+
 - Maven 3.9+
 - Gemini API Key (free from [Google AI Studio](https://aistudio.google.com/app/apikey))
@@ -166,7 +166,7 @@ export APP_MODE=DEV
 </td>
 <td align="center" width="120">
 <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" width="48" height="48" alt="Java" />
-<br><strong>Java 21</strong>
+<br><strong>Java 25</strong>
 </td>
 <td align="center" width="120">
 <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" width="48" height="48" alt="PostgreSQL" />

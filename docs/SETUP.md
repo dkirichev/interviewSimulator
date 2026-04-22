@@ -20,7 +20,7 @@ Before you begin, ensure you have the following installed:
 
 | Requirement | Version | Check Command |
 |-------------|---------|---------------|
-| **Java JDK** | 21+ | `java -version` |
+| **Java JDK** | 25+ | `java -version` |
 | **Maven** | 3.9+ | `mvn -version` |
 | **PostgreSQL** | 14+ | `psql --version` |
 | **Git** | Any | `git --version` |
@@ -31,8 +31,8 @@ Before you begin, ensure you have the following installed:
 <summary><strong>Ubuntu/Debian</strong></summary>
 
 ```bash
-# Java 21
-sudo apt install openjdk-21-jdk
+# Java 25
+sudo apt install openjdk-25-jdk
 
 # PostgreSQL
 sudo apt install postgresql postgresql-contrib
@@ -46,8 +46,8 @@ sudo apt install maven
 <summary><strong>macOS (Homebrew)</strong></summary>
 
 ```bash
-# Java 21
-brew install openjdk@21
+# Java 25
+brew install openjdk@25
 
 # PostgreSQL
 brew install postgresql@16
@@ -61,7 +61,7 @@ brew install maven
 <details>
 <summary><strong>Windows</strong></summary>
 
-1. **Java 21**: Download from [Adoptium](https://adoptium.net/)
+1. **Java 25**: Download from [Adoptium](https://adoptium.net/)
 2. **PostgreSQL**: Download from [postgresql.org](https://www.postgresql.org/download/windows/)
 3. **Maven**: Download from [maven.apache.org](https://maven.apache.org/download.cgi)
 </details>

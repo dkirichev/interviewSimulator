@@ -1,6 +1,6 @@
 # Technology decisions
 
-- We use Java 21 because the application benefits from current LTS stability while staying aligned with modern Spring
+- We use Java 25 because the application benefits from current LTS stability while staying aligned with modern Spring
   Boot baselines.
 - We use Spring Boot 4 because it provides integrated web, security, JPA, validation, scheduling, and WebSocket
   infrastructure with minimal custom framework glue.

@@ -59,7 +59,7 @@ If applicable, add screenshots.
 
 - OS: [e.g., Windows 11, macOS 14, Ubuntu 22.04]
 - Browser: [e.g., Chrome 120, Firefox 121]
-- Java Version: [e.g., 21.0.1]
+- Java Version: [e.g., 25.0.1]
 ```
 
 ### 💡 Suggesting Features
@@ -88,7 +88,7 @@ We welcome feature suggestions! Please:
 
 ### Prerequisites
 
-- Java 21+
+- Java 25+
 - Maven 3.9+
 - PostgreSQL 14+
 - Git

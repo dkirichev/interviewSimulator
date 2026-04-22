@@ -4,7 +4,7 @@
 
 - `Dockerfile` - Multi-stage container build for Spring Boot JAR (builder + non-root runtime).
 - `docker-compose.yml` - Local/prod orchestration for `app` + `postgres` with env-driven mode and DB config.
-- `pom.xml` - Primary build file (Java 21, Spring Boot 4, JPA, WebSocket, Security, Flyway, PostgreSQL, Gemini
+- `pom.xml` - Primary build file (Java 25, Spring Boot 4, JPA, WebSocket, Security, Flyway, PostgreSQL, Gemini
   integrations, PDF/DOCX parsing).
 - `package.json` - Frontend toolchain entry for Tailwind CSS compile/watch only.
 - `tailwind.config.js` - Tailwind theme/config.
