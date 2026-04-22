@@ -26,6 +26,7 @@ The AI Interview Simulator is a **real-time voice-based interview practice platf
 - **Server-side orchestration** - Spring Boot manages sessions and security
 - **Multi-language support** - English and Bulgarian with localized prompts
 - **CV-aware interviews** - AI uses uploaded resumes for personalized questions
+- **Configurable interview length** - Quick, Standard, and Marathon session modes
 - **Automatic grading** - Post-interview AI analysis and scoring
 
 ---
@@ -176,7 +177,7 @@ src/main/java/net/k2ai/interviewSimulator/
 
 ```
 1. /setup/step1 → User enters name
-2. /setup/step2 → User selects position, difficulty, uploads CV
+2. /setup/step2 → User selects position, difficulty, interview length, uploads CV
 3. /setup/step3 → User selects language and voice
 4. /interview → WebSocket connects, interview begins
 5. AI greets user → Interview conversation flows
@@ -298,7 +299,12 @@ The Gemini Live API connection supports automatic resumption:
 
 ### Interview Auto-Conclusion
 
-The AI naturally concludes interviews after 5-7 questions. Conclusion phrases (English and Bulgarian) are pattern-matched to trigger automatic grading:
+The AI naturally concludes interviews based on the selected length:
+- **Quick**: ~2-3 questions
+- **Standard**: ~4-6 questions
+- **Marathon**: ~8-12 questions
+
+Conclusion phrases (English and Bulgarian) are pattern-matched to trigger automatic grading:
 
 ```java
 // English patterns
@@ -474,7 +480,7 @@ src/main/resources/
 
 | Destination | Purpose | Payload |
 |-------------|---------|---------|
-| `/app/interview/start` | Start session | `{candidateName, position, difficulty, language, cvText?, voiceId?, userApiKey?}` |
+| `/app/interview/start` | Start session | `{candidateName, position, difficulty, interviewLength, language, cvText?, voiceId?, userApiKey?}` |
 | `/app/interview/audio` | Send audio chunk | Base64-encoded 16kHz PCM |
 | `/app/interview/end` | End interview | (none) |
 | `/app/interview/mic-off` | Signal mic muted | (none) |

@@ -155,7 +155,7 @@ Returns a preview audio file for a voice.
 |--------|------|-------------|
 | GET | `/` | Redirects to `/setup/step1` |
 | GET | `/setup/step1` | Setup wizard - Profile |
-| GET | `/setup/step2` | Setup wizard - Details + CV |
+| GET | `/setup/step2` | Setup wizard - Details + CV + Length |
 | GET | `/setup/step3` | Setup wizard - Voice & Language |
 | POST | `/setup/step1` | Process step 1 form |
 | POST | `/setup/step2` | Process step 2 form |
@@ -205,6 +205,7 @@ Starts a new interview session.
   "candidateName": "John Doe",
   "position": "Senior Java Developer",
   "difficulty": "Standard",
+  "interviewLength": "Standard",
   "language": "en",
   "cvText": "Extracted CV text...",
   "voiceId": "Fenrir",
@@ -219,6 +220,7 @@ Starts a new interview session.
 | `candidateName` | Yes | Candidate's name (2-30 chars, letters only) |
 | `position` | Yes | Target job position |
 | `difficulty` | Yes | `"Easy"`, `"Standard"`, or `"Hard"` |
+| `interviewLength` | Yes | `"Quick"`, `"Standard"`, or `"Marathon"` |
 | `language` | Yes | `"en"` or `"bg"` |
 | `cvText` | No | Extracted CV text |
 | `voiceId` | No | Voice ID (defaults to config) |

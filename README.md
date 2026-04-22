@@ -77,6 +77,14 @@ Every report page has a **Copy Link** button. Share your interview results direc
 | **⚖️ Standard** | Balanced technical + soft skills | General interview prep |
 | **🔥 Stress** | High-pressure, deep technical | Senior roles, tough companies |
 
+### ⏱️ Interview Length Modes
+
+| Mode | Typical Duration | Question Scope |
+|------|------------------|----------------|
+| **⚡ Quick** | 2-3 min | 2-3 focused questions |
+| **🧭 Standard** | 5-8 min | 4-6 balanced questions |
+| **🏁 Marathon** | 10-15 min | 8-12 in-depth questions |
+
 ### 💼 Position-Specific Questions
 
 The AI tailors questions to your target role:
