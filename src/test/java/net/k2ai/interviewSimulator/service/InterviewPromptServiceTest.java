@@ -92,6 +92,20 @@ class InterviewPromptServiceTest {
     }//testGenerateInterviewerPrompt_QaPosition_ContainsTestingFocus
 
 
+    @Test
+    void testGenerateInterviewerPrompt_EnglishContainsFinalTurnNoQuestionInstruction() {
+        String prompt = promptService.generateInterviewerPrompt("Java Developer", "Standard", "en");
+        assertThat(prompt).contains("Never ask a new question in your final concluding turn");
+    }//testGenerateInterviewerPrompt_EnglishContainsFinalTurnNoQuestionInstruction
+
+
+    @Test
+    void testGenerateInterviewerPrompt_BulgarianContainsFinalTurnNoQuestionInstruction() {
+        String prompt = promptService.generateInterviewerPrompt("Java Developer", "Standard", "bg");
+        assertThat(prompt).contains("Не задавай нов въпрос в последния си приключващ ход");
+    }//testGenerateInterviewerPrompt_BulgarianContainsFinalTurnNoQuestionInstruction
+
+
     // ===== Interview Conclusion Detection Tests =====
 
     @Test
@@ -120,6 +134,13 @@ class InterviewPromptServiceTest {
         boolean result = promptService.isInterviewConcluding("That concludes our interview for today.");
         assertThat(result).isTrue();
     }//testIsInterviewConcluding_DetectsThatConcludesOurInterview
+
+
+    @Test
+    void testIsInterviewConcluding_DetectsQuestionAndGoodbyeInSameTurn() {
+        boolean result = promptService.isInterviewConcluding("Do you have any final questions? We'll be in touch.");
+        assertThat(result).isTrue();
+    }//testIsInterviewConcluding_DetectsQuestionAndGoodbyeInSameTurn
 
 
     @Test
@@ -172,5 +193,26 @@ class InterviewPromptServiceTest {
                 "Can you explain how you would design a REST API for a booking system?");
         assertThat(result).isFalse();
     }//testIsInterviewConcluding_ReturnsFalseForTechnicalDiscussion
+
+
+    @Test
+    void testContainsQuestion_ReturnsTrueWhenQuestionMarkExists() {
+        boolean result = promptService.containsQuestion("Could you explain your architecture?");
+        assertThat(result).isTrue();
+    }//testContainsQuestion_ReturnsTrueWhenQuestionMarkExists
+
+
+    @Test
+    void testContainsQuestion_ReturnsFalseForStatementOnly() {
+        boolean result = promptService.containsQuestion("Thank you for your time.");
+        assertThat(result).isFalse();
+    }//testContainsQuestion_ReturnsFalseForStatementOnly
+
+
+    @Test
+    void testContainsQuestion_ReturnsFalseForNullInput() {
+        boolean result = promptService.containsQuestion(null);
+        assertThat(result).isFalse();
+    }//testContainsQuestion_ReturnsFalseForNullInput
 
 }//InterviewPromptServiceTest

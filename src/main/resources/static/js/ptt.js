@@ -173,7 +173,11 @@ function togglePttMode(enable) {
 			if (typeof stopAudioCaptureOnly === 'function') stopAudioCaptureOnly();
 			if (typeof stompClient !== 'undefined' && stompClient &&
 				typeof isConnected !== 'undefined' && isConnected) {
-				stompClient.send('/app/interview/mode-switch', {}, '');
+				if (typeof safeStompSend === 'function') {
+					safeStompSend('/app/interview/mode-switch', {}, '');
+				} else {
+					stompClient.send('/app/interview/mode-switch', {}, '');
+				}
 			}
 			pttAudioStarted = false;
 		}

@@ -1,31 +1,40 @@
 // src/main/resources/static/js/audio-processor.js
 
+// Capture pipeline (mic → server). Created once on interview start and kept
+// alive for the session — muting just stops SENDING, not the pipeline itself.
+// That avoids a ~300–500ms unmute lag from re-initialising AudioContext and
+// re-loading the worklet module on every mic toggle.
 let audioContext;
-let processor;            // ScriptProcessor fallback OR AudioWorkletNode
+let processor;            // ScriptProcessor fallback (legacy browsers)
 let input;
-let workletNode;          // AudioWorkletNode (preferred)
+let workletNode;          // AudioWorkletNode — preferred
 let globalStream;
+let captureInitialized = false;
 let stompClient = null;
 let isConnected = false;
 let usingWorklet = false;
 
-// Audio playback queue
-const audioQueue = [];
-let isPlaying = false;
+// Playback pipeline (server → speakers). One ring-buffer AudioWorklet streams
+// Gemini PCM continuously — no chunk scheduling, no overlap races.
 let playbackAudioContext;
-let nextPlayTime = 0;
+let playerNode;
+let playerReady = false;
+let bufferedPlayerSamples = 0;
 
-// Jitter buffer: wait until this much audio is queued before starting playback.
-// Absorbs network jitter so brief gaps don't cause underruns on high-ping links.
-const INITIAL_JITTER_MS = 150;
-// On underrun, pad this much silence forward to avoid glitches.
-const UNDERRUN_PAD_MS = 20;
-// Target Gemini output rate
+// Gemini output rate (fixed by Live API)
 const PLAYBACK_SAMPLE_RATE = 24000;
-// Active adaptive jitter target (grows on high latency, shrinks on stable net)
+
+// Jitter pre-buffer: hold incoming PCM out of the worklet ring until we have
+// enough to survive typical network jitter without an underrun. Once the
+// threshold is crossed we drain to the worklet and let it stream.
+const INITIAL_JITTER_MS = 150;
 let jitterTargetMs = INITIAL_JITTER_MS;
+let prebufferChunks = [];
+let prebufferedSamples = 0;
 let hasPrebuffered = false;
-let queuedPcmSamples = 0;
+// Sanity cap on buffered audio to prevent memory blowup during a runaway
+// network burst. ~30 seconds of audio is plenty of headroom.
+const MAX_BUFFERED_SAMPLES = PLAYBACK_SAMPLE_RATE * 30;
 
 // Track if introduction has completed (for one-time auto-unmute)
 let hasIntroductionCompleted = false;
@@ -131,6 +140,10 @@ function connectToBackend() {
 
 		startInterviewSession();
 		startPingLoop();
+		// Pre-warm both pipelines while AI generates the first audio chunk.
+		// This makes the post-intro mic unmute instantaneous.
+		ensurePlayerReady();
+		initializeAudioCapture();
 
 	}, function (error) {
 		console.error('WebSocket connection error:', error);
@@ -175,7 +188,7 @@ function startInterviewSession() {
 		}
 	}
 
-	stompClient.send('/app/interview/start', {}, JSON.stringify(startPayload));
+	safeStompSend('/app/interview/start', {}, JSON.stringify(startPayload));
 }
 
 function handleStatusMessage(message) {
@@ -205,7 +218,12 @@ function handleStatusMessage(message) {
 			}
 
 			isAISpeaking = false;
+			// Flush any prebuffer so we don't strand the tail of the turn.
+			flushPrebuffer();
 			hideConnectionOverlay();
+			// Reset prebuffer gate for the next turn. Keeps jitter protection
+			// at the start of each AI response.
+			hasPrebuffered = false;
 
 			if (!hasIntroductionCompleted) {
 				hasIntroductionCompleted = true;
@@ -223,11 +241,9 @@ function handleStatusMessage(message) {
 			}
 			break;
 		case 'INTERRUPTED':
-			audioQueue.length = 0;
-			queuedPcmSamples = 0;
-			hasPrebuffered = false;
-			nextPlayTime = 0;
-			isPlaying = false;
+			// Hard-cut: purge prebuffer AND the worklet ring so AI voice stops
+			// immediately when the user interrupts.
+			resetPlaybackBuffers();
 			if (typeof hideThinkingIndicator === 'function') {
 				hideThinkingIndicator();
 			}
@@ -255,37 +271,69 @@ function handleStatusMessage(message) {
 
 function handleAudioMessage(message) {
 	const data = JSON.parse(message.body);
-	if (data.data) {
-		hideConnectionOverlay();
-		isAISpeaking = true;
+	if (!data.data) return;
 
-		const audioBytes = base64ToArrayBuffer(data.data);
-		audioQueue.push(audioBytes);
-		queuedPcmSamples += audioBytes.byteLength / 2; // Int16 = 2 bytes/sample
+	hideConnectionOverlay();
+	isAISpeaking = true;
+	setAvatarState('talking');
+	updateStatus('AI Speaking', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
+	if (typeof hideThinkingIndicator === 'function') hideThinkingIndicator();
 
-		// Pre-buffer: wait for jitter target before starting playback.
-		// This absorbs network jitter and prevents robotic/stuttering output.
-		const bufferedMs = (queuedPcmSamples / PLAYBACK_SAMPLE_RATE) * 1000;
-		if (!isPlaying && !hasPrebuffered && bufferedMs < jitterTargetMs) {
-			// Still filling the jitter buffer
-			setAvatarState('talking');
-			updateStatus('AI Speaking', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
-			if (typeof hideThinkingIndicator === 'function') hideThinkingIndicator();
-			return;
+	const audioBytes = base64ToArrayBuffer(data.data);
+	const chunkSamples = audioBytes.byteLength / 2; // Int16
+
+	// Bring the player online on the first chunk of the session. Safe to call
+	// repeatedly; no-op once initialised.
+	ensurePlayerReady();
+
+	if (!hasPrebuffered) {
+		// Hold chunks until we have jitter target worth, then flush.
+		prebufferChunks.push(audioBytes);
+		prebufferedSamples += chunkSamples;
+		const bufferedMs = (prebufferedSamples / PLAYBACK_SAMPLE_RATE) * 1000;
+		if (bufferedMs >= jitterTargetMs) {
+			flushPrebuffer();
 		}
+		return;
+	}
 
-		hasPrebuffered = true;
+	// Streaming: push straight to the worklet.
+	pushPcmToPlayer(audioBytes);
+}
 
-		if (!isPlaying) {
-			playNextAudio();
+
+function flushPrebuffer() {
+	if (prebufferChunks.length > 0) {
+		for (const buf of prebufferChunks) {
+			pushPcmToPlayer(buf);
 		}
+		prebufferChunks = [];
+		prebufferedSamples = 0;
+	}
+	hasPrebuffered = true;
+}
 
-		setAvatarState('talking');
-		updateStatus('AI Speaking', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
 
-		if (typeof hideThinkingIndicator === 'function') {
-			hideThinkingIndicator();
-		}
+function pushPcmToPlayer(arrayBuffer) {
+	if (!playerNode) return;
+	// Drop if we're already sitting on way more than we can sensibly buffer —
+	// prevents memory growth during a runaway network burst.
+	if (bufferedPlayerSamples > MAX_BUFFERED_SAMPLES) {
+		console.warn('Player buffer over max, dropping chunk');
+		return;
+	}
+	// Transfer ownership so we don't pay a structured clone on every chunk.
+	playerNode.port.postMessage(arrayBuffer, [arrayBuffer]);
+}
+
+
+function resetPlaybackBuffers() {
+	prebufferChunks = [];
+	prebufferedSamples = 0;
+	hasPrebuffered = false;
+	bufferedPlayerSamples = 0;
+	if (playerNode) {
+		try { playerNode.port.postMessage({type: 'clear'}); } catch (e) {}
 	}
 }
 
@@ -390,11 +438,7 @@ function startPingLoop() {
 	stopPingLoop();
 	pingInterval = setInterval(() => {
 		if (stompClient && isConnected) {
-			try {
-				stompClient.send('/app/interview/ping', {}, JSON.stringify({t: Date.now()}));
-			} catch (e) {
-				// ignore — next tick will retry
-			}
+			safeStompSend('/app/interview/ping', {}, JSON.stringify({t: Date.now()}));
 		}
 	}, 4000);
 }
@@ -461,8 +505,45 @@ function dismissNetworkWarning() {
 }
 
 
+// ─── Playback worklet init ────────────────────────────────────────────────────
+async function ensurePlayerReady() {
+	if (playerReady) return;
+	if (!playbackAudioContext || playbackAudioContext.state === 'closed') {
+		playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)({
+			sampleRate: PLAYBACK_SAMPLE_RATE
+		});
+	}
+	if (playbackAudioContext.state === 'suspended') {
+		try { await playbackAudioContext.resume(); } catch (e) {}
+	}
+	try {
+		await playbackAudioContext.audioWorklet.addModule('/js/pcm-player-worklet.js');
+		playerNode = new AudioWorkletNode(playbackAudioContext, 'pcm-player', {
+			numberOfInputs: 0,
+			numberOfOutputs: 1,
+			outputChannelCount: [1]
+		});
+		playerNode.port.onmessage = (ev) => {
+			if (ev.data && ev.data.type === 'buffered') {
+				bufferedPlayerSamples = ev.data.samples;
+			}
+		};
+		playerNode.connect(playbackAudioContext.destination);
+		playerReady = true;
+	} catch (e) {
+		console.error('Failed to init playback worklet:', e);
+	}
+}
+
+
 // ─── Audio capture ────────────────────────────────────────────────────────────
-async function startAudioCapture() {
+// Capture pipeline inits ONCE per interview. Subsequent mute/unmute toggles
+// just flip `isMicActive` — the worklet handler short-circuits when the flag
+// is off. This makes unmute instant (no AudioContext rebuild, no worklet
+// module reload).
+async function initializeAudioCapture() {
+	if (captureInitialized) return true;
+
 	try {
 		if (window.preinitializedMicStream) {
 			globalStream = window.preinitializedMicStream;
@@ -485,8 +566,6 @@ async function startAudioCapture() {
 
 		input = audioContext.createMediaStreamSource(globalStream);
 
-		// Prefer AudioWorklet (off-thread, more reliable under CPU pressure).
-		// Fall back to ScriptProcessor on browsers without Worklet support.
 		if (audioContext.audioWorklet && typeof audioContext.audioWorklet.addModule === 'function') {
 			try {
 				await audioContext.audioWorklet.addModule('/js/pcm-recorder-worklet.js');
@@ -499,9 +578,8 @@ async function startAudioCapture() {
 				workletNode.port.onmessage = (ev) => {
 					if (!isMicActive || !stompClient || !isConnected || isAISpeaking) return;
 
-					const pcmBuffer = ev.data; // ArrayBuffer of Int16 samples
+					const pcmBuffer = ev.data;
 					if (typeof isPttMode !== 'undefined' && isPttMode) {
-						// Drop silent frames in PTT mode so Gemini VAD sees only speech
 						const view = new Int16Array(pcmBuffer);
 						let sumSq = 0;
 						for (let i = 0; i < view.length; i++) {
@@ -512,17 +590,17 @@ async function startAudioCapture() {
 					}
 
 					const base64Audio = arrayBufferToBase64(pcmBuffer);
-					stompClient.send('/app/interview/audio', {}, base64Audio);
+					safeStompSend('/app/interview/audio', {}, base64Audio);
 				};
 				input.connect(workletNode);
 				usingWorklet = true;
-				return;
+				captureInitialized = true;
+				return true;
 			} catch (e) {
 				console.warn('AudioWorklet init failed, falling back to ScriptProcessor:', e);
 			}
 		}
 
-		// Fallback: ScriptProcessor
 		processor = audioContext.createScriptProcessor(4096, 1, 1);
 		processor.onaudioprocess = (e) => {
 			if (!isMicActive || !stompClient || !isConnected || isAISpeaking) return;
@@ -537,27 +615,67 @@ async function startAudioCapture() {
 
 			const pcmData = floatTo16BitPCM(inputData);
 			const base64Audio = arrayBufferToBase64(pcmData);
-			stompClient.send('/app/interview/audio', {}, base64Audio);
+			safeStompSend('/app/interview/audio', {}, base64Audio);
 		};
 
 		input.connect(processor);
 		processor.connect(audioContext.destination);
 		usingWorklet = false;
+		captureInitialized = true;
+		return true;
 
 	} catch (err) {
 		console.error("Mic Error:", err);
 		alert("Microphone access denied! Please allow microphone access to use the interview simulator.");
+		return false;
 	}
 }
+
+
+// Public API used by interview.js / ptt.js — backward-compat wrapper.
+async function startAudioCapture() {
+	await initializeAudioCapture();
+}
+
+
+function safeStompSend(destination, headers, body) {
+	try {
+		stompClient.send(destination, headers, body);
+	} catch (e) {
+		console.warn('STOMP send failed:', destination, e);
+	}
+}
+
 
 function sendMicOffSignal() {
 	if (stompClient && isConnected) {
-		stompClient.send('/app/interview/mic-off', {}, '');
+		safeStompSend('/app/interview/mic-off', {}, '');
 	}
 }
 
+
+// Lightweight stop used by mic toggle / PTT release. Does NOT tear down the
+// pipeline — that's what makes unmute instant. The `isMicActive` flag is set
+// false by the caller; the worklet then drops frames without sending.
 function stopAudioCaptureOnly() {
-	if (globalStream) globalStream.getTracks().forEach(track => track.stop());
+	// No-op — pipeline stays alive. `isMicActive` gate in the worklet handler
+	// already prevents any audio from being sent.
+}
+
+
+function stopAudioCapture() {
+	stopAudioCaptureOnly();
+	sendMicOffSignal();
+}
+
+
+// Full teardown — called only on interview end. Releases the mic, closes the
+// AudioContext, stops the playback worklet.
+function teardownAudioPipelines() {
+	if (globalStream) {
+		globalStream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+		globalStream = null;
+	}
 	if (workletNode) {
 		try { workletNode.disconnect(); } catch (e) {}
 		workletNode.port.onmessage = null;
@@ -573,13 +691,25 @@ function stopAudioCaptureOnly() {
 	}
 	if (audioContext && audioContext.state !== 'closed') {
 		audioContext.close().catch(() => {});
+		audioContext = null;
 	}
+	captureInitialized = false;
 	usingWorklet = false;
-}
 
-function stopAudioCapture() {
-	stopAudioCaptureOnly();
-	sendMicOffSignal();
+	if (playerNode) {
+		try { playerNode.disconnect(); } catch (e) {}
+		playerNode.port.onmessage = null;
+		playerNode = null;
+	}
+	if (playbackAudioContext && playbackAudioContext.state !== 'closed') {
+		playbackAudioContext.close().catch(() => {});
+		playbackAudioContext = null;
+	}
+	playerReady = false;
+	bufferedPlayerSamples = 0;
+	prebufferChunks = [];
+	prebufferedSamples = 0;
+	hasPrebuffered = false;
 }
 
 function floatTo16BitPCM(input) {
@@ -609,88 +739,15 @@ function base64ToArrayBuffer(base64) {
 	return bytes.buffer;
 }
 
-// ─── Audio playback ──────────────────────────────────────────────────────────
-// Gemini emits contiguous 24kHz PCM chunks. Concatenate with sample-accurate
-// scheduling — NO per-chunk fades (fades were dampening every boundary and
-// produced a robotic / warbly output). On underrun we pad small silence to
-// keep timing monotonic without forward-jumping.
-async function playNextAudio() {
-	if (audioQueue.length === 0) {
-		isPlaying = false;
-		hasPrebuffered = false;
-		queuedPcmSamples = 0;
-		nextPlayTime = 0;
-		return;
-	}
-
-	isPlaying = true;
-	const audioData = audioQueue.shift();
-	const pcm16 = new Int16Array(audioData);
-	queuedPcmSamples = Math.max(0, queuedPcmSamples - pcm16.length);
-
-	try {
-		if (!playbackAudioContext || playbackAudioContext.state === 'closed') {
-			playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)({
-				sampleRate: PLAYBACK_SAMPLE_RATE
-			});
-			nextPlayTime = 0;
-		}
-
-		if (playbackAudioContext.state === 'suspended') {
-			await playbackAudioContext.resume();
-		}
-
-		const floatData = new Float32Array(pcm16.length);
-		for (let i = 0; i < pcm16.length; i++) {
-			floatData[i] = pcm16[i] / 32768.0;
-		}
-
-		const audioBuffer = playbackAudioContext.createBuffer(1, floatData.length, PLAYBACK_SAMPLE_RATE);
-		audioBuffer.getChannelData(0).set(floatData);
-
-		const source = playbackAudioContext.createBufferSource();
-		source.buffer = audioBuffer;
-		source.connect(playbackAudioContext.destination);
-
-		const currentTime = playbackAudioContext.currentTime;
-		const chunkDuration = floatData.length / PLAYBACK_SAMPLE_RATE;
-
-		// Underrun handling: if the scheduled start is in the past, shift forward
-		// by a small pad so we don't glitch at the boundary. First chunk after
-		// pre-buffer: start a tick in the future to give the context headroom.
-		if (nextPlayTime <= currentTime) {
-			nextPlayTime = currentTime + (UNDERRUN_PAD_MS / 1000);
-		}
-
-		source.start(nextPlayTime);
-		nextPlayTime += chunkDuration;
-
-		// Schedule next chunk a bit before this one ends for seamless playback
-		const timeUntilNextChunk = (nextPlayTime - currentTime) * 1000 - 30;
-		setTimeout(() => {
-			playNextAudio();
-		}, Math.max(0, timeUntilNextChunk));
-
-	} catch (err) {
-		console.error('Audio playback error:', err);
-		nextPlayTime = 0;
-		setTimeout(() => playNextAudio(), 10);
-	}
-}
-
 // End interview and disconnect
 function endInterviewConnection() {
 	if (stompClient && isConnected) {
-		stompClient.send('/app/interview/end', {}, '');
+		safeStompSend('/app/interview/end', {}, '');
 	}
 
-	stopAudioCapture();
 	stopPingLoop();
-	audioQueue.length = 0;
-	queuedPcmSamples = 0;
-	hasPrebuffered = false;
-	nextPlayTime = 0;
-	isPlaying = false;
+	resetPlaybackBuffers();
+	teardownAudioPipelines();
 }
 
 // Disconnect WebSocket
@@ -787,5 +844,5 @@ function clearLiveTranscript() {
 }
 
 function isAISpeakingNow() {
-	return isAISpeaking || isPlaying;
+	return isAISpeaking || bufferedPlayerSamples > 0;
 }
