@@ -65,6 +65,30 @@
 			<div class="w-40"></div>
 		</header>
 
+		<!--/*  High-Ping Notification Toast — below header, top-left, non-modal, dismiss with X  */-->
+		<div id="network-warning-toast"
+			 class="hidden fixed left-4 top-24 z-30 max-w-xs bg-amber-900/90 border border-amber-500/60 backdrop-blur-sm rounded-xl shadow-lg shadow-amber-900/40 p-3 pr-8"
+			 role="status" aria-live="polite">
+			<div class="flex items-start gap-2.5">
+				<i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm mt-0.5"></i>
+				<div class="text-xs leading-snug">
+					<p class="text-amber-100 font-semibold" th:text="#{interview.network.warningTitle}">Slow connection detected</p>
+					<p class="text-amber-200/80 mt-0.5" th:text="#{interview.network.warningBody}">
+						High latency may cause delays or choppy audio. Try a wired or closer Wi-Fi connection for best quality.
+					</p>
+					<p class="text-amber-300/60 mt-1 font-mono text-[10px]">
+						<span th:text="#{interview.network.latencyLabel}">Latency:</span>
+						<span id="network-warning-latency">— ms</span>
+					</p>
+				</div>
+			</div>
+			<button type="button" onclick="dismissNetworkWarning()"
+					class="absolute top-1.5 right-1.5 w-6 h-6 rounded-md text-amber-300 hover:text-white hover:bg-amber-800/60 flex items-center justify-center transition"
+					aria-label="Dismiss">
+				<i class="fa-solid fa-xmark text-xs"></i>
+			</button>
+		</div>
+
 		<!--/*  Main Content (Avatar)  */-->
 		<main class="flex-1 relative flex items-center justify-center bg-black overflow-hidden group">
 			<!--/*  Avatar Container  */-->

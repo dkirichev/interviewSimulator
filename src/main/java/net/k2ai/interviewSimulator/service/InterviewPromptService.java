@@ -99,6 +99,8 @@ public class InterviewPromptService {
 						- Thanking the candidate for their time
 						- Mentioning that "we have all the information we need"
 						- Saying something like "we'll be in touch with next steps"
+						- Never ask a new question in your final concluding turn
+						- If you ask a question, wait for the candidate's next answer before you conclude
 						- CRITICAL: You MUST end your final concluding message with the exact token [END_INTERVIEW] — this signals the system to end the session. Do not say this token aloud; just include it at the very end of your last response text.
 
 						## Important Notes
@@ -153,6 +155,8 @@ public class InterviewPromptService {
 						- Благодариш на кандидата за отделеното време
 						- Споменеш, че "имаме цялата информация, която ни трябва"
 						- Кажеш нещо като "ще се свържем с вас за следващите стъпки"
+						- Не задавай нов въпрос в последния си приключващ ход
+						- Ако все пак зададеш въпрос, изчакай следващия отговор на кандидата преди да приключиш
 						- КРИТИЧНО: ТРЯБВА да завършиш последното си съобщение с точния токен [END_INTERVIEW] — това сигнализира на системата да приключи сесията. Не го казвай на глас; просто го добави в самия край на последния си текстов отговор.
 
 						## Важни Бележки
@@ -556,5 +560,10 @@ public class InterviewPromptService {
 		log.debug("No conclusion pattern matched");
 		return false;
 	}//isInterviewConcluding
+
+
+	public boolean containsQuestion(String transcript) {
+		return transcript != null && transcript.contains("?");
+	}//containsQuestion
 
 }//InterviewPromptService

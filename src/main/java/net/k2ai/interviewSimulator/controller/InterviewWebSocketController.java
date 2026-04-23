@@ -133,6 +133,20 @@ public class InterviewWebSocketController {
 	}//modeSwitchMicOff
 
 
+	@MessageMapping("/interview/ping")
+	public void ping(@Payload Map<String, Object> payload, SimpMessageHeaderAccessor headerAccessor) {
+		String sessionId = headerAccessor.getSessionId();
+		// Echo the client timestamp straight back so the client can compute round-trip time.
+		// No validation needed — this is a latency probe, not an application message.
+		messagingTemplate.convertAndSendToUser(
+				sessionId,
+				"/queue/pong",
+				Map.of("t", payload.getOrDefault("t", 0)),
+				createHeaders(sessionId)
+		);
+	}//ping
+
+
 	private void sendError(String sessionId, String message) {
 		messagingTemplate.convertAndSendToUser(
 				sessionId,

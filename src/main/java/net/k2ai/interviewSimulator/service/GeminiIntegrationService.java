@@ -232,8 +232,14 @@ public class GeminiIntegrationService {
 					"message", "AI finished speaking"
 			));
 
-			// Check if this turn contained conclusion phrases
-			if (promptService.isInterviewConcluding(turnText)) {
+			// Check if this turn contained conclusion phrases.
+			// If Gemini asks a question and says goodbye in one turn, wait for one more turn.
+			boolean concludingTurn = promptService.isInterviewConcluding(turnText);
+			if (concludingTurn && promptService.containsQuestion(turnText)) {
+				log.info("Detected mixed question+conclusion turn; deferring interview end for session: {}", wsSessionId);
+				return;
+			}
+			if (concludingTurn) {
 				log.info("AI concluded interview - ending session: {}", wsSessionId);
 				endInterviewInternal(wsSessionId, state);
 			}
