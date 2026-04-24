@@ -41,9 +41,103 @@
 				<span id="i18n-verdict-hire" th:text="#{report.verdict.hire}">HIRE</span>
 				<span id="i18n-verdict-maybe" th:text="#{report.verdict.maybe}">MAYBE</span>
 				<span id="i18n-verdict-no-hire" th:text="#{report.verdict.noHire}">NO HIRE</span>
+				<span id="i18n-stats-total" th:text="#{history.stats.total}">Total Interviews</span>
+				<span id="i18n-stats-average" th:text="#{history.stats.average}">Avg Score</span>
+				<span id="i18n-stats-best" th:text="#{history.stats.best}">Best Score</span>
+				<span id="i18n-stats-pass-rate" th:text="#{history.stats.passRate}">Pass Rate</span>
+				<span id="i18n-stats-trend" th:text="#{history.stats.trend}">Score Trend</span>
+				<span id="i18n-stats-verdicts" th:text="#{history.stats.verdicts}">Verdict Breakdown</span>
+				<span id="i18n-stats-trend-none" th:text="#{history.stats.trend.none}">Need 2+ interviews to show trend</span>
+				<span id="i18n-page-prev" th:text="#{history.page.prev}">Previous</span>
+				<span id="i18n-page-next" th:text="#{history.page.next}">Next</span>
+				<span id="i18n-page-of" th:text="#{history.page.of}">of</span>
 			</div>
 
-			<!--/*  History Content (rendered by JS)  */-->
+			<!--/*  Statistics Section — shown by JS when entries exist  */-->
+			<div id="stats-section" class="hidden space-y-4">
+				<!--/*  4 Stat Cards  */-->
+				<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+					<!--/*  Total  */-->
+					<div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 relative overflow-hidden group hover:border-blue-500/50 transition-colors">
+						<div class="absolute inset-0 bg-blue-600/5 group-hover:bg-blue-600/10 transition-colors"></div>
+						<div class="relative">
+							<div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-3">
+								<i class="fa-solid fa-list-check"></i>
+							</div>
+							<div class="text-3xl font-bold text-white tabular-nums" id="stat-total">0</div>
+							<div class="text-xs text-slate-400 mt-1" id="stat-total-label">Total Interviews</div>
+						</div>
+					</div>
+
+					<!--/*  Average Score  */-->
+					<div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 relative overflow-hidden group hover:border-purple-500/50 transition-colors">
+						<div class="absolute inset-0 bg-purple-600/5 group-hover:bg-purple-600/10 transition-colors"></div>
+						<div class="relative">
+							<div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-3">
+								<i class="fa-solid fa-chart-line"></i>
+							</div>
+							<div class="flex items-baseline gap-1">
+								<span class="text-3xl font-bold text-white tabular-nums" id="stat-avg">0</span>
+								<span class="text-slate-500 text-sm">/100</span>
+							</div>
+							<div class="text-xs text-slate-400 mt-1" id="stat-avg-label">Avg Score</div>
+						</div>
+					</div>
+
+					<!--/*  Best Score  */-->
+					<div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 relative overflow-hidden group hover:border-yellow-500/50 transition-colors">
+						<div class="absolute inset-0 bg-yellow-600/5 group-hover:bg-yellow-600/10 transition-colors"></div>
+						<div class="relative">
+							<div class="w-10 h-10 rounded-xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center mb-3">
+								<i class="fa-solid fa-trophy"></i>
+							</div>
+							<div class="flex items-baseline gap-1">
+								<span class="text-3xl font-bold text-white tabular-nums" id="stat-best">0</span>
+								<span class="text-slate-500 text-sm">/100</span>
+							</div>
+							<div class="text-xs text-slate-400 mt-1" id="stat-best-label">Best Score</div>
+						</div>
+					</div>
+
+					<!--/*  Pass Rate  */-->
+					<div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 relative overflow-hidden group hover:border-green-500/50 transition-colors">
+						<div class="absolute inset-0 bg-green-600/5 group-hover:bg-green-600/10 transition-colors"></div>
+						<div class="relative">
+							<div class="w-10 h-10 rounded-xl bg-green-500/20 text-green-400 flex items-center justify-center mb-3">
+								<i class="fa-solid fa-circle-check"></i>
+							</div>
+							<div class="flex items-baseline gap-1">
+								<span class="text-3xl font-bold text-white tabular-nums" id="stat-rate">0</span>
+								<span class="text-slate-500 text-sm">%</span>
+							</div>
+							<div class="text-xs text-slate-400 mt-1" id="stat-rate-label">Pass Rate</div>
+						</div>
+					</div>
+				</div>
+
+				<!--/*  Trend + Verdict Breakdown  */-->
+				<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+					<!--/*  Score Trend Sparkline  */-->
+					<div class="md:col-span-3 bg-slate-800 rounded-2xl p-5 border border-slate-700">
+						<h3 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2" id="stat-trend-label">
+							<i class="fa-solid fa-wave-square text-blue-400"></i>
+							Score Trend
+						</h3>
+						<div id="sparkline-container" class="w-full h-20"></div>
+					</div>
+
+					<!--/*  Verdict Breakdown  */-->
+					<div class="md:col-span-2 bg-slate-800 rounded-2xl p-5 border border-slate-700">
+						<h3 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2" id="stat-verdicts-label">
+							<i class="fa-solid fa-chart-pie text-purple-400"></i>
+							Verdict Breakdown
+						</h3>
+						<div id="verdict-breakdown" class="space-y-3"></div>
+					</div>
+				</div>
+			</div>
+
+			<!--/*  History Content (rendered by JS: table + pagination OR empty state)  */-->
 			<div id="history-content">
 				<!--/*  Loading state  */-->
 				<div class="text-center py-16 text-slate-500">
@@ -56,11 +150,25 @@
 	<script>
 		(function() {
 			var TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+			var PAGE_SIZE = 5;
+			var currentPage = 0;
+			var allEntries = [];
+
 
 			function t(id) {
 				var el = document.getElementById(id);
-				return el ? el.textContent : '';
-			}
+				return el ? el.textContent.trim() : '';
+			}//t
+
+
+			function escapeHtml(str) {
+				return String(str)
+					.replace(/&/g, '&amp;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;')
+					.replace(/"/g, '&quot;');
+			}//escapeHtml
+
 
 			function verdictLabel(verdict) {
 				var map = {
@@ -70,7 +178,8 @@
 					'NO_HIRE': t('i18n-verdict-no-hire')
 				};
 				return map[verdict] || verdict;
-			}
+			}//verdictLabel
+
 
 			function verdictClass(verdict) {
 				var map = {
@@ -80,88 +189,315 @@
 					'NO_HIRE': 'bg-red-500/10 text-red-400 border-red-500/30'
 				};
 				return map[verdict] || 'bg-slate-500/10 text-slate-400 border-slate-500/30';
-			}
+			}//verdictClass
+
 
 			function scoreClass(score) {
 				if (score >= 80) return 'text-green-400';
 				if (score >= 60) return 'text-blue-400';
 				if (score >= 40) return 'text-yellow-400';
 				return 'text-red-400';
-			}
+			}//scoreClass
+
+
+			function scoreDotColor(score) {
+				if (score >= 80) return '#22c55e';
+				if (score >= 60) return '#3b82f6';
+				if (score >= 40) return '#eab308';
+				return '#ef4444';
+			}//scoreDotColor
+
 
 			function formatDate(iso) {
 				try {
 					var d = new Date(iso);
 					return d.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})
 						+ ' ' + d.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'});
-				} catch(e) { return iso; }
-			}
+				} catch (e) {
+					return iso;
+				}
+			}//formatDate
+
+
+			function animateNumber(el, target, duration) {
+				var startTime = null;
+				function step(ts) {
+					if (!startTime) startTime = ts;
+					var progress = Math.min((ts - startTime) / duration, 1);
+					var eased = 1 - Math.pow(1 - progress, 3);
+					el.textContent = Math.round(eased * target);
+					if (progress < 1) requestAnimationFrame(step);
+				}//step
+				requestAnimationFrame(step);
+			}//animateNumber
+
+
+			function renderSparkline(entries) {
+				var recent = entries.slice(0, 10).reverse();
+				if (recent.length < 2) {
+					return '<div class="flex items-center justify-center h-full text-slate-600 text-xs">'
+						+ '<i class="fa-solid fa-chart-line mr-2"></i>'
+						+ escapeHtml(t('i18n-stats-trend-none'))
+						+ '</div>';
+				}
+
+				var W = 400, H = 80, PAD_X = 16, PAD_Y = 12;
+				var scores = recent.map(function(e) { return e.overallScore || 0; });
+				var minS = Math.min.apply(null, scores);
+				var maxS = Math.max.apply(null, scores);
+				var range = maxS - minS || 1;
+				var n = scores.length;
+
+				var pts = scores.map(function(s, i) {
+					var x = PAD_X + (i / (n - 1)) * (W - PAD_X * 2);
+					var y = PAD_Y + (1 - (s - minS) / range) * (H - PAD_Y * 2);
+					return {x: x, y: y, s: s};
+				});
+
+				var lineD = 'M' + pts.map(function(p) { return p.x + ' ' + p.y; }).join(' L');
+				var areaD = lineD + ' L' + pts[n - 1].x + ' ' + (H - PAD_Y) + ' L' + pts[0].x + ' ' + (H - PAD_Y) + ' Z';
+
+				var dots = pts.map(function(p) {
+					return '<circle cx="' + p.x + '" cy="' + p.y + '" r="4" fill="' + scoreDotColor(p.s) + '" opacity="0.9">'
+						+ '<title>' + p.s + '</title>'
+						+ '</circle>';
+				}).join('');
+
+				return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="w-full h-full" preserveAspectRatio="none">'
+					+ '<defs>'
+					+ '<linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">'
+					+ '<stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"/>'
+					+ '<stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>'
+					+ '</linearGradient>'
+					+ '</defs>'
+					+ '<path d="' + areaD + '" fill="url(#sparkGrad)"/>'
+					+ '<path d="' + lineD + '" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
+					+ dots
+					+ '</svg>';
+			}//renderSparkline
+
+
+			function renderStats(entries) {
+				var total = entries.length;
+				var sum = 0;
+				var best = 0;
+				var verdicts = {STRONG_HIRE: 0, HIRE: 0, MAYBE: 0, NO_HIRE: 0};
+
+				entries.forEach(function(e) {
+					var s = e.overallScore || 0;
+					sum += s;
+					if (s > best) best = s;
+					if (Object.prototype.hasOwnProperty.call(verdicts, e.verdict)) verdicts[e.verdict]++;
+				});
+
+				var avg = total ? Math.round(sum / total) : 0;
+				var passRate = total ? Math.round((verdicts.STRONG_HIRE + verdicts.HIRE) / total * 100) : 0;
+
+				var totalEl = document.getElementById('stat-total');
+				var avgEl = document.getElementById('stat-avg');
+				var bestEl = document.getElementById('stat-best');
+				var rateEl = document.getElementById('stat-rate');
+
+				if (totalEl) animateNumber(totalEl, total, 600);
+				if (avgEl) animateNumber(avgEl, avg, 900);
+				if (bestEl) animateNumber(bestEl, best, 900);
+				if (rateEl) animateNumber(rateEl, passRate, 900);
+
+				var totalLabel = document.getElementById('stat-total-label');
+				var avgLabel = document.getElementById('stat-avg-label');
+				var bestLabel = document.getElementById('stat-best-label');
+				var rateLabel = document.getElementById('stat-rate-label');
+				var trendLabel = document.getElementById('stat-trend-label');
+				var verdictsLabel = document.getElementById('stat-verdicts-label');
+
+				if (totalLabel) totalLabel.textContent = t('i18n-stats-total');
+				if (avgLabel) avgLabel.textContent = t('i18n-stats-average');
+				if (bestLabel) bestLabel.textContent = t('i18n-stats-best');
+				if (rateLabel) rateLabel.textContent = t('i18n-stats-pass-rate');
+				if (trendLabel) trendLabel.innerHTML = '<i class="fa-solid fa-wave-square text-blue-400 mr-2"></i>' + escapeHtml(t('i18n-stats-trend'));
+				if (verdictsLabel) verdictsLabel.innerHTML = '<i class="fa-solid fa-chart-pie text-purple-400 mr-2"></i>' + escapeHtml(t('i18n-stats-verdicts'));
+
+				var sparkEl = document.getElementById('sparkline-container');
+				if (sparkEl) sparkEl.innerHTML = renderSparkline(entries);
+
+				var verdictEl = document.getElementById('verdict-breakdown');
+				if (verdictEl) {
+					var verdictData = [
+						{key: 'STRONG_HIRE', bar: 'bg-green-500', count: verdicts.STRONG_HIRE},
+						{key: 'HIRE', bar: 'bg-blue-500', count: verdicts.HIRE},
+						{key: 'MAYBE', bar: 'bg-yellow-500', count: verdicts.MAYBE},
+						{key: 'NO_HIRE', bar: 'bg-red-500', count: verdicts.NO_HIRE}
+					];
+					verdictEl.innerHTML = verdictData.map(function(v) {
+						var pct = total ? Math.round(v.count / total * 100) : 0;
+						return '<div>'
+							+ '<div class="flex justify-between text-xs mb-1">'
+							+ '<span class="text-slate-400">' + escapeHtml(verdictLabel(v.key)) + '</span>'
+							+ '<span class="text-slate-300 font-medium tabular-nums">' + v.count
+							+ ' <span class="text-slate-500">(' + pct + '%)</span></span>'
+							+ '</div>'
+							+ '<div class="h-1.5 bg-slate-700 rounded-full overflow-hidden">'
+							+ '<div class="h-full ' + v.bar + ' rounded-full transition-all duration-700 ease-out" style="width:0%" data-target="' + pct + '"></div>'
+							+ '</div>'
+							+ '</div>';
+					}).join('');
+
+					setTimeout(function() {
+						verdictEl.querySelectorAll('[data-target]').forEach(function(bar) {
+							bar.style.width = bar.getAttribute('data-target') + '%';
+						});
+					}, 80);
+				}
+
+				var statsSection = document.getElementById('stats-section');
+				if (statsSection) statsSection.classList.remove('hidden');
+			}//renderStats
+
 
 			function renderEmpty() {
 				return '<div class="text-center py-16">'
 					+ '<div class="w-20 h-20 mx-auto rounded-2xl bg-slate-800 flex items-center justify-center mb-5 border border-slate-700">'
 					+ '<i class="fa-solid fa-clock-rotate-left text-3xl text-slate-600"></i>'
 					+ '</div>'
-					+ '<h3 class="text-xl font-bold text-white mb-2">' + t('i18n-empty-title') + '</h3>'
-					+ '<p class="text-slate-400 text-sm mb-6">' + t('i18n-empty-desc') + '</p>'
+					+ '<h3 class="text-xl font-bold text-white mb-2">' + escapeHtml(t('i18n-empty-title')) + '</h3>'
+					+ '<p class="text-slate-400 text-sm mb-6">' + escapeHtml(t('i18n-empty-desc')) + '</p>'
 					+ '<a href="/setup/step1" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition">'
 					+ '<i class="fa-solid fa-plus"></i>'
-					+ t('i18n-empty-cta')
+					+ escapeHtml(t('i18n-empty-cta'))
 					+ '</a>'
 					+ '</div>';
-			}
+			}//renderEmpty
 
-			function renderTable(entries) {
-				var rows = entries.map(function(e) {
-					return '<tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition-colors">'
-						+ '<td class="px-4 py-3 text-sm text-slate-400 whitespace-nowrap">' + formatDate(e.date) + '</td>'
-						+ '<td class="px-4 py-3 text-sm text-white font-medium">' + escapeHtml(e.candidateName || '—') + '</td>'
-						+ '<td class="px-4 py-3 text-sm text-slate-300 max-w-40 truncate" title="' + escapeHtml(e.position || '') + '">' + escapeHtml(e.position || '—') + '</td>'
-						+ '<td class="px-4 py-3 text-sm text-slate-400">' + escapeHtml(e.difficulty || '—') + '</td>'
-						+ '<td class="px-4 py-3 text-sm font-bold ' + scoreClass(e.overallScore) + '">' + (e.overallScore != null ? e.overallScore : '—') + '</td>'
-						+ '<td class="px-4 py-3">'
-						+ '<span class="px-2 py-0.5 rounded-full text-xs font-bold border ' + verdictClass(e.verdict) + '">' + verdictLabel(e.verdict) + '</span>'
-						+ '</td>'
-						+ '<td class="px-4 py-3">'
-						+ '<a href="' + e.url + '" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium rounded-lg transition">'
-						+ '<i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>'
-						+ t('i18n-action-view')
-						+ '</a>'
-						+ '</td>'
-						+ '</tr>';
-				}).join('');
+
+			function buildTableHeader() {
+				var cols = [
+					t('i18n-col-date'),
+					t('i18n-col-name'),
+					t('i18n-col-position'),
+					t('i18n-col-difficulty'),
+					t('i18n-col-score'),
+					t('i18n-col-verdict'),
+					t('i18n-col-action')
+				];
+				return '<tr class="border-b border-slate-700 bg-slate-900/50">'
+					+ cols.map(function(c) {
+						return '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">'
+							+ escapeHtml(c) + '</th>';
+					}).join('')
+					+ '</tr>';
+			}//buildTableHeader
+
+
+			function buildRow(e) {
+				return '<tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition-colors">'
+					+ '<td class="px-4 py-3 text-sm text-slate-400 whitespace-nowrap">' + formatDate(e.date) + '</td>'
+					+ '<td class="px-4 py-3 text-sm text-white font-medium">' + escapeHtml(e.candidateName || '—') + '</td>'
+					+ '<td class="px-4 py-3 text-sm text-slate-300 max-w-40 truncate" title="' + escapeHtml(e.position || '') + '">' + escapeHtml(e.position || '—') + '</td>'
+					+ '<td class="px-4 py-3 text-sm text-slate-400">' + escapeHtml(e.difficulty || '—') + '</td>'
+					+ '<td class="px-4 py-3 text-sm font-bold ' + scoreClass(e.overallScore) + '">' + (e.overallScore != null ? e.overallScore : '—') + '</td>'
+					+ '<td class="px-4 py-3">'
+					+ '<span class="px-2 py-0.5 rounded-full text-xs font-bold border ' + verdictClass(e.verdict) + '">' + escapeHtml(verdictLabel(e.verdict)) + '</span>'
+					+ '</td>'
+					+ '<td class="px-4 py-3">'
+					+ '<a href="' + escapeHtml(e.url) + '" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium rounded-lg transition">'
+					+ '<i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>'
+					+ escapeHtml(t('i18n-action-view'))
+					+ '</a>'
+					+ '</td>'
+					+ '</tr>';
+			}//buildRow
+
+
+			function buildPagination(page, totalPages) {
+				if (totalPages <= 1) return '';
+
+				var prevDisabled = page === 0;
+				var nextDisabled = page >= totalPages - 1;
+
+				var prevCls = prevDisabled
+					? 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 cursor-not-allowed'
+					: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-700 transition cursor-pointer';
+				var nextCls = nextDisabled
+					? 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 cursor-not-allowed'
+					: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-700 transition cursor-pointer';
+
+				var dots = '';
+				if (totalPages <= 7) {
+					for (var i = 0; i < totalPages; i++) {
+						var isActive = i === page;
+						dots += '<button onclick="window.historyChangePage(' + i + ')" class="w-8 h-8 rounded-lg text-xs font-medium transition '
+							+ (isActive ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-700 hover:text-white')
+							+ '">' + (i + 1) + '</button>';
+					}
+				} else {
+					var pages = buildPageNumbers(page, totalPages);
+					pages.forEach(function(p) {
+						if (p === '...') {
+							dots += '<span class="w-8 h-8 flex items-center justify-center text-slate-600 text-xs">…</span>';
+						} else {
+							var isActive = p === page;
+							dots += '<button onclick="window.historyChangePage(' + p + ')" class="w-8 h-8 rounded-lg text-xs font-medium transition '
+								+ (isActive ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-700 hover:text-white')
+								+ '">' + (p + 1) + '</button>';
+						}
+					});
+				}
+
+				return '<div class="flex items-center justify-between px-4 py-3 border-t border-slate-700">'
+					+ '<button onclick="window.historyChangePage(' + (page - 1) + ')" ' + (prevDisabled ? 'disabled' : '') + ' class="' + prevCls + '">'
+					+ '<i class="fa-solid fa-chevron-left text-xs"></i>'
+					+ escapeHtml(t('i18n-page-prev'))
+					+ '</button>'
+					+ '<div class="flex items-center gap-1">' + dots + '</div>'
+					+ '<button onclick="window.historyChangePage(' + (page + 1) + ')" ' + (nextDisabled ? 'disabled' : '') + ' class="' + nextCls + '">'
+					+ escapeHtml(t('i18n-page-next'))
+					+ '<i class="fa-solid fa-chevron-right text-xs"></i>'
+					+ '</button>'
+					+ '</div>';
+			}//buildPagination
+
+
+			function buildPageNumbers(current, total) {
+				var pages = [];
+				if (total <= 7) {
+					for (var i = 0; i < total; i++) pages.push(i);
+					return pages;
+				}
+				pages.push(0);
+				if (current > 2) pages.push('...');
+				for (var j = Math.max(1, current - 1); j <= Math.min(total - 2, current + 1); j++) {
+					pages.push(j);
+				}
+				if (current < total - 3) pages.push('...');
+				pages.push(total - 1);
+				return pages;
+			}//buildPageNumbers
+
+
+			function renderTablePage(entries, page) {
+				var totalPages = Math.ceil(entries.length / PAGE_SIZE);
+				var start = page * PAGE_SIZE;
+				var pageEntries = entries.slice(start, start + PAGE_SIZE);
+
+				var rows = pageEntries.map(buildRow).join('');
 
 				return '<div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">'
 					+ '<div class="overflow-x-auto">'
 					+ '<table class="w-full">'
-					+ '<thead>'
-					+ '<tr class="border-b border-slate-700 bg-slate-900/50">'
-					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-date') + '</th>'
-					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-name') + '</th>'
-					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-position') + '</th>'
-					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-difficulty') + '</th>'
-					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-score') + '</th>'
-					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-verdict') + '</th>'
-					+ '<th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">' + t('i18n-col-action') + '</th>'
-					+ '</tr>'
-					+ '</thead>'
-					+ '<tbody>'
-					+ rows
-					+ '</tbody>'
+					+ '<thead>' + buildTableHeader() + '</thead>'
+					+ '<tbody>' + rows + '</tbody>'
 					+ '</table>'
 					+ '</div>'
+					+ buildPagination(page, totalPages)
 					+ '</div>'
-					+ '<div class="text-right">'
-					+ '<button onclick="clearHistory()" class="text-xs text-slate-600 hover:text-red-400 transition px-2 py-1">'
+					+ '<div class="text-right mt-2">'
+					+ '<button onclick="window.clearHistory()" class="text-xs text-slate-600 hover:text-red-400 transition px-2 py-1">'
 					+ '<i class="fa-solid fa-trash mr-1"></i>'
-					+ t('i18n-clear')
+					+ escapeHtml(t('i18n-clear'))
 					+ '</button>'
 					+ '</div>';
-			}
+			}//renderTablePage
 
-			function escapeHtml(str) {
-				return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-			}
 
 			function loadHistory() {
 				var container = document.getElementById('history-content');
@@ -169,26 +505,45 @@
 
 				try {
 					var raw = localStorage.getItem('interview_history');
-					var entries = raw ? JSON.parse(raw) : [];
+					allEntries = raw ? JSON.parse(raw) : [];
 					var now = Date.now();
-					entries = entries.filter(function(e) { return now - new Date(e.date).getTime() < TWO_WEEKS_MS; });
+					allEntries = allEntries.filter(function(e) {
+						return now - new Date(e.date).getTime() < TWO_WEEKS_MS;
+					});
 
-					if (entries.length === 0) {
+					if (allEntries.length === 0) {
 						container.innerHTML = renderEmpty();
 					} else {
-						container.innerHTML = renderTable(entries);
+						renderStats(allEntries);
+						container.innerHTML = renderTablePage(allEntries, currentPage);
 					}
-				} catch(e) {
+				} catch (e) {
 					container.innerHTML = renderEmpty();
 				}
-			}
+			}//loadHistory
+
+
+			window.historyChangePage = function(page) {
+				var totalPages = Math.ceil(allEntries.length / PAGE_SIZE);
+				if (page < 0 || page >= totalPages) return;
+				currentPage = page;
+				var container = document.getElementById('history-content');
+				if (container) container.innerHTML = renderTablePage(allEntries, currentPage);
+				container.scrollIntoView({behavior: 'smooth', block: 'start'});
+			};//historyChangePage
+
 
 			window.clearHistory = function() {
 				if (confirm(t('i18n-clear-confirm'))) {
-					try { localStorage.removeItem('interview_history'); } catch(e) {}
+					try { localStorage.removeItem('interview_history'); } catch (e) {}
+					currentPage = 0;
+					allEntries = [];
+					var statsSection = document.getElementById('stats-section');
+					if (statsSection) statsSection.classList.add('hidden');
 					loadHistory();
 				}
-			};
+			};//clearHistory
+
 
 			document.addEventListener('DOMContentLoaded', loadHistory);
 		})();
