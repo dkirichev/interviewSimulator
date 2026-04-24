@@ -22,6 +22,21 @@ public class InputSanitizerService {
 			Pattern.CASE_INSENSITIVE
 	);
 
+	// Meta-tokens used by the LLM prompt and the turn-end detector. Must be stripped
+	// from user-supplied fields (candidateName, position, cvText) so a malicious CV
+	// can't prematurely terminate the interview or inject role switches.
+	private static final Pattern PROMPT_CONTROL_TOKEN_PATTERN = Pattern.compile(
+			"(?i)\\[\\s*END_INTERVIEW\\s*\\]|\\[\\s*/?(?:system|assistant|user)\\s*\\]",
+			Pattern.CASE_INSENSITIVE
+	);
+
+	// Common prompt-injection lead-ins. Removed defensively; false positives are
+	// acceptable on CV text.
+	private static final Pattern PROMPT_INJECTION_LEADIN_PATTERN = Pattern.compile(
+			"(?im)^\\s*(ignore\\s+(all\\s+)?(previous|prior|above)\\s+instructions|system\\s*:|assistant\\s*:).*$",
+			Pattern.CASE_INSENSITIVE
+	);
+
 	/**
 	 * Sanitizes text for safe display in HTML.
 	 * Escapes HTML special characters to prevent XSS.
@@ -72,7 +87,7 @@ public class InputSanitizerService {
 			return null;
 		}
 
-		String trimmed = input.trim();
+		String trimmed = stripControlTokens(input).trim();
 
 		// Only allow letters (Unicode), spaces, hyphens, apostrophes
 		if (!trimmed.matches("^[\\p{L}\\s\\-']+$")) {
@@ -97,7 +112,7 @@ public class InputSanitizerService {
 			return null;
 		}
 
-		String trimmed = input.trim();
+		String trimmed = stripControlTokens(input).trim();
 
 		// Check for dangerous patterns
 		if (SQL_INJECTION_PATTERN.matcher(trimmed).find()) {
@@ -129,7 +144,9 @@ public class InputSanitizerService {
 			return null;
 		}
 
-		String sanitized = input;
+		// Clamp length BEFORE running regex — unbounded input with catastrophic
+		// backtracking or large scans is its own DoS vector.
+		String sanitized = input.length() > 100_000 ? input.substring(0, 100_000) : input;
 
 		// Remove script tags and javascript
 		sanitized = SCRIPT_PATTERN.matcher(sanitized).replaceAll("");
@@ -137,13 +154,27 @@ public class InputSanitizerService {
 		// Remove HTML tags
 		sanitized = HTML_TAG_PATTERN.matcher(sanitized).replaceAll("");
 
-		// Limit total length to prevent memory issues (100KB max)
-		if (sanitized.length() > 100_000) {
-			sanitized = sanitized.substring(0, 100_000);
-		}
+		// Strip LLM control tokens so a crafted CV can't end the interview or
+		// impersonate system/assistant turns.
+		sanitized = stripControlTokens(sanitized);
 
 		return sanitized;
 	}// sanitizeCvText
+
+
+	/**
+	 * Strips LLM prompt control tokens and common prompt-injection lead-ins.
+	 * Applied to any user-supplied field that is later interpolated into the
+	 * system prompt.
+	 */
+	public String stripControlTokens(String input) {
+		if (input == null) {
+			return null;
+		}
+		String stripped = PROMPT_CONTROL_TOKEN_PATTERN.matcher(input).replaceAll("");
+		stripped = PROMPT_INJECTION_LEADIN_PATTERN.matcher(stripped).replaceAll("");
+		return stripped;
+	}// stripControlTokens
 
 
 	/**

@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.k2ai.interviewSimulator.config.GeminiConfig;
+import net.k2ai.interviewSimulator.service.ClientIpResolver;
 import net.k2ai.interviewSimulator.service.RateLimitService;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -28,6 +29,7 @@ public class ApiKeyController {
 
 	private final GeminiConfig geminiConfig;
 	private final RateLimitService rateLimitService;
+	private final ClientIpResolver clientIpResolver;
 
 	private final OkHttpClient httpClient = new OkHttpClient.Builder()
 			.connectTimeout(10, TimeUnit.SECONDS)
@@ -55,9 +57,9 @@ public class ApiKeyController {
 			@RequestBody Map<String, String> payload,
 			HttpServletRequest request) {
 
-		// Rate limit by IP address
-		String clientIp = getClientIp(request);
-		rateLimitService.checkRateLimit(clientIp);
+		// Rate limit by IP address: 10 validation attempts per minute.
+		String clientIp = clientIpResolver.resolve(request);
+		rateLimitService.checkRateLimit("validate-key", clientIp, 10, 60_000);
 
 		String apiKey = payload.get("apiKey");
 
@@ -96,8 +98,9 @@ public class ApiKeyController {
 							"message", "API key is valid"
 					));
 				} else {
-					String errorBody = response.body() != null ? response.body().string() : "";
-					log.warn("API key validation failed: {} - {}", response.code(), errorBody);
+					// Do not propagate upstream error bodies to clients — they may include
+					// identifiers or internal messages. Log only the status code.
+					log.warn("API key validation failed: {}", response.code());
 
 					// Check for specific error types
 					if (response.code() == 400 || response.code() == 403) {
@@ -128,14 +131,5 @@ public class ApiKeyController {
 		}
 	}//validateApiKey
 
-
-	private String getClientIp(HttpServletRequest request) {
-		String xForwardedFor = request.getHeader("X-Forwarded-For");
-		if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-			// Take the first IP in case of multiple proxies
-			return xForwardedFor.split(",")[0].trim();
-		}
-		return request.getRemoteAddr();
-	}// getClientIp
 
 }//ApiKeyController

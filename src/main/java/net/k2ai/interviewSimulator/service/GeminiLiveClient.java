@@ -20,6 +20,14 @@ public class GeminiLiveClient {
 	// Safety margin before 15-minute limit (reconnect at 14 minutes)
 	private static final long SESSION_TIMEOUT_MS = 14 * 60 * 1000;
 
+	// Shared across all live interviews. Creating a new OkHttpClient per
+	// interview leaks dispatcher and connection-pool threads because close()
+	// below only tears down the WebSocket, not the client.
+	private static final OkHttpClient SHARED_CLIENT = new OkHttpClient.Builder()
+			.readTimeout(0, TimeUnit.MILLISECONDS)
+			.pingInterval(30, TimeUnit.SECONDS)
+			.build();
+
 	private final OkHttpClient client;
 
 	private final ObjectMapper objectMapper;
@@ -73,10 +81,7 @@ public class GeminiLiveClient {
 		this.model = model;
 		this.voiceName = voiceName;
 		this.objectMapper = new ObjectMapper();
-		this.client = new OkHttpClient.Builder()
-				.readTimeout(0, TimeUnit.MILLISECONDS)
-				.pingInterval(30, TimeUnit.SECONDS)
-				.build();
+		this.client = SHARED_CLIENT;
 	}//GeminiLiveClient
 
 	public void setPttMode(boolean pttMode) {

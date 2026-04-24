@@ -4,11 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -19,6 +21,19 @@ public class CvProcessingService {
 
 	private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 	private static final int MAX_EXTRACTED_LENGTH = 100_000; // 100KB max text
+
+	// Zip-bomb protection for DOCX (which is a ZIP). Cap total inflated size at
+	// 100MB and require a min compression ratio of 0.01 (i.e. 100x max).
+	private static final long MAX_UNCOMPRESSED_DOCX_SIZE = 100L * 1024 * 1024;
+	private static final double MIN_DOCX_INFLATE_RATIO = 0.01d;
+
+
+	@PostConstruct
+	public void configurePoiZipLimits() {
+		ZipSecureFile.setMaxFileCount(1000);
+		ZipSecureFile.setMaxEntrySize(MAX_UNCOMPRESSED_DOCX_SIZE);
+		ZipSecureFile.setMinInflateRatio(MIN_DOCX_INFLATE_RATIO);
+	}//configurePoiZipLimits
 
 	private static final String CONTENT_TYPE_PDF = "application/pdf";
 	private static final String CONTENT_TYPE_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";

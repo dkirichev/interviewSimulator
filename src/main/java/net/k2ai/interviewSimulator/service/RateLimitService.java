@@ -1,6 +1,7 @@
 package net.k2ai.interviewSimulator.service;
 
 import net.k2ai.interviewSimulator.exception.RateLimitException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -8,52 +9,59 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Simple in-memory rate limiter for API key validation attempts.
- * Prevents brute-force API key testing.
+ * In-memory rate limiter with named buckets.
+ * Prevents brute-force and abuse of expensive endpoints.
  */
 @Service
 public class RateLimitService {
 
-	private static final int MAX_ATTEMPTS_PER_WINDOW = 10;
+	private static final int DEFAULT_MAX_ATTEMPTS = 10;
 
-	private static final long WINDOW_MILLIS = 60_000; // 1 minute
+	private static final long DEFAULT_WINDOW_MILLIS = 60_000;
 
 	private final Map<String, RateLimitEntry> rateLimitMap = new ConcurrentHashMap<>();
 
 
 	/**
-	 * Check if an IP address is rate limited and increment the counter.
-	 *
-	 * @param ipAddress The client IP address
-	 * @throws RateLimitException if rate limit exceeded
+	 * Default bucket: 10 attempts per 60s. Kept for backwards compatibility.
 	 */
 	public void checkRateLimit(String ipAddress) {
-		long now = System.currentTimeMillis();
-
-		RateLimitEntry entry = rateLimitMap.compute(ipAddress, (key, existing) -> {
-			if (existing == null || now - existing.windowStart > WINDOW_MILLIS) {
-				// Start new window
-				return new RateLimitEntry(now, new AtomicInteger(1));
-			} else {
-				// Increment existing
-				existing.count.incrementAndGet();
-				return existing;
-			}
-		});
-
-		if (entry.count.get() > MAX_ATTEMPTS_PER_WINDOW) {
-			throw new RateLimitException("Too many requests. Please wait a minute before trying again.");
-		}
-	}// checkRateLimit
+		checkRateLimit("default", ipAddress, DEFAULT_MAX_ATTEMPTS, DEFAULT_WINDOW_MILLIS);
+	}//checkRateLimit
 
 
 	/**
-	 * Periodically clean up old entries.
+	 * Throws RateLimitException if the bucket+key exceeds maxAttempts within windowMs.
 	 */
+	public void checkRateLimit(String bucket, String key, int maxAttempts, long windowMillis) {
+		long now = System.currentTimeMillis();
+		String composite = bucket + ":" + key;
+
+		RateLimitEntry entry = rateLimitMap.compute(composite, (k, existing) -> {
+			if (existing == null || now - existing.windowStart > windowMillis) {
+				return new RateLimitEntry(now, new AtomicInteger(1));
+			}
+			existing.count.incrementAndGet();
+			return existing;
+		});
+
+		if (entry.count.get() > maxAttempts) {
+			throw new RateLimitException("Too many requests. Please wait before trying again.");
+		}
+	}//checkRateLimit
+
+
+	/**
+	 * Evicts buckets whose window has long expired. Caps memory from accumulating
+	 * one entry per distinct IP forever.
+	 */
+	@Scheduled(fixedRate = 10 * 60 * 1000)
 	public void cleanup() {
 		long now = System.currentTimeMillis();
-		rateLimitMap.entrySet().removeIf(e -> now - e.getValue().windowStart > WINDOW_MILLIS * 2);
-	}// cleanup
+		// Generous expiry: 1 hour is well past the longest single-bucket window (5 min).
+		long expiryAfter = 60 * 60 * 1000L;
+		rateLimitMap.entrySet().removeIf(e -> now - e.getValue().windowStart > expiryAfter);
+	}//cleanup
 
 
 	private static class RateLimitEntry {
@@ -64,6 +72,6 @@ public class RateLimitService {
 			this.windowStart = windowStart;
 			this.count = count;
 		}
-	}// RateLimitEntry
+	}//RateLimitEntry
 
-}// RateLimitService
+}//RateLimitService
