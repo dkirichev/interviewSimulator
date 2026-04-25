@@ -31,10 +31,20 @@ public class InputSanitizerService {
 	);
 
 	// Common prompt-injection lead-ins. Removed defensively; false positives are
-	// acceptable on CV text.
+	// acceptable on CV text. Covers English + Bulgarian (Cyrillic) since the app
+	// supports BG locale and the LLM understands both.
 	private static final Pattern PROMPT_INJECTION_LEADIN_PATTERN = Pattern.compile(
-			"(?im)^\\s*(ignore\\s+(all\\s+)?(previous|prior|above)\\s+instructions|system\\s*:|assistant\\s*:).*$",
-			Pattern.CASE_INSENSITIVE
+			"(?imu)^\\s*("
+					+ "ignore\\s+(all\\s+)?(previous|prior|above)\\s+instructions"
+					+ "|disregard\\s+(all\\s+)?(previous|prior|above)\\s+instructions"
+					+ "|forget\\s+(all\\s+)?(previous|prior|above)\\s+instructions"
+					+ "|system\\s*:|assistant\\s*:|user\\s*:"
+					+ "|игнорирай\\s+(всички\\s+)?(предишни|предходни|горни)\\s+инструкции"
+					+ "|пренебрегни\\s+(всички\\s+)?(предишни|предходни|горни)\\s+инструкции"
+					+ "|забрави\\s+(всички\\s+)?(предишни|предходни|горни)\\s+инструкции"
+					+ "|система\\s*:|асистент\\s*:|потребител\\s*:"
+					+ ").*$",
+			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE
 	);
 
 	/**

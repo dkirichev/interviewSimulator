@@ -145,6 +145,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
+		<!-- Actuator: only /actuator/health is exposed (Docker HEALTHCHECK) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 		<!-- PDF text extraction -->
 		<dependency>
 			<groupId>org.apache.pdfbox</groupId>

@@ -570,6 +570,11 @@ public class GeminiIntegrationService {
 
 		private final String language;
 
+		// Hard cap on transcript size so an extremely long session can't grow the
+		// per-session buffer without bound. ~256 KB of UTF-16 chars covers far
+		// more than the Gemini Live 15-min window, but stops a misbehaving client.
+		private static final int MAX_TRANSCRIPT_CHARS = 256 * 1024;
+
 		private final StringBuilder fullTranscript = new StringBuilder();
 
 		private final StringBuilder currentTurnTranscript = new StringBuilder();
@@ -577,10 +582,12 @@ public class GeminiIntegrationService {
 		// Tracks last speaker to avoid duplicate prefixes on streaming tokens
 		private String lastSpeaker = "";
 
-		private boolean ended = false;
+		// volatile: read by audio handler / cleanup threads without synchronization,
+		// must see the latest value as soon as it's set.
+		private volatile boolean ended = false;
 
 		// For session resumption
-		private boolean reconnecting = false;
+		private volatile boolean reconnecting = false;
 
 		private String voiceId;
 
@@ -627,6 +634,9 @@ public class GeminiIntegrationService {
 
 
 		public synchronized void appendUserTranscript(String text) {
+			if (fullTranscript.length() >= MAX_TRANSCRIPT_CHARS) {
+				return;
+			}
 			if (!"Candidate".equals(lastSpeaker)) {
 				fullTranscript.append("\n[Candidate]: ");
 				lastSpeaker = "Candidate";
@@ -636,6 +646,9 @@ public class GeminiIntegrationService {
 
 
 		public synchronized void appendAiTranscript(String text) {
+			if (fullTranscript.length() >= MAX_TRANSCRIPT_CHARS) {
+				return;
+			}
 			if (!"Interviewer".equals(lastSpeaker)) {
 				fullTranscript.append("\n[Interviewer]: ");
 				lastSpeaker = "Interviewer";

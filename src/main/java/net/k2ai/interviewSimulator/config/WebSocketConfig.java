@@ -25,8 +25,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
 	@Override
 	public void configureMessageBroker(MessageBrokerRegistry config) {
-		// Enable simple broker for topics (broadcast) and queues (user-specific)
-		config.enableSimpleBroker("/topic", "/queue");
+		// Only user-specific queues are used; /topic is unused so we don't expose
+		// a broadcast destination prefix that nothing publishes to.
+		config.enableSimpleBroker("/queue");
 		// Prefix for messages FROM client TO server
 		config.setApplicationDestinationPrefixes("/app");
 		// Prefix for user-specific messages

@@ -159,13 +159,16 @@ public class GlobalExceptionHandler {
 		log.warn("Illegal argument for request to {}: {}", request.getRequestURI(), ex.getMessage());
 
 		if (isApiRequest(request)) {
+			// Don't echo internal exception messages to API clients — they can
+			// leak implementation detail (e.g. internal IDs, stack-trace hints).
 			return ResponseEntity.badRequest().body(Map.of(
 					"success", false,
-					"error", ex.getMessage()
+					"error", "Invalid request."
 			));
 		}
 
-		return renderErrorPage(model, "400", "Bad Request", ex.getMessage());
+		return renderErrorPage(model, "400", "Bad Request",
+				"The request was invalid. Please check your input and try again.");
 	}// handleIllegalArgumentException
 
 
