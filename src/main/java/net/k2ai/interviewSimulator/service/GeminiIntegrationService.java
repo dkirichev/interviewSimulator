@@ -10,11 +10,17 @@ import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PreDestroy;
+
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -33,6 +39,35 @@ public class GeminiIntegrationService {
 
 	// Maps WebSocket session ID to interview state
 	private final Map<String, InterviewState> activeSessions = new ConcurrentHashMap<>();
+
+	// Bounded pool for async grading. Caps concurrent grading calls and
+	// the backlog queue, so a burst of ended interviews can't spawn unbounded
+	// threads. Tasks beyond capacity fall back to running on the caller thread
+	// (CallerRunsPolicy) which naturally backpressures the caller.
+	private final ExecutorService gradingExecutor = new ThreadPoolExecutor(
+			2, 4,
+			60L, TimeUnit.SECONDS,
+			new LinkedBlockingQueue<>(32),
+			r -> {
+				Thread t = new Thread(r, "grading-worker");
+				t.setDaemon(true);
+				return t;
+			},
+			new ThreadPoolExecutor.CallerRunsPolicy()
+	);
+
+
+	@PreDestroy
+	public void shutdown() {
+		gradingExecutor.shutdown();
+		try {
+			if (!gradingExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+				gradingExecutor.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+	}//shutdown
 
 
 	public UUID startInterview(String wsSessionId, String candidateName, String position, String difficulty, String language) {
@@ -438,7 +473,7 @@ public class GeminiIntegrationService {
 
 
 	private void triggerGrading(String wsSessionId, InterviewState state) {
-		new Thread(() -> {
+		gradingExecutor.submit(() -> {
 			String transcript = state.getFullTranscript();
 			try {
 				InterviewFeedback feedback = gradingService.gradeInterview(
@@ -474,7 +509,7 @@ public class GeminiIntegrationService {
 			} finally {
 				state.clearSensitiveState();
 			}
-		}).start();
+		});
 	}//triggerGrading
 
 
@@ -492,6 +527,12 @@ public class GeminiIntegrationService {
 				headerAccessor.getMessageHeaders()
 		);
 	}//sendToClient
+
+
+	public boolean hasActiveSession(String wsSessionId) {
+		InterviewState state = activeSessions.get(wsSessionId);
+		return state != null && !state.isEnded();
+	}//hasActiveSession
 
 
 	public void handleDisconnect(String wsSessionId) {
@@ -529,6 +570,11 @@ public class GeminiIntegrationService {
 
 		private final String language;
 
+		// Hard cap on transcript size so an extremely long session can't grow the
+		// per-session buffer without bound. ~256 KB of UTF-16 chars covers far
+		// more than the Gemini Live 15-min window, but stops a misbehaving client.
+		private static final int MAX_TRANSCRIPT_CHARS = 256 * 1024;
+
 		private final StringBuilder fullTranscript = new StringBuilder();
 
 		private final StringBuilder currentTurnTranscript = new StringBuilder();
@@ -536,10 +582,12 @@ public class GeminiIntegrationService {
 		// Tracks last speaker to avoid duplicate prefixes on streaming tokens
 		private String lastSpeaker = "";
 
-		private boolean ended = false;
+		// volatile: read by audio handler / cleanup threads without synchronization,
+		// must see the latest value as soon as it's set.
+		private volatile boolean ended = false;
 
 		// For session resumption
-		private boolean reconnecting = false;
+		private volatile boolean reconnecting = false;
 
 		private String voiceId;
 
@@ -586,6 +634,9 @@ public class GeminiIntegrationService {
 
 
 		public synchronized void appendUserTranscript(String text) {
+			if (fullTranscript.length() >= MAX_TRANSCRIPT_CHARS) {
+				return;
+			}
 			if (!"Candidate".equals(lastSpeaker)) {
 				fullTranscript.append("\n[Candidate]: ");
 				lastSpeaker = "Candidate";
@@ -595,6 +646,9 @@ public class GeminiIntegrationService {
 
 
 		public synchronized void appendAiTranscript(String text) {
+			if (fullTranscript.length() >= MAX_TRANSCRIPT_CHARS) {
+				return;
+			}
 			if (!"Interviewer".equals(lastSpeaker)) {
 				fullTranscript.append("\n[Interviewer]: ");
 				lastSpeaker = "Interviewer";

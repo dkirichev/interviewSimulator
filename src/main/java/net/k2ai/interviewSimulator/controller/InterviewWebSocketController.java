@@ -2,8 +2,10 @@ package net.k2ai.interviewSimulator.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.k2ai.interviewSimulator.exception.RateLimitException;
 import net.k2ai.interviewSimulator.service.GeminiIntegrationService;
 import net.k2ai.interviewSimulator.service.InputSanitizerService;
+import net.k2ai.interviewSimulator.service.RateLimitService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -27,12 +29,33 @@ public class InterviewWebSocketController {
 	private final GeminiIntegrationService geminiIntegrationService;
 	private final SimpMessagingTemplate messagingTemplate;
 	private final InputSanitizerService sanitizerService;
+	private final RateLimitService rateLimitService;
 
 
 	@MessageMapping("/interview/start")
 	public void startInterview(@Payload Map<String, String> payload, SimpMessageHeaderAccessor headerAccessor) {
 		String sessionIdStr = headerAccessor.getSessionId();
 		log.info("Starting interview for WebSocket session: {}", sessionIdStr);
+
+		// Throttle interview starts per IP. Captured at handshake by the
+		// WebSocketHandshakeInterceptor. Without this, an unauthenticated caller
+		// could spam starts and drain the backend Gemini API key.
+		String clientIp = resolveClientIp(headerAccessor);
+		try {
+			rateLimitService.checkRateLimit("ws-start", clientIp, 5, 60_000);
+		} catch (RateLimitException e) {
+			log.warn("Interview-start rate limit exceeded for IP: {}", clientIp);
+			sendError(sessionIdStr, "Too many interview starts. Please wait a minute and try again.");
+			return;
+		}
+
+		// Only one interview per WebSocket session. Prevents repeated starts on a
+		// single socket from spawning parallel Gemini connections.
+		if (geminiIntegrationService.hasActiveSession(sessionIdStr)) {
+			log.warn("Interview already active for WebSocket session: {}", sessionIdStr);
+			sendError(sessionIdStr, "An interview is already in progress on this connection.");
+			return;
+		}
 
 		// Extract and sanitize inputs
 		String candidateName = sanitizerService.sanitizeName(payload.getOrDefault("candidateName", ""));
@@ -155,6 +178,18 @@ public class InterviewWebSocketController {
 				createHeaders(sessionId)
 		);
 	}//sendError
+
+
+	private String resolveClientIp(SimpMessageHeaderAccessor headerAccessor) {
+		Object attrs = headerAccessor.getSessionAttributes();
+		if (attrs instanceof Map<?, ?> map) {
+			Object ip = map.get("clientIp");
+			if (ip instanceof String s && !s.isBlank()) {
+				return s;
+			}
+		}
+		return "unknown";
+	}//resolveClientIp
 
 
 	private org.springframework.messaging.MessageHeaders createHeaders(String sessionId) {

@@ -123,3 +123,16 @@ Input validation annotations live in `validation/` (`@LettersOnly`, `@SafeText`,
 ## Logging
 
 Log external API calls, WebSocket events, errors, and business-level state changes. Include context (session ID, user name) in messages. Do not log simple CRUD or every method entry/exit.
+
+## Security envs
+
+Two security-related env vars worth knowing:
+
+| Var | Default | Use |
+|-----|---------|-----|
+| `SESSION_COOKIE_SECURE` | `true` | Set to `false` for local plain-HTTP dev; otherwise the session cookie is dropped by the browser. |
+| `APP_TRUST_FORWARDED_HEADERS` | `false` | Enable ONLY behind a trusted proxy (Cloudflare Tunnel / nginx / load balancer). Otherwise attackers can spoof source IPs and bypass per-IP rate limits. |
+
+Per-IP rate limits exist on WS handshake, `/app/interview/start`, CV upload, admin login, and admin password change. Source IP comes from `ClientIpResolver`. When `APP_TRUST_FORWARDED_HEADERS=true` the resolver honors headers in this order: `CF-Connecting-IP` → `X-Forwarded-For` (leftmost) → socket peer. `CF-Connecting-IP` is preferred because Cloudflare always overwrites it at the edge, so the caller cannot spoof it; `X-Forwarded-For` can be prepended by the client and Cloudflare only appends, so it is fallback only.
+
+Actuator exposes **only** `/actuator/health` (Docker `HEALTHCHECK`). Don't add new endpoints to `management.endpoints.web.exposure.include` without a security review.

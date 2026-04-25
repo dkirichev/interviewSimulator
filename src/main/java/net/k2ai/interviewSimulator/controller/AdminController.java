@@ -1,11 +1,15 @@
 package net.k2ai.interviewSimulator.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.k2ai.interviewSimulator.entity.InterviewFeedback;
 import net.k2ai.interviewSimulator.entity.InterviewSession;
+import net.k2ai.interviewSimulator.exception.RateLimitException;
 import net.k2ai.interviewSimulator.repository.InterviewFeedbackRepository;
 import net.k2ai.interviewSimulator.service.AdminService;
+import net.k2ai.interviewSimulator.service.ClientIpResolver;
+import net.k2ai.interviewSimulator.service.RateLimitService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +35,10 @@ public class AdminController {
 	private final AdminService adminService;
 
 	private final InterviewFeedbackRepository feedbackRepository;
+
+	private final RateLimitService rateLimitService;
+
+	private final ClientIpResolver clientIpResolver;
 
 
 	@GetMapping("/login")
@@ -129,8 +137,21 @@ public class AdminController {
 			@RequestParam("currentPassword") String currentPassword,
 			@RequestParam("newPassword") String newPassword,
 			@RequestParam("confirmPassword") String confirmPassword,
+			HttpServletRequest request,
 			RedirectAttributes redirectAttributes
 	) {
+		// Throttle change-password attempts per IP to slow brute-force of the
+		// current password (the request is already authenticated, but a session
+		// hijack scenario is what this guards against).
+		String clientIp = clientIpResolver.resolve(request);
+		try {
+			rateLimitService.checkRateLimit("admin-change-password", clientIp, 5, 300_000);
+		} catch (RateLimitException e) {
+			log.warn("Admin change-password rate limit exceeded for IP: {}", clientIp);
+			redirectAttributes.addFlashAttribute("passwordError", "admin.password.rateLimited");
+			return "redirect:/admin/dashboard";
+		}
+
 		if (newPassword == null || newPassword.length() < 8) {
 			redirectAttributes.addFlashAttribute("passwordError", "admin.password.tooShort");
 			return "redirect:/admin/dashboard";

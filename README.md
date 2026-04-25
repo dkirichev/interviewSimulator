@@ -247,6 +247,17 @@ This project is built with a **privacy-by-design** philosophy:
 | **Mobile device blocking** | Mobile phones and tablets are redirected away from the app via a server-side interceptor — a professional interview requires a desktop environment with a proper microphone |
 | **Mode-aware legal pages** | Privacy Policy and Terms & Conditions adapt their content based on the app mode (DEV/PROD/REVIEWER), so users only see information relevant to their context |
 
+### Hardening details
+
+- **Per-IP rate limiting** on WebSocket handshakes, interview starts, CV uploads, admin login, and admin password changes. Buckets are evicted every 10 min so the in-memory map cannot grow unbounded.
+- **Strict input sanitization** on candidate name, position, and CV text — strips HTML, JavaScript, SQL fragments, LLM prompt-control tokens (`[END_INTERVIEW]`, `[system|user|assistant]`), and prompt-injection lead-ins (English + Bulgarian).
+- **Bounded grading thread pool** (`2→4`, queue 32, caller-runs) so a flood of ended interviews cannot fork unbounded threads.
+- **Hardened CSP** (no `unsafe-eval`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`).
+- **Session cookies** are `HttpOnly`, `SameSite=Lax`, and `Secure` by default. For local plain-HTTP dev, set `SESSION_COOKIE_SECURE=false`.
+- **Reverse-proxy IP trust** is **off by default**. Behind a trusted proxy (Cloudflare Tunnel, nginx, load balancer) set `APP_TRUST_FORWARDED_HEADERS=true` so per-IP rate limits use the real client IP. The resolver prefers `CF-Connecting-IP` (spoof-proof — Cloudflare overwrites at the edge) and falls back to the leftmost `X-Forwarded-For` entry.
+- **Actuator** exposes only `/actuator/health` (used by the Docker `HEALTHCHECK`); no other endpoints are reachable.
+- **Hibernate `ddl-auto=validate`** — schema is owned by Flyway; the app never mutates DDL at runtime.
+
 ---
 
 ## 🛡️ Admin Panel
