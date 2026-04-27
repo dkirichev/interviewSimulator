@@ -544,5 +544,136 @@
             box-shadow: 0 0 14px 4px rgba(59, 130, 246, 0.35);
         }
     }
+
+    /* =====================================================================
+       API Key + Rate Limit modals — always dark regardless of page theme.
+       Uses ID-based selectors (specificity > the class-based light-theme
+       rules above) placed last in the cascade to win the !important battle.
+       ===================================================================== */
+
+    /* Restore dark backdrop */
+    .theme-light #apikey-modal [class~="bg-black/95"] {
+        background-color: rgba(0, 0, 0, 0.93) !important;
+    }
+    .theme-light #ratelimit-modal [class~="bg-black/90"] {
+        background-color: rgba(0, 0, 0, 0.90) !important;
+    }
+
+    /* Restore white / light text */
+    .theme-light #apikey-modal [class~="text-white"],
+    .theme-light #ratelimit-modal [class~="text-white"] {
+        color: #f8fafc !important;
+    }
+    .theme-light #apikey-modal [class~="text-slate-200"],
+    .theme-light #ratelimit-modal [class~="text-slate-200"] {
+        color: #e2e8f0 !important;
+    }
+    .theme-light #apikey-modal [class~="text-slate-300"],
+    .theme-light #ratelimit-modal [class~="text-slate-300"] {
+        color: #cbd5e1 !important;
+    }
+    .theme-light #apikey-modal [class~="text-slate-400"],
+    .theme-light #ratelimit-modal [class~="text-slate-400"] {
+        color: #94a3b8 !important;
+    }
+    .theme-light #apikey-modal [class~="text-slate-500"],
+    .theme-light #ratelimit-modal [class~="text-slate-500"] {
+        color: #64748b !important;
+    }
+
+    /* Restore dark backgrounds — slate-900 */
+    .theme-light #apikey-modal :is(
+        [class~="bg-slate-900"],
+        [class~="bg-slate-900/95"],
+        [class~="bg-slate-900/90"],
+        [class~="bg-slate-900/80"],
+        [class~="bg-slate-900/70"],
+        [class~="bg-slate-900/60"],
+        [class~="bg-slate-900/50"],
+        [class~="bg-slate-900/30"]
+    ) {
+        background-color: #0f172a !important;
+    }
+
+    /* Restore dark backgrounds — slate-800 */
+    .theme-light #apikey-modal :is(
+        [class~="bg-slate-800"],
+        [class~="bg-slate-800/90"],
+        [class~="bg-slate-800/80"],
+        [class~="bg-slate-800/70"],
+        [class~="bg-slate-800/60"],
+        [class~="bg-slate-800/50"],
+        [class~="bg-slate-800/30"]
+    ),
+    .theme-light #ratelimit-modal [class~="bg-slate-800"] {
+        background-color: #1e293b !important;
+    }
+
+    /* Restore dark backgrounds — slate-700 */
+    .theme-light #apikey-modal :is(
+        [class~="bg-slate-700"],
+        [class~="bg-slate-700/90"],
+        [class~="bg-slate-700/80"],
+        [class~="bg-slate-700/50"],
+        [class~="bg-slate-700/40"],
+        [class~="bg-slate-700/30"],
+        [class~="bg-slate-700/20"]
+    ) {
+        background-color: rgba(51, 65, 85, 0.85) !important;
+    }
+
+    .theme-light #apikey-modal [class~="bg-slate-600"] {
+        background-color: #475569 !important;
+    }
+
+    /* Restore dark borders */
+    .theme-light #apikey-modal :is(
+        [class~="border-slate-900"],
+        [class~="border-slate-800"],
+        [class~="border-slate-700"],
+        [class~="border-slate-700/50"],
+        [class~="border-slate-600"],
+        [class~="border-slate-600/50"],
+        [class~="border-slate-500/20"],
+        [class~="border-slate-500/30"]
+    ) {
+        border-color: #334155 !important;
+    }
+    .theme-light #ratelimit-modal [class~="border-slate-700"] {
+        border-color: #334155 !important;
+    }
+    .theme-light #ratelimit-modal [class~="border-red-500/50"] {
+        border-color: rgba(239, 68, 68, 0.5) !important;
+    }
+
+    /* Restore hover states */
+    .theme-light #apikey-modal [class~="hover:bg-slate-800"]:hover {
+        background-color: #1e293b !important;
+    }
+    .theme-light #apikey-modal [class~="hover:bg-slate-700"]:hover {
+        background-color: #334155 !important;
+    }
+    .theme-light #apikey-modal [class~="hover:bg-slate-600"]:hover {
+        background-color: #475569 !important;
+    }
+    .theme-light #apikey-modal [class~="hover:bg-slate-500"]:hover {
+        background-color: #64748b !important;
+    }
+    .theme-light #apikey-modal [class~="hover:text-white"]:hover,
+    .theme-light #ratelimit-modal [class~="hover:text-white"]:hover {
+        color: #f8fafc !important;
+    }
+    .theme-light #apikey-modal [class~="hover:text-slate-300"]:hover {
+        color: #cbd5e1 !important;
+    }
+    .theme-light #ratelimit-modal [class~="hover:bg-slate-700"]:hover {
+        background-color: #334155 !important;
+    }
+
+    /* Restore shadow */
+    .theme-light #apikey-modal [class~="shadow-2xl"],
+    .theme-light #ratelimit-modal [class~="shadow-2xl"] {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85) !important;
+    }
 </style>
 </html>

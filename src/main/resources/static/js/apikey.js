@@ -9,6 +9,9 @@ let currentOnboardingStep = 1;
 
 // Check for stored API key on page load (no HTTP request needed — this file only loads in PROD)
 function checkApiKeyOnLoad() {
+	// Legal pages must be readable before the user has a key
+	if (window.location.pathname.startsWith('/legal/')) return;
+
 	const storedKey = getStoredApiKey();
 	if (!storedKey) {
 		showApiKeyModal();
@@ -68,6 +71,7 @@ function hideApiKeyModal() {
 		modal.classList.add('hidden');
 		document.body.style.overflow = '';
 	}
+	try { sessionStorage.removeItem('onboarding_step'); } catch (e) { }
 }
 
 
@@ -94,6 +98,7 @@ function hideRateLimitModal() {
 // Clear API key and show modal (called when rate limited)
 function clearApiKeyAndShowModal() {
 	clearStoredApiKey();
+	try { sessionStorage.removeItem('onboarding_step'); } catch (e) { }
 	hideRateLimitModal();
 	showApiKeyModal();
 	// Jump directly to step 3 (the key input step)
@@ -113,6 +118,7 @@ function clearApiKeyAndShowModal() {
 function goToOnboardingStep(step) {
 	if (step < 1 || step > 3) return;
 	currentOnboardingStep = step;
+	try { sessionStorage.setItem('onboarding_step', step); } catch (e) { }
 
 	// Hide all steps
 	document.querySelectorAll('.onboarding-step').forEach(el => {
@@ -381,8 +387,18 @@ function requiresApiKey() {
 document.addEventListener('DOMContentLoaded', () => {
 	checkApiKeyOnLoad();
 
-	// Initialize onboarding progress dots
-	updateOnboardingProgress(1);
+	// Restore step if user navigated away (e.g. opened Terms page) and came back
+	let initialStep = 1;
+	try {
+		const saved = sessionStorage.getItem('onboarding_step');
+		if (saved) initialStep = parseInt(saved) || 1;
+	} catch (e) { }
+
+	if (initialStep > 1) {
+		goToOnboardingStep(initialStep);
+	} else {
+		updateOnboardingProgress(1);
+	}
 
 	// Allow Enter key to submit
 	const input = document.getElementById('apikey-input');
