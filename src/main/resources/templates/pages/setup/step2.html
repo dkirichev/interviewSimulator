@@ -201,7 +201,7 @@
 							</div>
 
 							<!--/*  Upload area (show only if no file uploaded)  */-->
-							<div th:if="${setupForm.cvFileName == null}" id="cv-upload-area" class="relative border-2 border-dashed border-slate-700 rounded-xl p-3 text-center hover:border-blue-500 transition cursor-pointer bg-slate-900/50">
+							<div th:if="${setupForm.cvFileName == null}" id="cv-upload-area" class="relative border-2 border-dashed border-slate-700 rounded-xl py-2.5 px-4 flex items-center justify-center gap-3 hover:border-blue-500 transition cursor-pointer bg-slate-900/50">
 								<label for="cv-file-input" class="sr-only">Upload CV File</label>
 								<input type="file"
 										id="cv-file-input"
@@ -209,10 +209,10 @@
 										accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 										onchange="handleCvFileSelect(this)">
-								<div>
-									<i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-500 mb-1"></i>
+								<i class="fa-solid fa-cloud-arrow-up text-xl text-slate-500 flex-shrink-0"></i>
+								<div class="text-left">
 									<p class="text-slate-400 font-medium text-sm" th:text="#{setup.cv.dropText}">Drop your CV here or click to browse</p>
-									<p class="text-slate-600 text-xs mt-1" th:text="#{setup.cv.fileTypes}">PDF or DOCX, max 10MB</p>
+									<p class="text-slate-600 text-xs" th:text="#{setup.cv.fileTypes}">PDF or DOCX, max 10MB</p>
 								</div>
 							</div>
 
@@ -227,6 +227,15 @@
 							<!--/*  Server-side error display  */-->
 							<p th:if="${#fields.hasErrors('cvFile')}" th:errors="*{cvFile}" class="mt-2 text-sm text-red-400 flex items-center gap-1">
 								<i class="fa-solid fa-circle-exclamation"></i>
+							</p>
+
+							<!--/*  CV Tips Link  */-->
+							<p class="mt-2 text-xs text-slate-500 text-center">
+								<span th:text="#{setup.cv.tips.intro}">Don't have a CV yet?</span>
+								<button type="button" onclick="openCvTipsModal()"
+										class="text-blue-400 hover:text-blue-300 underline underline-offset-2 ml-1 transition-colors">
+									<span th:text="#{setup.cv.tips.linkAnchor}">See our tips →</span>
+								</button>
 							</p>
 						</div>
 					</div>
@@ -248,6 +257,17 @@
 			</div>
 		</div>
 	</section>
+
+	<!--/*  Page-wide CV Drop Overlay  */-->
+	<div id="page-drop-overlay" class="fixed inset-0 z-40 hidden pointer-events-none">
+		<div class="absolute inset-3 rounded-2xl border-4 border-dashed border-blue-400 bg-blue-500/10 backdrop-blur-sm flex items-center justify-center">
+			<div class="text-center">
+				<i class="fa-solid fa-cloud-arrow-up text-5xl text-blue-400 mb-3"></i>
+				<p class="text-xl font-bold text-blue-300" th:text="#{setup.cv.dropText}">Drop your CV here</p>
+				<p class="text-sm text-blue-400 opacity-70 mt-1" th:text="#{setup.cv.fileTypes}">PDF or DOCX, max 10MB</p>
+			</div>
+		</div>
+	</div>
 
 	<!--/*  Custom Position Modal  */-->
 	<div id="custom-position-modal" class="fixed inset-0 z-50 hidden">
@@ -276,7 +296,96 @@
 		</div>
 	</div>
 
+	<!--/*  CV Tips Modal  */-->
+	<div id="cv-tips-modal" class="fixed inset-0 z-50 hidden">
+		<div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeCvTipsModal()"></div>
+		<div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+			<div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-lg p-6">
+				<!--/*  Header  */-->
+				<div class="flex items-center justify-between mb-5">
+					<div class="flex items-center gap-3">
+						<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 border border-blue-500/30 flex items-center justify-center">
+							<i class="fa-solid fa-lightbulb text-blue-400 text-sm"></i>
+						</div>
+						<h3 class="text-lg font-bold text-white" th:text="#{setup.cv.tips.modal.title}">CV Tips &amp; Advice</h3>
+					</div>
+					<button type="button" onclick="closeCvTipsModal()"
+							class="modal-close-x w-8 h-8 flex items-center justify-center rounded-lg bg-slate-600 border border-slate-500 text-slate-200 hover:text-white hover:bg-slate-500 transition-all">
+						<i class="fa-solid fa-xmark"></i>
+					</button>
+				</div>
+
+				<!--/*  Tips List  */-->
+				<ul class="space-y-3 mb-5">
+					<li class="flex items-start gap-3">
+						<div class="w-5 h-5 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+							<i class="fa-solid fa-check text-blue-400 text-xs" style="font-size:9px"></i>
+						</div>
+						<p class="text-sm text-slate-300 leading-relaxed" th:text="#{setup.cv.tips.modal.tip1}">Tailor your CV for each role.</p>
+					</li>
+					<li class="flex items-start gap-3">
+						<div class="w-5 h-5 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+							<i class="fa-solid fa-check text-blue-400 text-xs" style="font-size:9px"></i>
+						</div>
+						<p class="text-sm text-slate-300 leading-relaxed" th:text="#{setup.cv.tips.modal.tip2}">Lead with impact, not duties.</p>
+					</li>
+					<li class="flex items-start gap-3">
+						<div class="w-5 h-5 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+							<i class="fa-solid fa-check text-blue-400 text-xs" style="font-size:9px"></i>
+						</div>
+						<p class="text-sm text-slate-300 leading-relaxed" th:text="#{setup.cv.tips.modal.tip3}">Keep it to one page.</p>
+					</li>
+					<li class="flex items-start gap-3">
+						<div class="w-5 h-5 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+							<i class="fa-solid fa-check text-blue-400 text-xs" style="font-size:9px"></i>
+						</div>
+						<p class="text-sm text-slate-300 leading-relaxed" th:text="#{setup.cv.tips.modal.tip4}">Use a clean, ATS-safe format.</p>
+					</li>
+				</ul>
+
+				<!--/*  Recommended Tools  */-->
+				<div class="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+					<p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3" th:text="#{setup.cv.tips.modal.tools.title}">Recommended Tools</p>
+					<a th:href="${#locale.language == 'bg'} ? 'https://europass.europa.eu/bg/create-europass-cv' : 'https://europass.europa.eu/en/create-europass-cv'"
+							target="_blank" rel="noopener noreferrer"
+							class="flex items-center gap-3 p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-blue-500/40 transition-all group">
+						<div class="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+							<i class="fa-solid fa-file-lines text-blue-400 text-sm"></i>
+						</div>
+						<div class="flex-1 min-w-0">
+							<p class="text-sm font-medium text-white" th:text="#{setup.cv.tips.modal.europass.label}">Create your Europass CV</p>
+							<p class="text-xs text-slate-500">europass.europa.eu</p>
+						</div>
+						<i class="fa-solid fa-arrow-up-right-from-square text-slate-600 group-hover:text-blue-400 text-xs transition-colors flex-shrink-0"></i>
+					</a>
+				</div>
+
+				<!--/*  Close Button  */-->
+				<button type="button" onclick="closeCvTipsModal()"
+						class="modal-close-btn w-full mt-4 px-4 py-2.5 rounded-lg bg-slate-600 border border-slate-500 hover:bg-slate-500 text-white text-sm font-medium transition"
+						th:text="#{setup.cv.tips.modal.close}">Close</button>
+			</div>
+		</div>
+	</div>
+
 	<style>
+		.theme-light #cv-tips-modal .modal-close-x {
+			background: rgba(0,0,0,.12);
+			border-color: rgba(0,0,0,.25);
+			color: #1e293b;
+		}
+		.theme-light #cv-tips-modal .modal-close-x:hover {
+			background: rgba(0,0,0,.22);
+			color: #0f172a;
+		}
+		.theme-light #cv-tips-modal .modal-close-btn {
+			background: #334155;
+			border-color: #475569;
+		}
+		.theme-light #cv-tips-modal .modal-close-btn:hover {
+			background: #1e293b;
+		}
+
 		.il-card { transition: background-color .15s, border-color .15s, color .15s; }
 		/* Dark theme */
 		.il-card.il-active-Quick    { background-color: rgb(245 158 11 / .12) !important; border-color: rgb(245 158 11)  !important; color: rgb(251 191 36)  !important; }
@@ -415,6 +524,68 @@
 		(function() {
 			const checked = document.querySelector('#interview-length-chips input[type=radio]:checked');
 			if (checked) selectInterviewLength(checked.value);
+		})();
+
+		function openCvTipsModal() {
+			document.getElementById('cv-tips-modal').classList.remove('hidden');
+		}
+
+		function closeCvTipsModal() {
+			document.getElementById('cv-tips-modal').classList.add('hidden');
+		}
+
+		// Page-wide drag-and-drop
+		(function () {
+			let dragCounter = 0;
+
+			function isModalOpen() {
+				const tips = document.getElementById('cv-tips-modal');
+				const pos = document.getElementById('custom-position-modal');
+				return (tips && !tips.classList.contains('hidden')) ||
+					(pos && !pos.classList.contains('hidden'));
+			}
+
+			function hasUploadArea() {
+				const area = document.getElementById('cv-upload-area');
+				return area && !area.classList.contains('hidden');
+			}
+
+			document.addEventListener('dragenter', function (e) {
+				if (isModalOpen() || !hasUploadArea()) return;
+				e.preventDefault();
+				dragCounter++;
+				document.getElementById('page-drop-overlay').classList.remove('hidden');
+			});
+
+			document.addEventListener('dragleave', function (e) {
+				dragCounter--;
+				if (dragCounter <= 0) {
+					dragCounter = 0;
+					document.getElementById('page-drop-overlay').classList.add('hidden');
+				}
+			});
+
+			document.addEventListener('dragover', function (e) {
+				if (isModalOpen() || !hasUploadArea()) return;
+				e.preventDefault();
+			});
+
+			document.addEventListener('drop', function (e) {
+				e.preventDefault();
+				dragCounter = 0;
+				document.getElementById('page-drop-overlay').classList.add('hidden');
+				if (isModalOpen() || !hasUploadArea()) return;
+				const files = e.dataTransfer && e.dataTransfer.files;
+				if (files && files.length > 0) {
+					const input = document.getElementById('cv-file-input');
+					if (input) {
+						const dt = new DataTransfer();
+						dt.items.add(files[0]);
+						input.files = dt.files;
+						handleCvFileSelect(input);
+					}
+				}
+			});
 		})();
 
 		function handleCvFileSelect(input) {

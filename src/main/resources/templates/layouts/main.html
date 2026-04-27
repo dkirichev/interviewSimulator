@@ -73,7 +73,7 @@
 				</svg>
 				<span class="text-sm text-slate-200" data-i18n="global.language.name.bulgarian"
 						th:text="#{global.language.name.bulgarian}" />
-				<i id="lang-check-bg" th:classappend="${#locale.language != 'bg'} ? 'hidden' : ''"
+				<i th:if="${#locale.language == 'bg'}" id="lang-check-bg"
 						class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
 			</button>
 			<!--/*  English  */-->
@@ -90,7 +90,7 @@
 				</svg>
 				<span class="text-sm text-slate-200" data-i18n="global.language.name.english"
 						th:text="#{global.language.name.english}" />
-				<i id="lang-check-en" th:classappend="${#locale.language != 'en'} ? 'hidden' : ''"
+				<i th:if="${#locale.language == 'en'}" id="lang-check-en"
 						class="fa-solid fa-check text-green-400 ml-auto text-xs"></i>
 			</button>
 		</div>
