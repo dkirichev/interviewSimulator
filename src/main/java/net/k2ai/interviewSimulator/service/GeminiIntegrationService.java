@@ -194,6 +194,7 @@ public class GeminiIntegrationService {
 		// When Gemini is ready
 		client.setOnConnected(() -> {
 			log.info("Gemini ready for session: {} (new: {})", wsSessionId, isNewSession);
+			state.setInitialConnectionEstablished(true);
 
 			if (isNewSession) {
 				// Start elapsed-time timer when interview begins
@@ -293,6 +294,15 @@ public class GeminiIntegrationService {
 		client.setOnError(error -> {
 			log.error("Gemini error for session {}: {}", wsSessionId, error);
 
+			// REVIEWER mode: rotate to next key if still in initial connection phase
+			if (geminiConfig.isReviewerMode() && !state.isInitialConnectionEstablished()) {
+				boolean retryable = error != null &&
+						(error.startsWith("RATE_LIMIT:") || error.startsWith("INVALID_KEY:"));
+				if (retryable && tryNextLiveKey(wsSessionId, state)) {
+					return;
+				}
+			}
+
 			// Check for rate limit or invalid key errors
 			if (error != null && error.startsWith("RATE_LIMIT:")) {
 				sendToClient(wsSessionId, "/queue/error", Map.of(
@@ -382,6 +392,36 @@ public class GeminiIntegrationService {
 		newClient.connect(resumptionHandle);
 		log.info("Reconnection initiated with resumption handle for session: {}", wsSessionId);
 	}//initiateReconnection
+
+
+	private boolean tryNextLiveKey(String wsSessionId, InterviewState state) {
+		var keys = geminiConfig.getReviewerKeyList();
+		int nextIndex = state.getLiveKeyAttemptIndex() + 1;
+
+		if (nextIndex >= keys.size()) {
+			log.error("All {} reviewer keys exhausted for live connection, session: {}", keys.size(), wsSessionId);
+			return false;
+		}
+
+		state.setLiveKeyAttemptIndex(nextIndex);
+		String nextKey = keys.get(nextIndex);
+		log.info("Live connection attempt {}/{} failed, retrying with next reviewer key for session: {}",
+				nextIndex, keys.size(), wsSessionId);
+
+		state.getGeminiClient().close();
+
+		String effectiveVoice = state.getVoiceId() != null ? state.getVoiceId() : geminiConfig.getVoiceName();
+		GeminiLiveClient newClient = new GeminiLiveClient(nextKey, geminiConfig.getLiveModel(), effectiveVoice);
+		newClient.setSystemInstruction(state.getSystemInstruction());
+		newClient.setPttMode(state.isPttMode());
+
+		state.setGeminiClient(newClient);
+		state.setUserApiKey(nextKey);
+
+		setupGeminiCallbacks(wsSessionId, state);
+		newClient.connect();
+		return true;
+	}//tryNextLiveKey
 
 
 	public void sendAudioToGemini(String wsSessionId, String base64Audio) {
@@ -605,6 +645,12 @@ public class GeminiIntegrationService {
 		// PTT mode flag (persisted for reconnection)
 		private boolean pttMode = false;
 
+		// REVIEWER mode live key rotation: index of the key currently in use
+		private int liveKeyAttemptIndex = 0;
+
+		// Set to true once onConnected fires; gates live key retry logic
+		private volatile boolean initialConnectionEstablished = false;
+
 
 		public InterviewState(UUID interviewSessionId, GeminiLiveClient geminiClient, String language) {
 			this.interviewSessionId = interviewSessionId;
@@ -735,6 +781,26 @@ public class GeminiIntegrationService {
 		public void setPttMode(boolean pttMode) {
 			this.pttMode = pttMode;
 		}//setPttMode
+
+
+		public int getLiveKeyAttemptIndex() {
+			return liveKeyAttemptIndex;
+		}//getLiveKeyAttemptIndex
+
+
+		public void setLiveKeyAttemptIndex(int liveKeyAttemptIndex) {
+			this.liveKeyAttemptIndex = liveKeyAttemptIndex;
+		}//setLiveKeyAttemptIndex
+
+
+		public boolean isInitialConnectionEstablished() {
+			return initialConnectionEstablished;
+		}//isInitialConnectionEstablished
+
+
+		public void setInitialConnectionEstablished(boolean initialConnectionEstablished) {
+			this.initialConnectionEstablished = initialConnectionEstablished;
+		}//setInitialConnectionEstablished
 
 
 		public synchronized void startTimer() {
