@@ -96,7 +96,8 @@ public class GradingService {
 						session.getId(), saved.getOverallScore(), config.model());
 				return saved;
 			} catch (RateLimitException e) {
-				boolean isDaily = e.getMessage() != null && e.getMessage().toLowerCase().contains("daily");
+				String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+				boolean isDaily = msg.contains("daily") || msg.contains("per day") || msg.contains("per_day");
 				rotationService.flagExhausted(config.apiKey(), config.model(), isDaily);
 				log.warn("Rate limit/overload on model {}, rotating to next...", config.model());
 			} catch (ModelAccessException e) {
@@ -236,14 +237,18 @@ public class GradingService {
 				String errorBody = response.body() != null ? response.body().string() : "No response body";
 				log.error("Gemini API error: {} - {}", response.code(), errorBody);
 
-				// Check for rate limit (429 RESOURCE_EXHAUSTED) or model overload (503)
+				// Rate limit (429) or temporary overload (503)
 				if (response.code() == 429 || response.code() == 503) {
 					throw new RateLimitException("API rate limit/overload (" + response.code() + "): " + errorBody);
 				}
 
-				// Check for model access errors (403, 404)
-				if (response.code() == 403 || response.code() == 404) {
+				// Model inaccessible: bad key (401), permission denied (403), not found (404),
+				// or billing/precondition failure (400 FAILED_PRECONDITION)
+				if (response.code() == 401 || response.code() == 403 || response.code() == 404) {
 					throw new ModelAccessException("Model not accessible: " + model + " - " + response.code());
+				}
+				if (response.code() == 400 && errorBody.contains("FAILED_PRECONDITION")) {
+					throw new ModelAccessException("Model precondition failed (billing/access): " + model);
 				}
 
 				throw new IOException("Gemini API error: " + response.code());
