@@ -76,49 +76,41 @@ public class GradingService {
 
 	/**
 	 * Grading with model/key rotation (REVIEWER + PROD modes).
-	 * Tries each available model/key combo until one succeeds.
+	 * Each failure flags the combo so the next call to getNextAvailable returns a different one.
+	 * Loop exits when all combos are exhausted or one succeeds.
 	 */
 	private InterviewFeedback gradeWithRotation(InterviewSession session, String prompt, String userApiKey) {
-		int maxAttempts = geminiConfig.getGradingModelList().size();
-		if (geminiConfig.isReviewerMode()) {
-			maxAttempts = geminiConfig.getGradingModelList().size() * geminiConfig.getReviewerKeyList().size();
-		}
-		// Cap at reasonable number
-		maxAttempts = Math.min(maxAttempts, 9);
+		int attempt = 0;
+		int safetyLimit = 20;
 
-		for (int attempt = 0; attempt < maxAttempts; attempt++) {
-			GeminiModelRotationService.GradingConfig config = rotationService.getNextAvailable(userApiKey);
-			if (config == null) {
-				log.error("All model/key combinations exhausted for session: {}", session.getId());
-				break;
-			}
-
-			log.info("Grading attempt {} with model: {}", attempt + 1, config.model());
+		GeminiModelRotationService.GradingConfig config;
+		while ((config = rotationService.getNextAvailable(userApiKey)) != null && attempt < safetyLimit) {
+			attempt++;
+			log.info("Grading attempt {} with model: {}", attempt, config.model());
 
 			try {
 				String response = callGeminiApi(prompt, config.apiKey(), config.model());
 				InterviewFeedback feedback = parseGradingResponse(response, session);
-
-				// Save to database
 				InterviewFeedback saved = saveFeedback(session, feedback);
-
 				log.info("Grading complete for session: {}. Score: {} (model: {})",
 						session.getId(), saved.getOverallScore(), config.model());
 				return saved;
 			} catch (RateLimitException e) {
 				boolean isDaily = e.getMessage() != null && e.getMessage().toLowerCase().contains("daily");
 				rotationService.flagExhausted(config.apiKey(), config.model(), isDaily);
-				log.warn("Rate limit hit on model {}, trying next...", config.model());
+				log.warn("Rate limit/overload on model {}, rotating to next...", config.model());
 			} catch (ModelAccessException e) {
 				rotationService.flagInaccessible(config.apiKey(), config.model());
-				log.warn("Model {} inaccessible, trying next...", config.model());
+				log.warn("Model {} inaccessible, rotating to next...", config.model());
 			} catch (Exception e) {
-				log.warn("Grading failed with model {} (will retry): {}", config.model(), e.getMessage());
+				// Flag with short cooldown so this combo is skipped next iteration
+				rotationService.flagExhausted(config.apiKey(), config.model(), false);
+				log.warn("Grading error on model {} (flagged 65s, rotating): {}", config.model(), e.getMessage());
 			}
 		}
 
 		log.error("All grading attempts failed for session: {}", session.getId());
-		return createDefaultFeedback(session);
+		return saveFeedback(session, createDefaultFeedback(session));
 	}//gradeWithRotation
 
 
@@ -244,9 +236,9 @@ public class GradingService {
 				String errorBody = response.body() != null ? response.body().string() : "No response body";
 				log.error("Gemini API error: {} - {}", response.code(), errorBody);
 
-				// Check for rate limit (429 RESOURCE_EXHAUSTED)
-				if (response.code() == 429) {
-					throw new RateLimitException("API rate limit exceeded: " + errorBody);
+				// Check for rate limit (429 RESOURCE_EXHAUSTED) or model overload (503)
+				if (response.code() == 429 || response.code() == 503) {
+					throw new RateLimitException("API rate limit/overload (" + response.code() + "): " + errorBody);
 				}
 
 				// Check for model access errors (403, 404)
