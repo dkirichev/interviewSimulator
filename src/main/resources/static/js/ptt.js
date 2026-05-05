@@ -122,7 +122,7 @@ async function activatePtt() {
 	if (typeof startVisualizer === 'function') startVisualizer();
 	if (typeof hideThinkingIndicator === 'function') hideThinkingIndicator();
 	if (typeof updateStatus === 'function') {
-		updateStatus('Recording...', 'bg-green-500/20 text-green-400 border-green-500/50');
+		updateStatus(window.statusMessages?.recording || 'Recording...', 'bg-green-500/20 text-green-400 border-green-500/50');
 	}
 	setPttMicRing(true);
 }
@@ -138,11 +138,12 @@ function deactivatePtt() {
 		// or key was released before async stream init finished). Just restore the idle PTT status.
 		if (typeof isAISpeakingNow === 'function' && isAISpeakingNow()) {
 			if (typeof updateStatus === 'function') {
-				updateStatus('AI Speaking', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
+				updateStatus(window.statusMessages?.aiSpeaking || 'AI Speaking', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
 			}
 		} else {
 			if (typeof updateStatus === 'function') {
-				updateStatus('Hold ' + pttKeyConfig.display + ' to speak', 'bg-slate-700/50 text-slate-400 border-slate-600/50');
+				const tpl = window.statusMessages?.holdToSpeak || 'Hold {key} to speak';
+			updateStatus(tpl.replace('{key}', pttKeyConfig.display), 'bg-slate-700/50 text-slate-400 border-slate-600/50');
 			}
 		}
 		return;
@@ -154,7 +155,7 @@ function deactivatePtt() {
 	if (typeof showThinkingIndicator === 'function') showThinkingIndicator();
 	if (typeof setAvatarState === 'function') setAvatarState('thinking');
 	if (typeof updateStatus === 'function') {
-		updateStatus('Processing...', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
+		updateStatus(window.statusMessages?.processing || 'Processing...', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
 	}
 }
 

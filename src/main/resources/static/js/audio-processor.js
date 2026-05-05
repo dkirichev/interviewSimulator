@@ -147,7 +147,7 @@ function connectToBackend() {
 
 	}, function (error) {
 		console.error('WebSocket connection error:', error);
-		updateStatus('Connection Failed', 'bg-red-500/20 text-red-400 border-red-500/50');
+		updateStatus(window.statusMessages?.connectionFailed || 'Connection Failed', 'bg-red-500/20 text-red-400 border-red-500/50');
 		hideConnectionOverlay();
 		stopPingLoop();
 	});
@@ -196,7 +196,7 @@ function handleStatusMessage(message) {
 
 	switch (data.type) {
 		case 'CONNECTED':
-			updateStatus('Connected', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
+			updateStatus(window.statusMessages?.connected || 'Connected', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
 			if (typeof updateLoadingStep === 'function') {
 				updateLoadingStep('connect', 'done');
 			}
@@ -207,7 +207,7 @@ function handleStatusMessage(message) {
 			if (overlay) {
 				const overlayText = overlay.querySelector('p');
 				if (overlayText) {
-					overlayText.innerText = 'Waiting for interviewer...';
+					overlayText.innerText = window.statusMessages?.waitingForInterviewer || 'Waiting for interviewer...';
 				}
 			}
 			break;
@@ -231,12 +231,13 @@ function handleStatusMessage(message) {
 					enableMicAfterAI();
 				}
 			} else if (isMicActive) {
-				updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
+				updateStatus(window.statusMessages?.listening || 'Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
 			} else {
 				if (typeof isPttMode !== 'undefined' && isPttMode && typeof pttKeyConfig !== 'undefined') {
-					updateStatus('Hold ' + pttKeyConfig.display + ' to speak', 'bg-slate-700/50 text-slate-400 border-slate-600/50');
+					const tpl = window.statusMessages?.holdToSpeak || 'Hold {key} to speak';
+					updateStatus(tpl.replace('{key}', pttKeyConfig.display), 'bg-slate-700/50 text-slate-400 border-slate-600/50');
 				} else {
-					updateStatus('Your Turn', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
+					updateStatus(window.statusMessages?.yourTurn || 'Your Turn', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
 				}
 			}
 			break;
@@ -260,7 +261,7 @@ function handleStatusMessage(message) {
 			showGradingScreen();
 			break;
 		case 'DISCONNECTED':
-			updateStatus('Disconnected', 'bg-red-500/20 text-red-400 border-red-500/50');
+			updateStatus(window.statusMessages?.disconnected || 'Disconnected', 'bg-red-500/20 text-red-400 border-red-500/50');
 			if (typeof stopCallTimer === 'function') {
 				stopCallTimer();
 			}
@@ -276,7 +277,7 @@ function handleAudioMessage(message) {
 	hideConnectionOverlay();
 	isAISpeaking = true;
 	setAvatarState('talking');
-	updateStatus('AI Speaking', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
+	updateStatus(window.statusMessages?.aiSpeaking || 'AI Speaking', 'bg-blue-500/20 text-blue-400 border-blue-500/50');
 	if (typeof hideThinkingIndicator === 'function') hideThinkingIndicator();
 
 	const audioBytes = base64ToArrayBuffer(data.data);

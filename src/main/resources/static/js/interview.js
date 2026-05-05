@@ -22,7 +22,8 @@ function enableMicAfterAI() {
 	// PTT mode: don't auto-enable mic, show key hint
 	if (typeof isPttMode !== 'undefined' && isPttMode) {
 		if (typeof pttKeyConfig !== 'undefined') {
-			updateStatus('Hold ' + pttKeyConfig.display + ' to speak', 'bg-slate-700/50 text-slate-400 border-slate-600/50');
+			const tpl = window.statusMessages?.holdToSpeak || 'Hold {key} to speak';
+			updateStatus(tpl.replace('{key}', pttKeyConfig.display), 'bg-slate-700/50 text-slate-400 border-slate-600/50');
 		}
 		return;
 	}
@@ -44,7 +45,7 @@ function enableMicAfterAI() {
 		muteOverlay.classList.add('hidden');
 	}
 
-	updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
+	updateStatus(window.statusMessages?.listening || 'Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
 	hideThinkingIndicator();
 
 	startAudioCapture();
@@ -62,7 +63,7 @@ function startInterviewSimulation() {
 		connectionOverlay.style.opacity = '1';
 		const overlayText = connectionOverlay.querySelector('p');
 		if (overlayText) {
-			overlayText.innerText = 'Establishing Secure Websocket...';
+			overlayText.innerText = window.statusMessages?.connecting || 'Establishing Secure Websocket...';
 		}
 	}
 
@@ -108,7 +109,7 @@ function toggleMic() {
 			muteOverlay.classList.add('hidden');
 		}
 
-		updateStatus('Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
+		updateStatus(window.statusMessages?.listening || 'Listening...', 'bg-green-500/20 text-green-400 border-green-500/50');
 		hideThinkingIndicator();
 
 		startAudioCapture();
@@ -122,10 +123,10 @@ function toggleMic() {
 		// Only show thinking indicator if AI is not currently speaking
 		// (thinking only makes sense when waiting for AI response)
 		if (typeof isAISpeakingNow === 'function' && isAISpeakingNow()) {
-			updateStatus('Muted', 'bg-slate-500/20 text-slate-400 border-slate-500/50');
+			updateStatus(window.statusMessages?.muted || 'Muted', 'bg-slate-500/20 text-slate-400 border-slate-500/50');
 			setAvatarState('talking');
 		} else {
-			updateStatus('Processing...', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
+			updateStatus(window.statusMessages?.processing || 'Processing...', 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50');
 			showThinkingIndicator();
 			setAvatarState('thinking');
 		}
