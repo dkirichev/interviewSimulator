@@ -26,6 +26,17 @@
 
 ---
 
+<p align="center">
+  <img src="https://img.shields.io/badge/🥇%201st%20Place-National%20Olympiad%20in%20IT%202026-gold?style=for-the-badge" alt="NOIT 2026 Gold Medal" />
+</p>
+
+<p align="center">
+  <strong>🏆 Winner — National Olympiad in Information Technology (NOIT) 2026</strong><br>
+  <em>1st Place · Gold Medal · "Distributed Applications" category</em>
+</p>
+
+---
+
 ## ✨ Features
 
 <table>
