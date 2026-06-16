@@ -12,6 +12,10 @@ function checkApiKeyOnLoad() {
 	// Legal pages must be readable before the user has a key
 	if (window.location.pathname.startsWith('/legal/')) return;
 
+	// Shared report pages must be viewable by friends without a key.
+	// Starting an interview from here navigates to /setup/, where the modal triggers.
+	if (window.location.pathname.startsWith('/report/')) return;
+
 	const storedKey = getStoredApiKey();
 	if (!storedKey) {
 		showApiKeyModal();
